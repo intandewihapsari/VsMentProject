@@ -90,4 +90,25 @@ class DashboardViewModel : ViewModel() {
             }
         }
     }
+    fun kirimNotifikasi(notifData: Map<String, Any>, onSuccess: () -> Unit) {
+        val db = FirebaseDatabase.getInstance().getReference("operational/notifikasi")
+
+        // push() agar setiap notifikasi punya ID unik (N001, N002, dst secara otomatis)
+        db.push().setValue(notifData)
+            .addOnSuccessListener { onSuccess() }
+    }
+
+    // Fungsi untuk list target (Semua Staff + Daftar Staff Spesifik)
+    fun getTargetNotifList(): LiveData<List<String>> {
+        val liveData = MutableLiveData<List<String>>()
+        FirebaseDatabase.getInstance().getReference("master_data/staff")
+            .get().addOnSuccessListener { snapshot ->
+                val list = mutableListOf("Semua Staff") // Opsi default
+                snapshot.children.forEach {
+                    list.add(it.child("nama").value.toString())
+                }
+                liveData.value = list
+            }
+        return liveData
+    }
 }

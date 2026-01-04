@@ -14,7 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.indri.vsmentproject.UI.dashboard.DashboardItem
 import com.indri.vsmentproject.UI.dashboard.DashboardViewModel
 import com.indri.vsmentproject.databinding.FragmentDashboardBinding
-import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.*
 
 class DashboardFragment : Fragment() {
 
@@ -25,9 +26,7 @@ class DashboardFragment : Fragment() {
     private lateinit var dashboardAdapter: DashboardAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         return binding.root
@@ -54,7 +53,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // Data Dashboard Utama
+        // 1. Observer Dashboard Utama
         viewModel.notifikasiUrgent.observe(viewLifecycleOwner) { listNotif ->
             val dashboardItems = listOf(
                 DashboardItem.NotifikasiUrgent(listNotif),
@@ -66,69 +65,111 @@ class DashboardFragment : Fragment() {
             dashboardAdapter.update(dashboardItems)
         }
 
-        // Data Villa ke Spinner
+        // 2. Observer Data Villa (Untuk kedua form)
         viewModel.getVillaList().observe(viewLifecycleOwner) { villaList ->
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, villaList)
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.layoutFormTambahTugas.spinnerVilla.adapter = adapter
+            binding.layoutFormKirimNotifikasi.spinnerVillaNotif.adapter = adapter
         }
 
-        // Data Staff ke Spinner
+        // 3. Observer Data Staff (Untuk form tugas & form notifikasi)
         viewModel.getStaffList().observe(viewLifecycleOwner) { staffList ->
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, staffList)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            binding.layoutFormTambahTugas.spinnerStaff.adapter = adapter
+            // Adapter untuk Form Tugas
+            val adapterTugas = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, staffList)
+            binding.layoutFormTambahTugas.spinnerStaff.adapter = adapterTugas
+
+            // Adapter untuk Form Notifikasi (Ditambah opsi "Semua Staff")
+            val listTargetNotif = mutableListOf("Semua Staff")
+            listTargetNotif.addAll(staffList)
+            val adapterNotif = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listTargetNotif)
+            binding.layoutFormKirimNotifikasi.spinnerTargetNotif.adapter = adapterNotif
         }
     }
 
     private fun setupFormListeners() {
         val formTugas = binding.layoutFormTambahTugas
+        val formNotif = binding.layoutFormKirimNotifikasi
+
+        // --- LOGIKA FORM TUGAS ---
+        formTugas.btnPilihTanggal.setOnClickListener { showDatePicker() }
 
         formTugas.btnSimpanTugas.setOnClickListener {
-            // 1. Ambil inputan dari View Binding
             val namaTugas = formTugas.etNamaTugas.text.toString().trim()
-            val deskripsi = formTugas.etDeskripsiTugas.text.toString().trim()
-            val tenggat = formTugas.tvDeadlineDate.text.toString()
+            val kategori = getCheckedCategory()
+            val villa = formTugas.spinnerVilla.selectedItem?.toString() ?: ""
 
-            // 2. Ambil Pilihan dari Spinner & RadioButton
-            val villaTerpilih = formTugas.spinnerVilla.selectedItem.toString()
-            val staffTerpilih = formTugas.spinnerStaff.selectedItem.toString()
-            val kategori = getCheckedCategory() // Fungsi yang kita buat sebelumnya
-
-            // 3. Validasi
-            if (namaTugas.isEmpty() || kategori.isEmpty()) {
-                Toast.makeText(requireContext(), "Lengkapi Nama & Kategori!", Toast.LENGTH_SHORT).show()
+            if (namaTugas.isEmpty() || kategori.isEmpty() || villa.isEmpty()) {
+                Toast.makeText(requireContext(), "Lengkapi data tugas!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 4. Bungkus data ke dalam Map (Sesuai struktur JSON baru)
             val taskData = mapOf(
                 "tugas" to namaTugas,
-                "keterangan" to deskripsi,
+                "keterangan" to formTugas.etDeskripsiTugas.text.toString().trim(),
                 "kategori" to kategori,
-                "staff_nama" to staffTerpilih,
-                "villa_target" to villaTerpilih,
+                "staff_nama" to formTugas.spinnerStaff.selectedItem.toString(),
+                "villa_target" to villa,
                 "status" to "pending",
-                "waktu_tenggat" to tenggat
+                "waktu_tenggat" to formTugas.tvDeadlineDate.text.toString()
             )
 
-            // 5. Eksekusi Simpan ke Firebase melalui ViewModel
-            viewModel.simpanTugas(taskData, villaTerpilih) {
+            viewModel.simpanTugas(taskData, villa) {
                 Toast.makeText(requireContext(), "Tugas Berhasil Disimpan!", Toast.LENGTH_SHORT).show()
                 resetFormTugas()
                 switchView(showDashboard = true)
             }
         }
+
+        // --- LOGIKA FORM NOTIFIKASI ---
+        formNotif.btnKirimNotifFirebase.setOnClickListener {
+            val judul = formNotif.etJudulNotif.text.toString().trim()
+            val pesan = formNotif.etPesanNotif.text.toString().trim()
+            val target = formNotif.spinnerTargetNotif.selectedItem?.toString() ?: ""
+            val villa = formNotif.spinnerVillaNotif.selectedItem?.toString() ?: ""
+
+            // CEK APAKAH URGENT ATAU INFO
+            val isUrgent = formNotif.switchUrgent.isChecked
+            val tipeNotif = if (isUrgent) "urgent" else "info"
+
+            if (judul.isEmpty() || pesan.isEmpty()) {
+                Toast.makeText(requireContext(), "Judul dan Pesan wajib diisi!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val notifData = mapOf(
+                "judul" to judul,
+                "pesan" to pesan,
+                "ditujukan_ke" to target,
+                "villa_terkait" to villa,
+                "waktu" to SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
+                "status_baca" to false,
+                "tipe" to tipeNotif // Nilainya sekarang dinamis: "urgent" atau "info"
+            )
+
+            viewModel.kirimNotifikasi(notifData) {
+                val pesanSukses = if (isUrgent) "Notifikasi DARURAT Terkirim!" else "Notifikasi Terkirim"
+                Toast.makeText(requireContext(), pesanSukses, Toast.LENGTH_SHORT).show()
+
+                resetFormNotif()
+                switchView(showDashboard = true)
+            }
+        }
     }
 
-    // Fungsi khusus untuk mencari RadioButton yang dicentang di dalam Binding
+    private fun showDatePicker() {
+        val c = Calendar.getInstance()
+        DatePickerDialog(requireContext(), { _, year, month, day ->
+            val date = "$day/${month + 1}/$year"
+            binding.layoutFormTambahTugas.tvDeadlineDate.text = date
+        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
     private fun getCheckedCategory(): String {
         val rg = binding.layoutFormTambahTugas.rgKategori
         val id = rg.checkedRadioButtonId
         return if (id != -1) {
-            // Kita cari view-nya melalui root form agar lebih akurat
-            val rb = binding.layoutFormTambahTugas.root.findViewById<RadioButton>(id)
-            rb?.text?.toString() ?: ""
+            binding.layoutFormTambahTugas.root.findViewById<RadioButton>(id)?.text?.toString() ?: ""
         } else ""
     }
 
@@ -144,6 +185,14 @@ class DashboardFragment : Fragment() {
             etDeskripsiTugas.text.clear()
             rgKategori.clearCheck()
             tvDeadlineDate.text = "Pilih Tanggal"
+        }
+    }
+
+    private fun resetFormNotif() {
+        binding.layoutFormKirimNotifikasi.apply {
+            etJudulNotif.text.clear()
+            etPesanNotif.text.clear()
+            switchUrgent.isChecked = false // Reset switch
         }
     }
 

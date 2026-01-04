@@ -26,6 +26,26 @@
         android:padding="16dp">
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Terkait Villa" android:textColor="@color/myBlack" android:textStyle="bold"/>
+        <Spinner
+            android:id="@+id/spinner_villa_notif"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@color/myWhite"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Ditujukan Ke" android:textColor="@color/myBlack" android:textStyle="bold"/>
+        <Spinner
+            android:id="@+id/spinner_target_notif"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@color/myWhite"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Judul Notifikasi" android:textColor="@color/myBlack" android:textStyle="bold"/>
         <EditText
             android:id="@+id/et_judul_notif"
@@ -50,6 +70,16 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp"/>
 
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switch_urgent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tandai sebagai Urgent?"
+            android:textColor="@color/myBlack"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"
+            android:thumbTint="@color/myRedDark"
+            app:trackTint="@color/myRedLight"/>
         <Button
             android:id="@+id/btn_kirim_notif_firebase"
             android:layout_width="match_parent"
