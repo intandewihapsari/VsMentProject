@@ -3,8 +3,8 @@ package com.indri.vsmentproject.UI.main
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.indri.vsmentproject.UI.dashboard.DashboardFragment
 import com.indri.vsmentproject.databinding.ActivityMainBinding
+import com.indri.vsmentproject.ui.dashboard.DashboardFragment
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding

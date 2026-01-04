@@ -1,13 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".UI.dashboard.DashboardFragment">
+    android:layout_height="match_parent">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvDashboard"
+        android:id="@+id/rv_dashboard"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <include
+        android:id="@+id/layoutFormTambahTugas"
+        layout="@layout/layout_tambah_tugas"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/layoutFormKirimNotifikasi"
+        layout="@layout/layout_kirim_notifikasi"
+        android:visibility="gone" />
 
 </FrameLayout>

@@ -1,15 +1,24 @@
-package com.indri.vsmentproject.UI.dashboard
+package com.indri.vsmentproject.ui.dashboard
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.indri.vsmentproject.UI.dashboard.DashboardItem
+import com.indri.vsmentproject.UI.dashboard.viewholder.AksiCepatViewHolder
 import com.indri.vsmentproject.UI.dashboard.viewholder.AnalisisCepatViewHolder
+import com.indri.vsmentproject.UI.dashboard.viewholder.InventarisViewHolder
 import com.indri.vsmentproject.UI.dashboard.viewholder.NotifikasiUrgentViewHolder
+import com.indri.vsmentproject.UI.dashboard.viewholder.TugasPendingViewHolder
+import com.indri.vsmentproject.databinding.ItemAksiCepatBinding
 import com.indri.vsmentproject.databinding.ItemAnalisisCepatBinding
+import com.indri.vsmentproject.databinding.ItemInventarisBinding
 import com.indri.vsmentproject.databinding.ItemNotifikasiUrgentBinding
+import com.indri.vsmentproject.databinding.ItemTugasPendingBinding
 
 class DashboardAdapter(
-    private var items: List<DashboardItem> = emptyList()
+    private var items: List<DashboardItem> = emptyList(),
+    private val onTambahTugasClick: () -> Unit,
+    private val onKirimNotifClick: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun update(newItems: List<DashboardItem>) {
@@ -36,40 +45,33 @@ class DashboardAdapter(
             is DashboardItem.TugasPending -> TYPE_TUGAS
         }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): RecyclerView.ViewHolder {
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-
         return when (viewType) {
-            TYPE_NOTIFIKASI -> {
-                val binding = ItemNotifikasiUrgentBinding
-                    .inflate(inflater, parent, false)
-                NotifikasiUrgentViewHolder(binding)
-            }
-            TYPE_ANALISIS -> {
-                val binding = ItemAnalisisCepatBinding
-                    .inflate(inflater, parent, false)
-                AnalisisCepatViewHolder(binding)
-            }
-
-            else -> throw IllegalArgumentException("Belum dipakai")
+            TYPE_NOTIFIKASI -> NotifikasiUrgentViewHolder(
+                ItemNotifikasiUrgentBinding.inflate(inflater, parent, false)
+            )
+            TYPE_ANALISIS -> AnalisisCepatViewHolder(
+                ItemAnalisisCepatBinding.inflate(inflater, parent, false)
+            )
+            TYPE_AKSI -> AksiCepatViewHolder(
+                ItemAksiCepatBinding.inflate(inflater, parent, false)
+            )
+            // TAMBAHKAN INI AGAR TIDAK ERROR
+            TYPE_INVENTARIS -> InventarisViewHolder(
+                ItemInventarisBinding.inflate(inflater, parent, false)
+            )
+            TYPE_TUGAS -> TugasPendingViewHolder(
+                ItemTugasPendingBinding.inflate(inflater, parent, false)
+            )
+            else -> throw IllegalArgumentException("Tipe view tidak dikenal: $viewType")
         }
     }
-
-    override fun onBindViewHolder(
-        holder: RecyclerView.ViewHolder,
-        position: Int
-    ) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
-            is DashboardItem.NotifikasiUrgent -> {
-                (holder as NotifikasiUrgentViewHolder).bind(item.data)
-            }
-            is DashboardItem.AnalisisCepat -> {
-                (holder as AnalisisCepatViewHolder).bind(item.data)
-            }
+            is DashboardItem.NotifikasiUrgent -> (holder as NotifikasiUrgentViewHolder).bind(item.data)
+            is DashboardItem.AnalisisCepat -> (holder as AnalisisCepatViewHolder).bind(item.data)
+            is DashboardItem.AksiCepat -> (holder as AksiCepatViewHolder).bind(onTambahTugasClick, onKirimNotifClick)
             else -> Unit
         }
     }
