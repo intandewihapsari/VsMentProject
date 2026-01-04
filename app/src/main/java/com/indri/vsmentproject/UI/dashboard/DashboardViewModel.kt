@@ -1,10 +1,10 @@
-package com.indri.vsmentproject.ViewModel
+package com.indri.vsmentproject.UI.dashboard
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
-import com.indri.vsmentproject.Data.NotifikasiModel
-import com.indri.vsmentproject.Repository.MainRepository
+import com.indri.vsmentproject.Data.Model.NotifikasiModel
+import com.indri.vsmentproject.Data.Repository.MainRepository
 
 class DashboardViewModel : ViewModel() {
 

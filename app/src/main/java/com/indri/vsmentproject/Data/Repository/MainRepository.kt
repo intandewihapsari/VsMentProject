@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.Repository
+package com.indri.vsmentproject.Data.Repository
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -6,7 +6,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.indri.vsmentproject.Data.NotifikasiModel
+import com.indri.vsmentproject.Data.Model.NotifikasiModel
 
 class MainRepository {
 

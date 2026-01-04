@@ -1,10 +1,10 @@
-package com.indri.vsmentproject
+package com.indri.vsmentproject.UI.dashboard
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.ViewHolder.AnalisisCepatViewHolder
-import com.indri.vsmentproject.ViewHolder.NotifikasiUrgentViewHolder
+import com.indri.vsmentproject.UI.dashboard.viewholder.AnalisisCepatViewHolder
+import com.indri.vsmentproject.UI.dashboard.viewholder.NotifikasiUrgentViewHolder
 import com.indri.vsmentproject.databinding.ItemAnalisisCepatBinding
 import com.indri.vsmentproject.databinding.ItemNotifikasiUrgentBinding
 

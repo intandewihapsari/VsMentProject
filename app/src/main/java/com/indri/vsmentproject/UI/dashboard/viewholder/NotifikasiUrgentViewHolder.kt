@@ -1,8 +1,8 @@
-package com.indri.vsmentproject.ViewHolder
+package com.indri.vsmentproject.UI.dashboard.viewholder
 
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.Data.NotifikasiModel
+import com.indri.vsmentproject.Data.Model.NotifikasiModel
 import com.indri.vsmentproject.databinding.ItemNotifikasiUrgentBinding
 
 class NotifikasiUrgentViewHolder(

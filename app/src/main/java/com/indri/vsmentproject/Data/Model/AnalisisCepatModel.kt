@@ -1,6 +1,6 @@
-package com.indri.vsmentproject.Data
+package com.indri.vsmentproject.Data.Model
 
-data class NotifikasiModel(
+data class AnalisisCepatModel(
     val id_notifikasi: String = "",
     val judul: String = "",
     val pesan: String = "",

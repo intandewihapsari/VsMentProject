@@ -1,7 +1,7 @@
-package com.indri.vsmentproject
+package com.indri.vsmentproject.UI.dashboard
 
-import com.indri.vsmentproject.Data.AnalisisCepatModel
-import com.indri.vsmentproject.Data.NotifikasiModel
+import com.indri.vsmentproject.Data.Model.AnalisisCepatModel
+import com.indri.vsmentproject.Data.Model.NotifikasiModel
 
 sealed class DashboardItem {
     data class NotifikasiUrgent(

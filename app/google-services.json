@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "354056935922",
+    "firebase_url": "https://vsment-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "vsment",
+    "storage_bucket": "vsment.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354056935922:android:4599cfefede694175af36b",
+        "android_client_info": {
+          "package_name": "com.indri.vsment"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzjr0PCgohZ4MK0gwxUCuwBrWuRxSGjGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354056935922:android:ba4e95520b6926b95af36b",
+        "android_client_info": {
+          "package_name": "com.indri.vsmentproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzjr0PCgohZ4MK0gwxUCuwBrWuRxSGjGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

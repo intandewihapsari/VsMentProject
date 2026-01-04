@@ -19,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VsMentProject" >
         <activity
-            android:name=".Activity.MainActivity"
+            android:name=".UI.main.MainActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

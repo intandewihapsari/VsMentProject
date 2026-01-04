@@ -1,16 +1,10 @@
-package com.indri.vsmentproject.Activity
+package com.indri.vsmentproject.UI.main
 
 import android.os.Bundle
-import android.view.View
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.bumptech.glide.Glide
-import com.indri.vsmentproject.R
+import com.indri.vsmentproject.UI.dashboard.DashboardFragment
 import com.indri.vsmentproject.databinding.ActivityMainBinding
-
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding

@@ -1,10 +1,10 @@
-package com.indri.vsmentproject.ViewHolder
+package com.indri.vsmentproject.UI.dashboard.viewholder
 
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.databinding.ItemAksiCepatBinding
+import com.indri.vsmentproject.databinding.ItemInventarisBinding
 
-class AksiCepatViewHolder (
-    private val binding: ItemAksiCepatBinding
+class InventarisViewHolder (
+    private val binding: ItemInventarisBinding
 ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind() {
