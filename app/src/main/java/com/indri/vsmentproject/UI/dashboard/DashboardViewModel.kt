@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import com.google.firebase.database.FirebaseDatabase
+import com.indri.vsmentproject.Data.Model.InventarisModel
 import com.indri.vsmentproject.Data.Model.NotifikasiModel
 import com.indri.vsmentproject.Data.Repository.MainRepository
 
@@ -12,6 +13,9 @@ class DashboardViewModel : ViewModel() {
 
     private val repo = MainRepository()
     private val masterDb = FirebaseDatabase.getInstance().getReference("master_data")
+
+    private val _inventarisData = MutableLiveData<InventarisModel>()
+    val inventarisData: LiveData<InventarisModel> = _inventarisData
 
     val notifikasiUrgent: LiveData<List<NotifikasiModel>> = repo.loadNotifikasi().map { list ->
         list.filter { it.tipe == "urgent" }
@@ -110,5 +114,36 @@ class DashboardViewModel : ViewModel() {
                 liveData.value = list
             }
         return liveData
+    }
+
+    fun loadInventarisSummary() {
+        val ref = FirebaseDatabase.getInstance().getReference("operational/task_management")
+
+        ref.addValueEventListener(object : com.google.firebase.database.ValueEventListener {
+            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+                var ganti = 0
+                var periksa = 0
+                var layak = 0
+
+                // Loop semua Villa
+                for (villaSnapshot in snapshot.children) {
+                    val tasksSnapshot = villaSnapshot.child("tasks")
+                    // Loop semua Tugas di dalam villa tersebut
+                    for (taskSnapshot in tasksSnapshot.children) {
+                        val status = taskSnapshot.child("status").value?.toString() ?: ""
+                        val kategori = taskSnapshot.child("kategori").value?.toString() ?: ""
+
+                        if (status == "selesai") {
+                            layak++
+                        } else if (status == "pending") {
+                            if (kategori == "Perbaikan") ganti++ else periksa++
+                        }
+                    }
+                }
+                // Kirim hasil hitungan ke LiveData
+                _inventarisData.postValue(InventarisModel(ganti, periksa, layak))
+            }
+            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
+        })
     }
 }

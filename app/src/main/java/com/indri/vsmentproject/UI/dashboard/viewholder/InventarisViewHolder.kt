@@ -3,12 +3,12 @@ package com.indri.vsmentproject.UI.dashboard.viewholder
 import androidx.recyclerview.widget.RecyclerView
 import com.indri.vsmentproject.databinding.ItemInventarisBinding
 
-class InventarisViewHolder (
-    private val binding: ItemInventarisBinding
-) : RecyclerView.ViewHolder(binding.root) {
+class InventarisViewHolder(val binding: ItemInventarisBinding) :
+    RecyclerView.ViewHolder(binding.root) {
 
-    fun bind() {
-        binding.tvTitle.text = "Notifikasi Urgent"
-        binding.tvMessage.text = "Gas LPG habis di dapur"
+    fun bind(ganti: Int, periksa: Int, layak: Int) {
+        binding.tvPerluGanti.text = "Perlu Ganti : $ganti"
+        binding.tvPerluPeriksa.text = "Perlu Periksa : $periksa"
+        binding.tvLayakPakai.text = "Layak Pakai : $layak"
     }
 }

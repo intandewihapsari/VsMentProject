@@ -53,19 +53,28 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // 1. Observer Dashboard Utama
+        // 1. Pemicu awal untuk menghitung data dari Firebase
+        viewModel.loadInventarisSummary()
+
+        // 2. Observer Utama: Kita gabungkan Notifikasi dan Inventaris
         viewModel.notifikasiUrgent.observe(viewLifecycleOwner) { listNotif ->
-            val dashboardItems = listOf(
-                DashboardItem.NotifikasiUrgent(listNotif),
-                DashboardItem.AnalisisCepat(emptyList()),
-                DashboardItem.AksiCepat,
-                DashboardItem.Inventaris,
-                DashboardItem.TugasPending
-            )
-            dashboardAdapter.update(dashboardItems)
+            viewModel.inventarisData.observe(viewLifecycleOwner) { dataInv ->
+
+                // Buat daftar item untuk ditampilkan di RecyclerView
+                val dashboardItems = listOf(
+                    DashboardItem.NotifikasiUrgent(listNotif),
+                    DashboardItem.AnalisisCepat(emptyList()),
+                    DashboardItem.AksiCepat,
+                    DashboardItem.Inventaris(dataInv), // Data hasil hitung masuk ke sini
+                    DashboardItem.TugasPending
+                )
+
+                // Kirim ke adapter
+                dashboardAdapter.update(dashboardItems)
+            }
         }
 
-        // 2. Observer Data Villa (Untuk kedua form)
+        // 3. Observer Data Villa (Tetap di luar observer pertama)
         viewModel.getVillaList().observe(viewLifecycleOwner) { villaList ->
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, villaList)
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -73,20 +82,17 @@ class DashboardFragment : Fragment() {
             binding.layoutFormKirimNotifikasi.spinnerVillaNotif.adapter = adapter
         }
 
-        // 3. Observer Data Staff (Untuk form tugas & form notifikasi)
+        // 4. Observer Data Staff
         viewModel.getStaffList().observe(viewLifecycleOwner) { staffList ->
-            // Adapter untuk Form Tugas
             val adapterTugas = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, staffList)
             binding.layoutFormTambahTugas.spinnerStaff.adapter = adapterTugas
 
-            // Adapter untuk Form Notifikasi (Ditambah opsi "Semua Staff")
             val listTargetNotif = mutableListOf("Semua Staff")
             listTargetNotif.addAll(staffList)
             val adapterNotif = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listTargetNotif)
             binding.layoutFormKirimNotifikasi.spinnerTargetNotif.adapter = adapterNotif
         }
     }
-
     private fun setupFormListeners() {
         val formTugas = binding.layoutFormTambahTugas
         val formNotif = binding.layoutFormKirimNotifikasi

@@ -72,6 +72,13 @@ class DashboardAdapter(
             is DashboardItem.NotifikasiUrgent -> (holder as NotifikasiUrgentViewHolder).bind(item.data)
             is DashboardItem.AnalisisCepat -> (holder as AnalisisCepatViewHolder).bind(item.data)
             is DashboardItem.AksiCepat -> (holder as AksiCepatViewHolder).bind(onTambahTugasClick, onKirimNotifClick)
+            is DashboardItem.Inventaris -> {
+                (holder as InventarisViewHolder).bind(
+                    item.data.perluGanti,
+                    item.data.perluPeriksa,
+                    item.data.layakPakai
+                )
+            }
             else -> Unit
         }
     }
