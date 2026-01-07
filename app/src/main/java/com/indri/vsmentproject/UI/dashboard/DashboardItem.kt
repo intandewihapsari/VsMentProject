@@ -20,7 +20,7 @@ sealed class DashboardItem {
     ) : DashboardItem()
 
     data class TugasPending(
-        val listTugas: List<TugasModel>
+        val listTugas: List<TugasModel> // Harus List agar bind(item.listTugas) tidak error
     ) : DashboardItem()
 }
 

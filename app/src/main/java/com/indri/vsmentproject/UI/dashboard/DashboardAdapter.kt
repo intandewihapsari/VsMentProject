@@ -13,6 +13,7 @@ import com.indri.vsmentproject.databinding.ItemAksiCepatBinding
 import com.indri.vsmentproject.databinding.ItemAnalisisCepatBinding
 import com.indri.vsmentproject.databinding.ItemInventarisBinding
 import com.indri.vsmentproject.databinding.ItemNotifikasiUrgentBinding
+import com.indri.vsmentproject.databinding.ItemTugasPendingBinding
 import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
 
 class DashboardAdapter(
@@ -62,7 +63,7 @@ class DashboardAdapter(
                 ItemInventarisBinding.inflate(inflater, parent, false)
             )
             TYPE_TUGAS -> TugasPendingViewHolder(
-                ItemTugasPendingListBinding.inflate(inflater, parent, false)
+                ItemTugasPendingBinding.inflate(inflater, parent, false)
             )
             else -> throw IllegalArgumentException("Tipe view tidak dikenal: $viewType")
         }
@@ -79,7 +80,10 @@ class DashboardAdapter(
                     item.data.layakPakai
                 )
             }
-            is DashboardItem.TugasPending -> { (holder as TugasPendingViewHolder).bind(item.listTugas)
+            is DashboardItem.TugasPending -> {
+                // Pastikan holder di-cast ke TugasPendingViewHolder
+                val tugasHolder = holder as TugasPendingViewHolder
+                tugasHolder.bind(item.listTugas)
             }
         }
     }

@@ -163,13 +163,15 @@ class DashboardViewModel : ViewModel() {
                     val tasksSnapshot = villaSnapshot.child("tasks")
                     for (taskSnapshot in tasksSnapshot.children) {
                         val status = taskSnapshot.child("status").value?.toString() ?: ""
+                        val namaTugas = taskSnapshot.child("tugas").value?.toString() ?: "Tugas Tanpa Nama"
+                        val staff = taskSnapshot.child("staff_nama").value?.toString() ?: "Belum ada PIC"
 
                         // Filter: Hanya ambil yang statusnya pending
                         if (status == "pending") {
                             val model = TugasModel(
-                                tugas = taskSnapshot.child("tugas").value?.toString() ?: "",
+                                tugas = namaTugas,
                                 status = status,
-                                staff_nama = taskSnapshot.child("staff_nama").value?.toString() ?: "Tanpa PIC"
+                                staff_nama = staff
                             )
                             list.add(model)
                         }

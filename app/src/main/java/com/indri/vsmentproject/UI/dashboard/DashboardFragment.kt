@@ -38,6 +38,10 @@ class DashboardFragment : Fragment() {
         setupRecyclerView()
         setupObservers()
         setupFormListeners()
+
+        // Memicu pengambilan data awal
+        viewModel.loadInventarisSummary()
+        viewModel.loadTugasPending()
     }
 
     private fun setupRecyclerView() {
@@ -53,29 +57,15 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        // 1. Pemicu awal untuk menghitung data dari Firebase
-        viewModel.loadInventarisSummary()
+        // --- OBSERVER UNTUK LIST DASHBOARD (RECYCLERVIEW) ---
+        // Kita pantau semua data secara terpisah, lalu panggil updateDashboard()
 
-        // 2. Observer Utama: Kita gabungkan Notifikasi dan Inventaris
-        viewModel.notifikasiUrgent.observe(viewLifecycleOwner) { listNotif ->
-            viewModel.inventarisData.observe(viewLifecycleOwner) { dataInv ->
-                viewModel.listTugasPending.observe(viewLifecycleOwner) { listTugas ->
-                    // Buat daftar item untuk ditampilkan di RecyclerView
-                    val dashboardItems = listOf(
-                        DashboardItem.NotifikasiUrgent(listNotif),
-                        DashboardItem.AnalisisCepat(emptyList()),
-                        DashboardItem.AksiCepat,
-                        DashboardItem.Inventaris(dataInv), // Data hasil hitung masuk ke sini
-                        DashboardItem.TugasPending(listTugas)
-                    )
+        viewModel.notifikasiUrgent.observe(viewLifecycleOwner) { updateDashboard() }
+        viewModel.inventarisData.observe(viewLifecycleOwner) { updateDashboard() }
+        viewModel.listTugasPending.observe(viewLifecycleOwner) { updateDashboard() }
 
-                    // Kirim ke adapter
-                    dashboardAdapter.update(dashboardItems)
-                }
-            }
-        }
+        // --- OBSERVER UNTUK FORM (SPINNER) ---
 
-        // 3. Observer Data Villa (Tetap di luar observer pertama)
         viewModel.getVillaList().observe(viewLifecycleOwner) { villaList ->
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, villaList)
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -83,7 +73,6 @@ class DashboardFragment : Fragment() {
             binding.layoutFormKirimNotifikasi.spinnerVillaNotif.adapter = adapter
         }
 
-        // 4. Observer Data Staff
         viewModel.getStaffList().observe(viewLifecycleOwner) { staffList ->
             val adapterTugas = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, staffList)
             binding.layoutFormTambahTugas.spinnerStaff.adapter = adapterTugas
@@ -94,11 +83,44 @@ class DashboardFragment : Fragment() {
             binding.layoutFormKirimNotifikasi.spinnerTargetNotif.adapter = adapterNotif
         }
     }
+
+    /**
+     * Fungsi utama untuk menggabungkan semua data menjadi satu list untuk RecyclerView
+     */
+    private fun updateDashboard() {
+        val listNotif = viewModel.notifikasiUrgent.value ?: emptyList()
+        val dataInv = viewModel.inventarisData.value
+        val listTugas = viewModel.listTugasPending.value ?: emptyList()
+
+        val dashboardItems = mutableListOf<DashboardItem>()
+
+        // 1. Notifikasi Urgent (Paling Atas)
+        dashboardItems.add(DashboardItem.NotifikasiUrgent(listNotif))
+
+        // 2. Analisis Cepat (Kosongkan dulu sesuai permintaan sebelumnya)
+        dashboardItems.add(DashboardItem.AnalisisCepat(emptyList()))
+
+        // 3. Tombol Aksi Cepat
+        dashboardItems.add(DashboardItem.AksiCepat)
+
+        // 4. Widget Inventaris (Hanya muncul jika data sudah ada)
+        dataInv?.let {
+            dashboardItems.add(DashboardItem.Inventaris(it))
+        }
+
+        // 5. List Tugas Pending (Kartu Induk yang berisi daftar tugas)
+        if (listTugas.isNotEmpty()) {
+            dashboardItems.add(DashboardItem.TugasPending(listTugas))
+        }
+
+        // Kirim data ke adapter
+        dashboardAdapter.update(dashboardItems)
+    }
+
     private fun setupFormListeners() {
         val formTugas = binding.layoutFormTambahTugas
         val formNotif = binding.layoutFormKirimNotifikasi
 
-        // --- LOGIKA FORM TUGAS ---
         formTugas.btnPilihTanggal.setOnClickListener { showDatePicker() }
 
         formTugas.btnSimpanTugas.setOnClickListener {
@@ -128,14 +150,11 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        // --- LOGIKA FORM NOTIFIKASI ---
         formNotif.btnKirimNotifFirebase.setOnClickListener {
             val judul = formNotif.etJudulNotif.text.toString().trim()
             val pesan = formNotif.etPesanNotif.text.toString().trim()
             val target = formNotif.spinnerTargetNotif.selectedItem?.toString() ?: ""
             val villa = formNotif.spinnerVillaNotif.selectedItem?.toString() ?: ""
-
-            // CEK APAKAH URGENT ATAU INFO
             val isUrgent = formNotif.switchUrgent.isChecked
             val tipeNotif = if (isUrgent) "urgent" else "info"
 
@@ -151,13 +170,12 @@ class DashboardFragment : Fragment() {
                 "villa_terkait" to villa,
                 "waktu" to SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
                 "status_baca" to false,
-                "tipe" to tipeNotif // Nilainya sekarang dinamis: "urgent" atau "info"
+                "tipe" to tipeNotif
             )
 
             viewModel.kirimNotifikasi(notifData) {
                 val pesanSukses = if (isUrgent) "Notifikasi DARURAT Terkirim!" else "Notifikasi Terkirim"
                 Toast.makeText(requireContext(), pesanSukses, Toast.LENGTH_SHORT).show()
-
                 resetFormNotif()
                 switchView(showDashboard = true)
             }
@@ -199,7 +217,7 @@ class DashboardFragment : Fragment() {
         binding.layoutFormKirimNotifikasi.apply {
             etJudulNotif.text.clear()
             etPesanNotif.text.clear()
-            switchUrgent.isChecked = false // Reset switch
+            switchUrgent.isChecked = false
         }
     }
 
