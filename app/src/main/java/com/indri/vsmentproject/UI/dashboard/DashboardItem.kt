@@ -3,6 +3,7 @@ package com.indri.vsmentproject.UI.dashboard
 import com.indri.vsmentproject.Data.Model.AnalisisCepatModel
 import com.indri.vsmentproject.Data.Model.InventarisModel
 import com.indri.vsmentproject.Data.Model.NotifikasiModel
+import com.indri.vsmentproject.Data.Model.TugasModel
 
 sealed class DashboardItem {
     data class NotifikasiUrgent(
@@ -18,7 +19,9 @@ sealed class DashboardItem {
         val data: InventarisModel
     ) : DashboardItem()
 
-    object TugasPending : DashboardItem()
+    data class TugasPending(
+        val listTugas: List<TugasModel>
+    ) : DashboardItem()
 }
 
 

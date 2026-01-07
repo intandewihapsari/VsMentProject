@@ -59,18 +59,19 @@ class DashboardFragment : Fragment() {
         // 2. Observer Utama: Kita gabungkan Notifikasi dan Inventaris
         viewModel.notifikasiUrgent.observe(viewLifecycleOwner) { listNotif ->
             viewModel.inventarisData.observe(viewLifecycleOwner) { dataInv ->
+                viewModel.listTugasPending.observe(viewLifecycleOwner) { listTugas ->
+                    // Buat daftar item untuk ditampilkan di RecyclerView
+                    val dashboardItems = listOf(
+                        DashboardItem.NotifikasiUrgent(listNotif),
+                        DashboardItem.AnalisisCepat(emptyList()),
+                        DashboardItem.AksiCepat,
+                        DashboardItem.Inventaris(dataInv), // Data hasil hitung masuk ke sini
+                        DashboardItem.TugasPending(listTugas)
+                    )
 
-                // Buat daftar item untuk ditampilkan di RecyclerView
-                val dashboardItems = listOf(
-                    DashboardItem.NotifikasiUrgent(listNotif),
-                    DashboardItem.AnalisisCepat(emptyList()),
-                    DashboardItem.AksiCepat,
-                    DashboardItem.Inventaris(dataInv), // Data hasil hitung masuk ke sini
-                    DashboardItem.TugasPending
-                )
-
-                // Kirim ke adapter
-                dashboardAdapter.update(dashboardItems)
+                    // Kirim ke adapter
+                    dashboardAdapter.update(dashboardItems)
+                }
             }
         }
 

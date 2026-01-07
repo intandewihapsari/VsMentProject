@@ -4,9 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.indri.vsmentproject.Data.Model.InventarisModel
 import com.indri.vsmentproject.Data.Model.NotifikasiModel
+import com.indri.vsmentproject.Data.Model.TugasModel
 import com.indri.vsmentproject.Data.Repository.MainRepository
 
 class DashboardViewModel : ViewModel() {
@@ -16,6 +20,9 @@ class DashboardViewModel : ViewModel() {
 
     private val _inventarisData = MutableLiveData<InventarisModel>()
     val inventarisData: LiveData<InventarisModel> = _inventarisData
+
+    private val _listTugasPending = MutableLiveData<List<TugasModel>>()
+    val listTugasPending: LiveData<List<TugasModel>> = _listTugasPending
 
     val notifikasiUrgent: LiveData<List<NotifikasiModel>> = repo.loadNotifikasi().map { list ->
         list.filter { it.tipe == "urgent" }
@@ -146,4 +153,32 @@ class DashboardViewModel : ViewModel() {
             override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
         })
     }
+
+    fun loadTugasPending() {
+        val ref = FirebaseDatabase.getInstance().getReference("operational/task_management")
+        ref.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = mutableListOf<TugasModel>()
+                for (villaSnapshot in snapshot.children) {
+                    val tasksSnapshot = villaSnapshot.child("tasks")
+                    for (taskSnapshot in tasksSnapshot.children) {
+                        val status = taskSnapshot.child("status").value?.toString() ?: ""
+
+                        // Filter: Hanya ambil yang statusnya pending
+                        if (status == "pending") {
+                            val model = TugasModel(
+                                tugas = taskSnapshot.child("tugas").value?.toString() ?: "",
+                                status = status,
+                                staff_nama = taskSnapshot.child("staff_nama").value?.toString() ?: "Tanpa PIC"
+                            )
+                            list.add(model)
+                        }
+                    }
+                }
+                _listTugasPending.postValue(list)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
 }
