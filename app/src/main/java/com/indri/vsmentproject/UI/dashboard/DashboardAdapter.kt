@@ -14,7 +14,6 @@ import com.indri.vsmentproject.databinding.ItemAnalisisCepatBinding
 import com.indri.vsmentproject.databinding.ItemInventarisBinding
 import com.indri.vsmentproject.databinding.ItemNotifikasiUrgentBinding
 import com.indri.vsmentproject.databinding.ItemTugasPendingBinding
-import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
 
 class DashboardAdapter(
     private var items: List<DashboardItem> = emptyList(),
