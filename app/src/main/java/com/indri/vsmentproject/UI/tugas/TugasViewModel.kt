@@ -48,7 +48,11 @@ class TugasViewModel : ViewModel() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val groupList = mutableListOf<VillaTugasGroup>()
                     for (villaSnapshot in snapshot.children) {
-                        val tasks = villaSnapshot.child("tasks").children.mapNotNull { it.getValue(TugasModel::class.java) }
+                        val tasks = villaSnapshot.child("tasks").children.mapNotNull {
+                            val task = it.getValue(TugasModel::class.java)
+                            task?.id = it.key ?: "" // MENYIMPAN ID DARI FIREBASE
+                            task
+                        }
                         if (tasks.isNotEmpty()) groupList.add(VillaTugasGroup(villaSnapshot.key ?: "", tasks))
                     }
                     _tugasGrouped.postValue(groupList)
@@ -60,6 +64,12 @@ class TugasViewModel : ViewModel() {
     fun simpanTugasLengkap(namaVilla: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
         FirebaseDatabase.getInstance().getReference("operational/task_management")
             .child(namaVilla).child("tasks").push().setValue(data)
+            .addOnCompleteListener { onComplete(it.isSuccessful) }
+    }
+
+    fun updateTugas(namaVilla: String, taskId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
+        FirebaseDatabase.getInstance().getReference("operational/task_management")
+            .child(namaVilla).child("tasks").child(taskId).updateChildren(data)
             .addOnCompleteListener { onComplete(it.isSuccessful) }
     }
 }

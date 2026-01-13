@@ -1,11 +1,15 @@
 package com.indri.vsmentproject.Data.Model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class TugasModel(
+    var id: String = "",           // Tambahkan baris ini
     val tugas: String = "",
-    val keterangan: String = "",
-    val kategori: String = "",     // Tambahkan ini untuk filter & detail
-    val deadline: String = "",     // Tambahkan ini untuk info batas waktu
-    val status: String = "",       // "pending" atau "selesai"
-    val staff_nama: String = ""
-)
+    val kategori: String = "",
+    val staff_nama: String = "",
+    val deadline: String = "",
+    val status: String = "",
+    val keterangan: String = ""
+) : Parcelable
