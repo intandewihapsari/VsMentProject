@@ -72,4 +72,13 @@ class TugasViewModel : ViewModel() {
             .child(namaVilla).child("tasks").child(taskId).updateChildren(data)
             .addOnCompleteListener { onComplete(it.isSuccessful) }
     }
+
+    fun hapusTugas(namaVilla: String, taskId: String, onComplete: (Boolean) -> Unit) {
+        FirebaseDatabase.getInstance().getReference("operational/task_management")
+            .child(namaVilla)
+            .child("tasks")
+            .child(taskId)
+            .removeValue()
+            .addOnCompleteListener { onComplete(it.isSuccessful) }
+    }
 }

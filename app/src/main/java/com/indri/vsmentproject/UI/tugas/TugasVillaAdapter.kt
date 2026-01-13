@@ -9,8 +9,8 @@ import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
 import com.indri.vsmentproject.databinding.ItemVillaGroupBinding
 
 class TugasVillaAdapter(
-    // 1. Tambahkan parameter callback klik di sini
-    private val onItemClick: (TugasModel) -> Unit
+    private val onItemClick: (TugasModel) -> Unit,
+    private val onItemLongClick: (TugasModel) -> Unit
 ) : RecyclerView.Adapter<TugasVillaAdapter.ViewHolder>() {
 
     private var items = listOf<VillaTugasGroup>()
@@ -28,23 +28,19 @@ class TugasVillaAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val group = items[position]
         holder.binding.tvNamaVilla.text = group.namaVilla
-
-        // Bersihkan view lama sebelum menambah yang baru (agar tidak double saat scroll)
         holder.binding.containerTugasVilla.removeAllViews()
-
         val inflater = LayoutInflater.from(holder.binding.root.context)
 
         group.listTugas.forEach { tugas ->
             val itemBinding = ItemTugasPendingListBinding.inflate(inflater, holder.binding.containerTugasVilla, false)
-
             itemBinding.tvNamaTugas.text = tugas.tugas
             itemBinding.tvStatus.text = "Status: ${tugas.status}"
             itemBinding.tvPIC.text = "Staff: ${tugas.staff_nama}"
 
-            // --- 2. TARUH DI SINI ---
-            // Klik pada satu baris tugas akan memicu detail
-            itemBinding.root.setOnClickListener {
-                onItemClick(tugas)
+            itemBinding.root.setOnClickListener { onItemClick(tugas) }
+            itemBinding.root.setOnLongClickListener {
+                onItemLongClick(tugas)
+                true
             }
 
             holder.binding.containerTugasVilla.addView(itemBinding.root)
@@ -52,6 +48,5 @@ class TugasVillaAdapter(
     }
 
     override fun getItemCount() = items.size
-
     class ViewHolder(val binding: ItemVillaGroupBinding) : RecyclerView.ViewHolder(binding.root)
 }

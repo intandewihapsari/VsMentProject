@@ -233,6 +233,15 @@
             android:layout_height="match_parent" />
     </LinearLayout>
 
+    <Button
+        android:id="@+id/btnHapus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hapus"
+        android:backgroundTint="#FF0000"
+        android:textColor="#FFFFFF"
+        android:visibility="gone" />
+
     <include
         android:id="@+id/layoutFormInput"
         layout="@layout/layout_form_tugas"
