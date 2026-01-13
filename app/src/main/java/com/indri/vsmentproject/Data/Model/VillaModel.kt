@@ -1,8 +1,12 @@
 package com.indri.vsmentproject.Data.Model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class VillaModel(
-    val id: String = "",
-    val nama: String = "", // Sesuaikan dengan JSON
-    val foto: String = "", // Sesuaikan dengan JSON
-    val area: List<String> = listOf()
-)
+    var id: String = "",
+    val nama: String = "",
+    val area: List<String> = emptyList(),
+    val foto: String = ""
+) : Parcelable

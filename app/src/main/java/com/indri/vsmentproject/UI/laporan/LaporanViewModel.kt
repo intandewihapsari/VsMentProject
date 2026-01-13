@@ -19,7 +19,7 @@ class LaporanViewModel : ViewModel() {
                         val laporan = it.getValue(LaporanModel::class.java)
                         laporan?.id = it.key ?: ""
                         laporan
-                    }
+                    }.reversed() // AGAR YANG TERBARU DI ATAS
                     _laporanList.postValue(list)
                 }
                 override fun onCancelled(error: DatabaseError) {}
@@ -28,9 +28,7 @@ class LaporanViewModel : ViewModel() {
 
     fun updateStatusLaporan(laporanId: String, statusBaru: String, onComplete: (Boolean) -> Unit) {
         FirebaseDatabase.getInstance().getReference("operational/laporan_barang")
-            .child(laporanId)
-            .child("status_laporan")
-            .setValue(statusBaru)
+            .child(laporanId).child("status_laporan").setValue(statusBaru)
             .addOnCompleteListener { onComplete(it.isSuccessful) }
     }
 }
