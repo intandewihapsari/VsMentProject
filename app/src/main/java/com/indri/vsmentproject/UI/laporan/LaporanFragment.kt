@@ -1,60 +1,85 @@
 package com.indri.vsmentproject.UI.laporan
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.indri.vsmentproject.R
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.indri.vsmentproject.Data.Model.LaporanModel
+import com.indri.vsmentproject.databinding.FragmentLaporanBinding
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [LaporanFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class LaporanFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var _binding: FragmentLaporanBinding? = null
+    private val binding get() = _binding!!
+    private val viewModel: LaporanViewModel by viewModels()
+    private lateinit var laporanAdapter: LaporanAdapter // Pastikan buat adapternya juga
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentLaporanBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        laporanAdapter = LaporanAdapter { laporan ->
+            tampilkanDetailLaporan(laporan)
         }
+
+        binding.rvLaporan.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = laporanAdapter
+        }
+
+        viewModel.laporanList.observe(viewLifecycleOwner) { list ->
+            laporanAdapter.updateList(list)
+        }
+
+        viewModel.getLaporanList()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_laporan, container, false)
+    private fun tampilkanDetailLaporan(laporan: LaporanModel) {
+        val detailMsg = """
+            Villa: ${laporan.villa_nama}
+            Area: ${laporan.area}
+            Barang: ${laporan.nama_barang}
+            Jenis: ${laporan.jenis_laporan.uppercase()}
+            Pelapor: ${laporan.staff_nama}
+            Waktu: ${laporan.waktu_lapor}
+            Keterangan: ${laporan.keterangan}
+            Status: ${laporan.status_laporan.replace("_", " ")}
+        """.trimIndent()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Detail Laporan")
+            .setMessage(detailMsg)
+            .setPositiveButton("Tutup", null)
+            .setNeutralButton("Ubah Status") { _, _ ->
+                pilihStatusBaru(laporan)
+            }
+            .show()
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment LaporanFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            LaporanFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun pilihStatusBaru(laporan: LaporanModel) {
+        val opsiStatus = arrayOf("belum_ditindaklanjuti", "proses", "selesai")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Pilih Status Baru")
+            .setItems(opsiStatus) { _, which ->
+                val statusTerpilih = opsiStatus[which]
+                viewModel.updateStatusLaporan(laporan.id, statusTerpilih) { sukses ->
+                    if (sukses) Toast.makeText(requireContext(), "Status diperbarui", Toast.LENGTH_SHORT).show()
                 }
             }
+            .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
