@@ -9,10 +9,10 @@ data class LaporanModel(
     val villa_nama: String = "",
     val area: String = "",
     val staff_nama: String = "",
-    val jenis_laporan: String = "", // rusak / habis
+    val jenis_laporan: String = "", // "rusak" atau "habis"
     val nama_barang: String = "",
     val keterangan: String = "",
-    var status_laporan: String = "belum_ditindaklanjuti", // Default status
+    var status_laporan: String = "belum_ditindaklanjuti",
     val waktu_lapor: String = "",
     val prioritas: String = ""
 ) : Parcelable

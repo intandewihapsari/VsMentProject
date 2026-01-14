@@ -9,7 +9,7 @@ data class TugasModel(
     val tugas: String = "",
     val kategori: String = "",
     val staff_nama: String = "",
-    val waktu_tenggat: String = "",
-    val status: String = "pending",
+    val waktu_tenggat: String = "", // Gunakan satu nama ini saja, jangan dicampur 'deadline'
+    val status: String = "pending", // "pending" atau "selesai"
     val keterangan: String = ""
 ) : Parcelable

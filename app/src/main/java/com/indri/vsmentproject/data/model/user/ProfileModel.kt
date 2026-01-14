@@ -6,8 +6,8 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class ProfileModel(
     val id: String = "",
-    val nama: String = "Manager Admin",
-    val email: String = "manager@villas.com",
-    val jabatan: String = "General Manager",
+    val nama: String = "",
+    val email: String = "",
+    val jabatan: String = "",
     val foto: String = ""
 ) : Parcelable

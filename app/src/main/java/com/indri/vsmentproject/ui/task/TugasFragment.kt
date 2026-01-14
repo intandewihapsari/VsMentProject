@@ -92,8 +92,8 @@ class TugasFragment : Fragment() {
         binding.layoutFormInput.tvHeaderVilla.text = "Ubah: $villaName"
         binding.layoutFormInput.etNamaTugas.setText(tugas.tugas)
         binding.layoutFormInput.etDeskripsiTugas.setText(tugas.keterangan)
-        tanggalTerpilih = tugas.deadline
-        binding.layoutFormInput.tvTanggalTerpilih.text = tugas.deadline
+        tanggalTerpilih = tugas.waktu_tenggat
+        binding.layoutFormInput.tvTanggalTerpilih.text = tugas.waktu_tenggat
 
         // Set Spinner Staff
         val staffAdapter = binding.layoutFormInput.spinnerStaff.adapter

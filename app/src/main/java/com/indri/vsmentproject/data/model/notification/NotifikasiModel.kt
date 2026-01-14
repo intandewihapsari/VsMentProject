@@ -1,5 +1,9 @@
 package com.indri.vsmentproject.data.model.notification
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class NotifikasiModel(
     val id_notifikasi: String = "",
     val judul: String = "",
@@ -9,4 +13,4 @@ data class NotifikasiModel(
     val waktu: String = "",
     val ditujukan_ke: String = "",
     val villa_terkait: String = ""
-)
+) : Parcelable
