@@ -1,10 +1,10 @@
-package com.indri.vsmentproject.ui.data
+package com.indri.vsmentproject.ui.masterdata
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.VillaModel
+import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.data.model.user.StaffModel
 
 class DataViewModel : ViewModel() {

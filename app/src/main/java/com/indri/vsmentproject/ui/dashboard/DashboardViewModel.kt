@@ -2,9 +2,9 @@ package com.indri.vsmentproject.ui.dashboard
 
 import androidx.lifecycle.*
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.InventarisModel
-import com.indri.vsmentproject.data.model.notifikasi.NotifikasiModel
-import com.indri.vsmentproject.data.model.tugas.TugasModel
+import com.indri.vsmentproject.data.model.task.InventarisModel
+import com.indri.vsmentproject.data.model.notification.NotifikasiModel
+import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.repository.MainRepository
 import java.text.SimpleDateFormat
 import java.util.*

@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.ui.data
+package com.indri.vsmentproject.ui.masterdata
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,7 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.indri.vsmentproject.data.model.user.StaffModel
-import com.indri.vsmentproject.data.model.VillaModel
+import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.FragmentDataBinding
 
 class DataFragment : Fragment() {

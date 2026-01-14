@@ -6,7 +6,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.indri.vsmentproject.data.model.notifikasi.NotifikasiModel
+import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 
 class MainRepository {
 

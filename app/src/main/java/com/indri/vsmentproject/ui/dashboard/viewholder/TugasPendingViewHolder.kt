@@ -2,7 +2,7 @@ package com.indri.vsmentproject.ui.dashboard.viewholder
 
 import android.view.LayoutInflater
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.data.model.tugas.TugasModel
+import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.databinding.ItemTugasPendingBinding
 import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding // Import Anak
 

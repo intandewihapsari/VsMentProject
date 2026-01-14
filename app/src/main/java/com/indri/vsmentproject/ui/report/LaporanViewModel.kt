@@ -1,10 +1,10 @@
-package com.indri.vsmentproject.ui.laporan
+package com.indri.vsmentproject.ui.report
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.LaporanModel
+import com.indri.vsmentproject.data.model.report.LaporanModel
 
 class LaporanViewModel : ViewModel() {
 

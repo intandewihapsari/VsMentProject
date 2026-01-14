@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.data.model.tugas
+package com.indri.vsmentproject.data.model.task
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

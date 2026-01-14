@@ -1,13 +1,13 @@
-package com.indri.vsmentproject.ui.tugas
+package com.indri.vsmentproject.ui.task
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.tugas.TugasModel
-import com.indri.vsmentproject.data.model.VillaModel
+import com.indri.vsmentproject.data.model.task.TugasModel
+import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.data.model.user.StaffModel
-import com.indri.vsmentproject.data.model.tugas.VillaTugasGroup
+import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 
 class TugasViewModel : ViewModel() {
 

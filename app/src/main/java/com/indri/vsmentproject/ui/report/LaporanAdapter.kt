@@ -1,9 +1,9 @@
-package com.indri.vsmentproject.ui.laporan
+package com.indri.vsmentproject.ui.report
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.data.model.LaporanModel
+import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding // Gunakan layout yang sudah ada biar cepat
 
 class LaporanAdapter(private val onClick: (LaporanModel) -> Unit) : RecyclerView.Adapter<LaporanAdapter.ViewHolder>() {

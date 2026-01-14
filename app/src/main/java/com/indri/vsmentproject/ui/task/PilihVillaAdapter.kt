@@ -1,11 +1,11 @@
-package com.indri.vsmentproject.ui.tugas
+package com.indri.vsmentproject.ui.task
 
 import android.R
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.indri.vsmentproject.data.model.VillaModel
+import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.ItemPilihVillaBinding
 
 class PilihVillaAdapter(

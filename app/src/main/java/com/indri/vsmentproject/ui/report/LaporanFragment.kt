@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.ui.laporan
+package com.indri.vsmentproject.ui.report
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,7 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.indri.vsmentproject.data.model.LaporanModel
+import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentLaporanBinding
 

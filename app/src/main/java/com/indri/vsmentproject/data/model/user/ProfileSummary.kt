@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.data.model
+package com.indri.vsmentproject.data.model.user
 
 data class ProfileSummary(
     val totalVilla: Int = 0,

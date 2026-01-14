@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.data.model
+package com.indri.vsmentproject.data.model.task
 
 data class InventarisModel(
     val perluGanti: Int = 0,

@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.data.model.notifikasi
+package com.indri.vsmentproject.data.model.notification
 
 data class NotifikasiModel(
     val id_notifikasi: String = "",

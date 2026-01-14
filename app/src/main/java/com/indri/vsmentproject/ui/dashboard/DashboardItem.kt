@@ -1,9 +1,9 @@
 package com.indri.vsmentproject.ui.dashboard
 
-import com.indri.vsmentproject.data.model.AnalisisCepatModel
-import com.indri.vsmentproject.data.model.InventarisModel
-import com.indri.vsmentproject.data.model.notifikasi.NotifikasiModel
-import com.indri.vsmentproject.data.model.tugas.TugasModel
+import com.indri.vsmentproject.data.model.notification.AnalisisCepatModel
+import com.indri.vsmentproject.data.model.task.InventarisModel
+import com.indri.vsmentproject.data.model.notification.NotifikasiModel
+import com.indri.vsmentproject.data.model.task.TugasModel
 
 sealed class DashboardItem {
     data class NotifikasiUrgent(

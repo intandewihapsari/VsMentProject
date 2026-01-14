@@ -1,7 +1,7 @@
 package com.indri.vsmentproject.ui.dashboard.viewholder
 
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.data.model.AnalisisCepatModel
+import com.indri.vsmentproject.data.model.notification.AnalisisCepatModel
 import com.indri.vsmentproject.databinding.ItemAnalisisCepatBinding
 
 class AnalisisCepatViewHolder (

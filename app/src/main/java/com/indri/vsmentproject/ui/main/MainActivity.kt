@@ -5,10 +5,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.indri.vsmentproject.R
-import com.indri.vsmentproject.ui.data.DataFragment
-import com.indri.vsmentproject.ui.laporan.LaporanFragment
+import com.indri.vsmentproject.ui.masterdata.DataFragment
+import com.indri.vsmentproject.ui.report.LaporanFragment
 import com.indri.vsmentproject.ui.profile.ProfileFragment
-import com.indri.vsmentproject.ui.tugas.TugasFragment
+import com.indri.vsmentproject.ui.task.TugasFragment
 import com.indri.vsmentproject.databinding.ActivityMainBinding
 import com.indri.vsmentproject.ui.dashboard.DashboardFragment
 class MainActivity : AppCompatActivity() {

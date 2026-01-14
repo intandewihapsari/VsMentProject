@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.ui.tugas
+package com.indri.vsmentproject.ui.task
 
 import android.app.DatePickerDialog
 import android.graphics.Color
@@ -14,8 +14,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.button.MaterialButton
-import com.indri.vsmentproject.data.model.tugas.TugasModel
-import com.indri.vsmentproject.data.model.tugas.VillaTugasGroup
+import com.indri.vsmentproject.data.model.task.TugasModel
+import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentTugasBinding
 import java.util.Calendar

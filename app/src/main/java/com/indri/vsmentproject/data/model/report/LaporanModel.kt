@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.data.model
+package com.indri.vsmentproject.data.model.report
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
