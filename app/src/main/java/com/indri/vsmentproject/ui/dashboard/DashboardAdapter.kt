@@ -11,7 +11,7 @@ class DashboardAdapter(
     private var items: List<DashboardItem> = emptyList(),
     private val onTambahTugasClick: () -> Unit,
     private val onKirimNotifClick: () -> Unit,
-    private val onTugasClick: (TugasModel) -> Unit // TAMBAHKAN INI SUPAYA TIDAK ERROR
+    private val onTugasClick: (TugasModel) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun updateData(newItems: List<DashboardItem>) {

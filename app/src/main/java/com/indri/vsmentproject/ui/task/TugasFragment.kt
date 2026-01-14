@@ -18,6 +18,7 @@ import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentTugasBinding
+import com.indri.vsmentproject.ui.tugas.PilihVillaAdapter
 import java.util.Calendar
 
 class TugasFragment : Fragment() {
@@ -200,14 +201,28 @@ class TugasFragment : Fragment() {
     }
 
     private fun setupPilihVillaAdapter() {
-        villaAdapter = PilihVillaAdapter { villaName ->
-            val v = viewModel.villaList.value?.find { it.nama == villaName }
-            if (v != null && v.area.isNotEmpty()) {
-                val areas = v.area.toTypedArray()
-                AlertDialog.Builder(requireContext()).setTitle("Pilih Ruangan").setItems(areas) { _, i -> bukaFormInput(v.nama, areas[i]) }.show()
-            } else bukaFormInput(villaName, "Umum")
+        // Perhatikan: 'villa' di sini adalah objek VillaModel, bukan String nama
+        villaAdapter = PilihVillaAdapter { villa ->
+            if (villa.area.isNotEmpty()) {
+                val areas = villa.area.toTypedArray()
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Pilih Ruangan di ${villa.nama}")
+                    .setItems(areas) { _, i ->
+                        // Kirim nama villa dan area yang dipilih
+                        bukaFormInput(villa.nama, areas[i])
+                    }
+                    .show()
+            } else {
+                // Jika area kosong, default ke "Umum"
+                bukaFormInput(villa.nama, "Umum")
+            }
         }
-        binding.rvPilihVilla.apply { layoutManager = LinearLayoutManager(requireContext()); adapter = villaAdapter }
+
+        binding.rvPilihVilla.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = villaAdapter
+        }
     }
 
     private fun bukaFormInput(namaVilla: String, namaRuangan: String) {

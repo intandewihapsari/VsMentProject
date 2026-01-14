@@ -1,6 +1,5 @@
-package com.indri.vsmentproject.ui.task
+package com.indri.vsmentproject.ui.tugas
 
-import android.R
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -9,49 +8,39 @@ import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.ItemPilihVillaBinding
 
 class PilihVillaAdapter(
-    private val onItemClick: (String) -> Unit
+    private var listVilla: List<VillaModel> = emptyList(),
+    private val onVillaClick: (VillaModel) -> Unit
 ) : RecyclerView.Adapter<PilihVillaAdapter.ViewHolder>() {
 
-    private var listVilla = listOf<VillaModel>()
-
-    fun updateData(newList: List<VillaModel>) {
-        this.listVilla = newList
-        notifyDataSetChanged()
-    }
+    class ViewHolder(val binding: ItemPilihVillaBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemPilihVillaBinding.inflate(
-            LayoutInflater.from(parent.context), parent, false
-        )
+        val binding = ItemPilihVillaBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val villa = listVilla[position]
-        holder.bind(villa) // Panggil fungsi bind di sini saja
+        holder.binding.apply {
+            tvNamaVilla.text = villa.nama
+            tvJumlahRuangan.text = "${villa.area.size} Ruangan"
+
+            // LOAD GAMBAR DENGAN GLIDE
+            Glide.with(ivVilla.context)
+                .load(villa.foto) // Sesuai field "foto" di VillaModel kamu
+                .placeholder(android.R.drawable.ic_menu_gallery) // Sambil nunggu
+                .error(android.R.drawable.stat_notify_error) // Jika URL salah
+                .centerCrop()
+                .into(ivVilla)
+
+            root.setOnClickListener { onVillaClick(villa) }
+        }
     }
 
-    override fun getItemCount() = listVilla.size
+    override fun getItemCount(): Int = listVilla.size
 
-    inner class ViewHolder(val binding: ItemPilihVillaBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-
-        fun bind(villa: VillaModel) {
-            // Gunakan villa.nama (sesuai model baru)
-            binding.tvNamaVilla.text = villa.nama
-
-            // Karena di JSON villa_list tidak ada "jumlahRuangan",
-            // kita tampilkan jumlah "area" saja sebagai pengganti
-            binding.tvJumlahRuangan.text = "${villa.area.size} Area"
-
-            Glide.with(binding.root.context)
-                .load(villa.foto) // Gunakan villa.foto (sesuai model baru)
-                .placeholder(R.drawable.ic_menu_gallery)
-                .into(binding.ivVilla)
-
-            binding.root.setOnClickListener {
-                onItemClick(villa.nama)
-            }
-        }
+    fun updateData(newList: List<VillaModel>) {
+        listVilla = newList
+        notifyDataSetChanged()
     }
 }
