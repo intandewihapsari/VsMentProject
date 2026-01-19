@@ -5,9 +5,10 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class StaffModel(
-    val id: String = "",      // Pastikan konsisten menggunakan 'id' atau 'uid'
+    var id: String = "",
     val nama: String = "",
-    val posisi: String = "",
     val email: String = "",
-    val foto_profil: String = ""
+    val posisi: String = "", // Tambahkan ini agar tidak error di Fragment
+    val role: String = "staff",
+    val status: String = "aktif"
 ) : Parcelable

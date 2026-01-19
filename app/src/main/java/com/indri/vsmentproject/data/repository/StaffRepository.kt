@@ -5,28 +5,39 @@ import androidx.lifecycle.MutableLiveData
 import com.google.firebase.database.*
 import com.indri.vsmentproject.data.model.notification.AnalisisCepatModel
 import com.indri.vsmentproject.data.model.notification.NotifikasiModel
-import com.indri.vsmentproject.data.model.user.StaffModel
+import com.indri.vsmentproject.data.utils.FirebaseConfig
+import com.indri.vsmentproject.data.utils.Resource
 
 class StaffRepository {
-    private val db = FirebaseDatabase.getInstance().getReference("users")
+    private val db = FirebaseDatabase.getInstance().reference
 
-    fun getStaffListByManager(managerUid: String): LiveData<List<StaffModel>> {
-        val liveData = MutableLiveData<List<StaffModel>>()
-
-        db.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val list = mutableListOf<StaffModel>()
-                for (data in snapshot.children) {
-                    val model = data.getValue(StaffModel::class.java)
-                    // Filter: Hanya ambil staff yang didaftarkan oleh Manager ini
-                    if (model?.role == "staff" && model.manager_id == managerUid) {
-                        list.add(model)
-                    }
+    // Fungsi untuk Dashboard: Analisis Cepat
+    fun getAnalisisCepat(): LiveData<List<AnalisisCepatModel>> {
+        val liveData = MutableLiveData<List<AnalisisCepatModel>>()
+        // Logic: Mengambil ringkasan laporan dari Firebase
+        db.child(FirebaseConfig.PATH_OPERATIONAL).child("analisis_ringkasan")
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val list = snapshot.children.mapNotNull { it.getValue(AnalisisCepatModel::class.java) }
+                    liveData.postValue(list)
                 }
-                liveData.postValue(list)
-            }
-            override fun onCancelled(error: DatabaseError) {}
-        })
+                override fun onCancelled(error: DatabaseError) {}
+            })
+        return liveData
+    }
+
+    // Fungsi untuk Dashboard: Notifikasi Urgent
+    fun getUrgentNotifications(): LiveData<List<NotifikasiModel>> {
+        val liveData = MutableLiveData<List<NotifikasiModel>>()
+        db.child(FirebaseConfig.PATH_NOTIFIKASI)
+            .orderByChild("priority").equalTo("high") // Filter yang urgent saja
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val list = snapshot.children.mapNotNull { it.getValue(NotifikasiModel::class.java) }
+                    liveData.postValue(list)
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
         return liveData
     }
 }

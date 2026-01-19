@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
+        android:name=".VsMentApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -19,30 +20,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VsMentProject"
         android:usesCleartextTraffic="true" >
+
         <activity
             android:name=".ui.main.StaffActivity"
             android:exported="false" />
         <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.main.ManagerActivity"
             android:exported="true" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

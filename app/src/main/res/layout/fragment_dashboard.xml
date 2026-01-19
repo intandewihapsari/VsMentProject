@@ -1,20 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F7FAFC">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_dashboard"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp" />
+
+    <LinearLayout
+        android:id="@+id/layout_empty_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:src="@android:drawable/ic_menu_info_details"
+            app:tint="#CBD5E0" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Belum ada data operasional"
+            android:textColor="#718096"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <include
         android:id="@+id/layoutFormTambahTugas"
         layout="@layout/layout_tambah_tugas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:visibility="gone" />
 
     <include
         android:id="@+id/layoutFormKirimNotifikasi"
         layout="@layout/layout_kirim_notifikasi"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:visibility="gone" />
 
 </FrameLayout>

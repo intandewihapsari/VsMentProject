@@ -1,40 +1,64 @@
 package com.indri.vsmentproject.data.repository
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.FirebaseDatabase
+import com.indri.vsmentproject.data.model.user.UserModel
+import com.indri.vsmentproject.data.utils.FirebaseConfig
+import com.indri.vsmentproject.data.utils.Resource
+
 class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseDatabase.getInstance().getReference("users")
+    private val db = FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_USERS)
 
-    // Fungsi Login
-    fun login(email: String, pass: String, onResult: (Boolean, String?, String?) -> Unit) {
+    fun login(email: String, pass: String, onResult: (Resource<String>) -> Unit) {
+        onResult(Resource.Loading())
         auth.signInWithEmailAndPassword(email, pass).addOnSuccessListener { result ->
-            val uid = result.user?.uid
-            // Setelah login sukses, langsung ambil role dari database
-            db.child(uid!!).get().addOnSuccessListener { snapshot ->
-                val role = snapshot.child("role").value.toString()
-                onResult(true, role, null)
+            val uid = result.user?.uid ?: ""
+            // Ambil role dari path users/[uid] agar sinkron dengan pendaftaran
+            db.child(uid).get().addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val role = snapshot.child(FirebaseConfig.FIELD_ROLE).value.toString()
+                    onResult(Resource.Success(role))
+                } else {
+                    onResult(Resource.Error("Data profil tidak ditemukan di database"))
+                }
+            }.addOnFailureListener {
+                onResult(Resource.Error("Gagal mengambil data user: ${it.message}"))
             }
         }.addOnFailureListener {
-            onResult(false, null, it.message)
+            onResult(Resource.Error("Email atau Password salah: ${it.message}"))
         }
     }
 
-    // Cek apakah user masih login (Auto-Login)
-    fun getCurrentUserRole(onResult: (String?) -> Unit) {
-        val uid = auth.currentUser?.uid
-        if (uid != null) {
-            db.child(uid).child("role").get().addOnSuccessListener {
-                onResult(it.value.toString())
-            }.addOnFailureListener { onResult(null) }
-        } else {
-            onResult(null)
+    // Tambahkan fungsi ini di dalam AuthRepository.kt
+    fun registerManager(email: String, pass: String, nama: String, onResult: (Resource<Unit>) -> Unit) {
+        onResult(Resource.Loading())
+        auth.createUserWithEmailAndPassword(email, pass).addOnSuccessListener { result ->
+            val uid = result.user?.uid ?: ""
+
+            // Membuat objek user berdasarkan UserModel
+            val user = UserModel(
+                uid = uid,
+                nama = nama,
+                email = email,
+                role = "manager",
+                posisi = "Property Manager"
+            )
+
+            // Simpan ke path users/[uid]
+            db.child(uid).setValue(user).addOnSuccessListener {
+                onResult(Resource.Success(Unit))
+            }.addOnFailureListener {
+                onResult(Resource.Error("Gagal simpan profil: ${it.message}"))
+            }
+        }.addOnFailureListener {
+            onResult(Resource.Error("Gagal registrasi: ${it.message}"))
         }
     }
 
     fun logout() {
         auth.signOut()
     }
+
+    fun getCurrentUser() = auth.currentUser
 }

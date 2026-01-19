@@ -79,4 +79,6 @@ dependencies {
 
     implementation("com.google.android.material:material:1.9.0")
 
+    implementation("com.cloudinary:cloudinary-android:2.5.0")
+
 }

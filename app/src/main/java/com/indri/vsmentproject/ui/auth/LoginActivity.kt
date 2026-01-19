@@ -3,19 +3,15 @@ package com.indri.vsmentproject.ui.auth
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.indri.vsmentproject.R
+import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.ActivityLoginBinding
 import com.indri.vsmentproject.ui.main.ManagerActivity
 import com.indri.vsmentproject.ui.main.StaffActivity
-import kotlin.jvm.java
-
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -28,20 +24,36 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
+        // 1. Cek jika sudah login (Auto Login)
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            checkRole(currentUser.uid)
+        }
+
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
 
             if (email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "Isi Email & Password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Email dan Password wajib diisi", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            auth.signInWithEmailAndPassword(email, pass).addOnSuccessListener { result ->
-                checkRole(result.user?.uid)
-            }.addOnFailureListener {
-                Toast.makeText(this, "Login Gagal: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+            // Tampilkan Loading
+            binding.progressBar.visibility = View.VISIBLE
+            binding.btnLogin.isEnabled = false
+
+            // 2. Proses Login Auth
+            auth.signInWithEmailAndPassword(email, pass)
+                .addOnSuccessListener { result ->
+                    // 3. Panggil checkRole setelah Auth Berhasil
+                    checkRole(result.user?.uid)
+                }
+                .addOnFailureListener { e ->
+                    binding.progressBar.visibility = View.GONE
+                    binding.btnLogin.isEnabled = true
+                    Toast.makeText(this, "Login Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
         }
 
         binding.tvToRegister.setOnClickListener {
@@ -49,27 +61,45 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkRole(uid: String?) {
-        Log.d("ROLE_CHECK", "Mencari UID: $uid")
-        FirebaseDatabase.getInstance().getReference("master_data/staff")
-            .child(uid!!).get().addOnSuccessListener { snapshot ->
-                if (snapshot.exists()) {
-                    val role = snapshot.child("role").value.toString()
-                    Log.d("ROLE_CHECK", "Role ditemukan: $role") // Lihat di Logcat!
+    /**
+     * Fungsi Inti: Mengecek role di Realtime Database berdasarkan UID
+     */
 
-                    val intent = if (role == "manager") {
-                        Intent(this@LoginActivity, ManagerActivity::class.java)
+    private fun checkRole(uid: String?) {
+        if (uid == null) return
+        binding.progressBar.visibility = View.VISIBLE
+
+        val rootRef = FirebaseDatabase.getInstance().reference
+
+        // 1. Cek di folder users/managers
+        rootRef.child(FirebaseConfig.PATH_MANAGERS).child(uid).get().addOnSuccessListener { snapshot ->
+            if (snapshot.exists()) {
+                // Ditemukan sebagai Manager
+                startActivity(Intent(this, ManagerActivity::class.java))
+                finish()
+            } else {
+                // 2. Jika tidak ada, cek di folder users/staffs
+                rootRef.child(FirebaseConfig.PATH_STAFFS).child(uid).get().addOnSuccessListener { staffSnap ->
+                    if (staffSnap.exists()) {
+                        // Ditemukan sebagai Staff
+                        startActivity(Intent(this, StaffActivity::class.java))
+                        finish()
                     } else {
-                        Intent(this@LoginActivity, StaffActivity::class.java)
+                        // Jika di kedua folder tidak ada
+                        auth.signOut()
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(this, "Profil tidak ditemukan di database!", Toast.LENGTH_SHORT).show()
                     }
-                    startActivity(intent)
-                    finish()
-                } else {
-                    Log.e("ROLE_CHECK", "Data UID tidak ada di database!")
-                    Toast.makeText(this, "Data profil tidak ditemukan", Toast.LENGTH_SHORT).show()
                 }
-            }.addOnFailureListener {
-                Log.e("ROLE_CHECK", "Gagal akses database: ${it.message}")
             }
+        }.addOnFailureListener {
+            binding.progressBar.visibility = View.GONE
+            Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun resetUI() {
+        binding.progressBar.visibility = View.GONE
+        binding.btnLogin.isEnabled = true
     }
 }
