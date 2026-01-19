@@ -1,16 +1,14 @@
 package com.indri.vsmentproject.ui.auth
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.indri.vsmentproject.R
-import com.indri.vsmentproject.data.model.user.User
+import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.databinding.ActivityRegisterBinding
+import com.indri.vsmentproject.ui.main.ManagerActivity
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegisterBinding
@@ -23,30 +21,23 @@ class RegisterActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
+        // RegisterActivity.kt
         binding.btnRegister.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
             val nama = binding.etNama.text.toString().trim()
-            val posisi = binding.etPosisi.text.toString().trim()
-
-            if (email.isEmpty() || pass.length < 6 || nama.isEmpty()) {
-                Toast.makeText(this, "Lengkapi data & Password min 6 karakter", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
 
             auth.createUserWithEmailAndPassword(email, pass).addOnSuccessListener { result ->
                 val uid = result.user?.uid
-                // User baru otomatis jadi 'staff'. Intan nanti rubah manual di Firebase ke 'manager'
-                val user = User(uid, nama, email, "staff", posisi)
+                val user = UserModel(uid, nama, email, "manager", "Supervisor") // Langsung set Manager
 
-                FirebaseDatabase.getInstance().getReference("master_data/staff")
+                FirebaseDatabase.getInstance().getReference("users")
                     .child(uid!!).setValue(user).addOnSuccessListener {
-                        Toast.makeText(this, "Daftar Berhasil!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Berhasil Daftar sebagai Manager", Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this, ManagerActivity::class.java))
                         finish()
                     }
-            }.addOnFailureListener {
-                Toast.makeText(this, "Gagal: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+            }.addOnFailureListener { Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show() }
         }
 
         binding.tvToLogin.setOnClickListener { finish() }

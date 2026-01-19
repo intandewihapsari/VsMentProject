@@ -1,14 +1,14 @@
 package com.indri.vsmentproject.ui.dashboard
 
 import androidx.lifecycle.*
-import com.indri.vsmentproject.data.repository.NotificationRepository
+import com.indri.vsmentproject.data.repository.StaffRepository
 import com.indri.vsmentproject.data.repository.TaskRepository
-import com.indri.vsmentproject.data.repository.UserRepository
+import com.indri.vsmentproject.data.repository.AuthRepository
 
 class DashboardViewModel : ViewModel() {
     private val taskRepo = TaskRepository()
-    private val notifRepo = NotificationRepository()
-    private val userRepo = UserRepository()
+    private val notifRepo = StaffRepository()
+    private val userRepo = AuthRepository()
 
     val urgentNotifications = notifRepo.getUrgentNotifications()
     val analisisCepatData = notifRepo.getAnalisisCepat()

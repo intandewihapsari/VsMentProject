@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.user.ProfileModel
 import com.indri.vsmentproject.data.model.user.ProfileSummary
 
 class ProfileViewModel : ViewModel() {

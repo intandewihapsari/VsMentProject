@@ -1,6 +1,7 @@
 package com.indri.vsmentproject.ui.masterdata
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -157,25 +158,97 @@ class DataFragment : Fragment() {
             }.show()
     }
 
+
     private fun dialogInputStaff(st: StaffModel?) {
         val layout = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(50, 20, 50, 0)
+            setPadding(50, 40, 50, 0)
         }
-        val etNama = EditText(requireContext()).apply { hint = "Nama Staff"; setText(st?.nama) }
-        val etPosisi = EditText(requireContext()).apply { hint = "Posisi"; setText(st?.posisi) }
+
+        val etNama = EditText(requireContext()).apply { hint = "Nama Lengkap"; setText(st?.nama) }
+        val etPosisi = EditText(requireContext()).apply { hint = "Posisi (Ex: Housekeeping)"; setText(st?.posisi) }
+
+        // TAMBAHKAN EMAIL DAN PASSWORD (Hanya untuk staff baru)
+        val etEmail = EditText(requireContext()).apply { hint = "Email Staff" }
+        val etPass = EditText(requireContext()).apply { hint = "Password Default (min 6 karakter)" }
+
         layout.addView(etNama)
         layout.addView(etPosisi)
 
+        if (st == null) { // Jika Tambah Baru, munculkan input login
+            layout.addView(etEmail)
+            layout.addView(etPass)
+        }
+
         AlertDialog.Builder(requireContext())
-            .setTitle(if (st == null) "Tambah Staff" else "Edit Staff")
+            .setTitle(if (st == null) "Registrasi Staff Baru" else "Edit Profil Staff")
             .setView(layout)
             .setPositiveButton("Simpan") { _, _ ->
-                if (etNama.text.isNotEmpty()) {
-                    val data = mapOf("nama" to etNama.text.toString(), "posisi" to etPosisi.text.toString())
-                    viewModel.simpanStaff(st?.id, data)
+                val nama = etNama.text.toString()
+                val posisi = etPosisi.text.toString()
+
+                if (st == null) {
+                    // LOGIC TAMBAH STAFF BARU (Auth + Database)
+                    val email = etEmail.text.toString()
+                    val pass = etPass.text.toString()
+
+                    if (email.isNotEmpty() && pass.length >= 6) {
+                        registerStaffAuth(email, pass, nama, posisi)
+                    } else {
+                        Toast.makeText(requireContext(), "Email/Password tidak valid", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    // LOGIC EDIT STAFF LAMA (Hanya Database)
+                    val data = mapOf("nama" to nama, "posisi" to posisi)
+                    viewModel.simpanStaff(st.id, data)
                 }
-            }.show()
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    // Fungsi pembantu untuk mendaftarkan ke Firebase Auth
+    private fun registerStaffAuth(email: String, pass: String, nama: String, posisi: String) {
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        // Ambil UID Manager saat ini sebelum dia tertimpa oleh login staff baru
+        val managerUid = auth.currentUser?.uid
+
+        Log.d("VSMENT_DEBUG", "Memulai Auth untuk email: $email")
+
+        auth.createUserWithEmailAndPassword(email, pass).addOnSuccessListener { result ->
+            val staffUid = result.user?.uid
+            Log.d("VSMENT_DEBUG", "Auth Sukses! Staff UID: $staffUid")
+
+            val dataStaff = mapOf(
+                "uid" to staffUid,
+                "nama" to nama,
+                "email" to email,
+                "role" to "staff",
+                "posisi" to posisi,
+                "manager_id" to managerUid
+            )
+
+            // GUNAKAN INSTANCE DATABASE LANGSUNG
+            val dbRef = com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
+
+            if (staffUid != null) {
+                dbRef.child(staffUid).setValue(dataStaff)
+                    .addOnSuccessListener {
+                        Log.d("VSMENT_DEBUG", "BERHASIL SIMPAN KE REALTIME DATABASE!")
+                        Toast.makeText(requireContext(), "Staff Berhasil Disimpan", Toast.LENGTH_SHORT).show()
+
+                        // Supaya tidak logout otomatis dari Manager,
+                        // Kita biarkan saja dulu atau arahkan login ulang.
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("VSMENT_DEBUG", "GAGAL DATABASE: ${e.message}")
+                        Toast.makeText(requireContext(), "Database Gagal: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+            }
+        }.addOnFailureListener { e ->
+            Log.e("VSMENT_DEBUG", "GAGAL AUTH: ${e.message}")
+            Toast.makeText(requireContext(), "Auth Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {
