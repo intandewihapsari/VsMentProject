@@ -9,17 +9,17 @@ import com.indri.vsmentproject.ui.masterdata.DataFragment
 import com.indri.vsmentproject.ui.report.LaporanFragment
 import com.indri.vsmentproject.ui.profile.ProfileFragment
 import com.indri.vsmentproject.ui.task.TugasFragment
-import com.indri.vsmentproject.databinding.ActivityMainBinding
+import com.indri.vsmentproject.databinding.ActivityManagerBinding
 import com.indri.vsmentproject.ui.dashboard.DashboardFragment
-class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+class ManagerActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityManagerBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         // Inisialisasi Binding
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityManagerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         // 1. Tampilan Awal saat aplikasi dibuka (Dashboard)
