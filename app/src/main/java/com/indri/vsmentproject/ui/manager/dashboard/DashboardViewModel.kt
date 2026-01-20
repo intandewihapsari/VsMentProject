@@ -14,13 +14,10 @@ class DashboardViewModel : ViewModel() {
     private val db = FirebaseDatabase.getInstance().reference
 
     private val _managerUid = MutableLiveData<String>()
-
-    // Gunakan AnalisisCepatModel sesuai yang kamu buat
     private val _analisisNyata = MutableLiveData<AnalisisCepatModel>()
 
     private fun hitungAnalisisRealtime() {
         val pathTugas = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-
         pathTugas.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 var totalSeluruhTugas = 0
@@ -29,39 +26,31 @@ class DashboardViewModel : ViewModel() {
                 snapshot.children.forEach { villaSnap ->
                     val listTugas = villaSnap.child("list_tugas")
                     totalSeluruhTugas += listTugas.childrenCount.toInt()
-
                     listTugas.children.forEach { tugas ->
                         val status = tugas.child("status").value.toString()
-                        if (status.equals("selesai", ignoreCase = true)) {
-                            totalSelesai++
-                        }
+                        if (status.equals("selesai", ignoreCase = true)) totalSelesai++
                     }
                 }
 
                 val progressPercent = if (totalSeluruhTugas > 0) (totalSelesai * 100 / totalSeluruhTugas) else 0
-
-                // PERBAIKAN: Gunakan model baru dan hapus kurung tutup double
-                val hasilAnalisis = AnalisisCepatModel(
+                _analisisNyata.postValue(AnalisisCepatModel(
                     progressTugas = "$progressPercent%",
-                    jumlahLaporan = 0, // Nanti bisa ditambah logic hitung laporan
-                    barangRusak = 0    // Nanti bisa ditambah logic hitung barang rusak
-                )
-                _analisisNyata.postValue(hasilAnalisis)
+                    jumlahLaporan = 0,
+                    barangRusak = 0
+                ))
             }
-
             override fun onCancelled(error: DatabaseError) {}
         })
     }
 
     val dashboardData: LiveData<Resource<List<DashboardItem>>> = _managerUid.switchMap { uid ->
         hitungAnalisisRealtime()
-
         val mediator = MediatorLiveData<Resource<List<DashboardItem>>>()
         mediator.value = Resource.Loading()
 
         val notifSource = notifRepo.getMyNotifications(uid)
         val inventarisSource = taskRepo.getInventarisSummary()
-        val pendingTaskSource = taskRepo.getAllPendingTasks()
+        val pendingTaskSource = taskRepo.getAllPendingTasks() // Pastikan ini LiveData aktif
 
         fun updateCombinedResult() {
             val notifRes = notifSource.value
@@ -69,17 +58,30 @@ class DashboardViewModel : ViewModel() {
             val inventarisRes = inventarisSource.value
             val taskRes = pendingTaskSource.value
 
+            // Dashboard tetap bisa tampil meski tugas pending kosong
             if (notifRes !is Resource.Loading && inventarisRes !is Resource.Loading) {
                 val items = mutableListOf<DashboardItem>()
 
+                // 1. Notifikasi Urgent
                 notifRes?.data?.let { if (it.isNotEmpty()) items.add(DashboardItem.NotifikasiUrgent(it)) }
 
-                // Kirim hasil hitungan ke DashboardItem
+                // 2. Analisis Cepat
                 analisisData?.let { items.add(DashboardItem.AnalisisCepat(it)) }
 
+                // 3. Aksi Cepat
                 items.add(DashboardItem.AksiCepat)
+
+                // 4. Inventaris
                 inventarisRes?.data?.let { items.add(DashboardItem.Inventaris(it)) }
-                taskRes?.data?.let { if (it.isNotEmpty()) items.add(DashboardItem.TugasPending(it)) }
+
+                // 5. Tugas Pending (AMBIL TOP 5 TERBARU)
+                taskRes?.data?.let { list ->
+                    if (list.isNotEmpty()) {
+                        // Urutkan berdasarkan created_at terbaru lalu ambil 5
+                        val top5 = list.sortedByDescending { it.created_at }.take(5)
+                        items.add(DashboardItem.TugasPending(top5))
+                    }
+                }
 
                 mediator.value = Resource.Success(items)
             }

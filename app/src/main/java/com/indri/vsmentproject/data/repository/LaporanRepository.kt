@@ -15,11 +15,12 @@ class LaporanRepository {
         val liveData = MutableLiveData<Resource<List<LaporanModel>>>()
         liveData.postValue(Resource.Loading())
 
+        // addValueEventListener membuat dashboard Manager otomatis update saat Staff kirim laporan
         db.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = snapshot.children.mapNotNull {
                     it.getValue(LaporanModel::class.java)?.apply { id = it.key ?: "" }
-                }.reversed()
+                }.reversed() // Laporan terbaru di atas
                 liveData.postValue(Resource.Success(list))
             }
             override fun onCancelled(error: DatabaseError) {
@@ -28,7 +29,6 @@ class LaporanRepository {
         })
         return liveData
     }
-
     fun updateStatus(laporanId: String, status: String, onComplete: (Boolean) -> Unit) {
         // Konsisten menggunakan FIELD_STATUS dari config
         db.child(laporanId).child(FirebaseConfig.FIELD_STATUS).setValue(status)

@@ -9,8 +9,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
+import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentDashboardBinding
 import com.indri.vsmentproject.data.utils.Resource
+import com.indri.vsmentproject.ui.manager.task.TugasFragment
+import com.indri.vsmentproject.ui.manager.report.LaporanFragment // Sesuaikan jika ada fragment notifikasi khusus
 
 class DashboardFragment : Fragment() {
 
@@ -35,7 +38,6 @@ class DashboardFragment : Fragment() {
         setupRecyclerView()
         observeDashboardData()
 
-        // Pemicu pertama: Ambil UID Manager yang sedang login
         val currentUid = auth.currentUser?.uid
         currentUid?.let {
             viewModel.setManagerUid(it)
@@ -45,27 +47,35 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        // Inisialisasi Adapter dengan 5 Parameter Lengkap
         dashboardAdapter = DashboardAdapter(
             items = emptyList(),
             onTambahTugasClick = {
-                // Navigasi ke Tab Tugas (Contoh pindah tab atau buka dialog)
-                Toast.makeText(requireContext(), "Buka Form Tambah Tugas", Toast.LENGTH_SHORT).show()
+                // PINDAH KE FRAGMENT TUGAS
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, TugasFragment()) // Pastikan ID container benar
+                    .addToBackStack(null)
+                    .commit()
             },
             onKirimNotifClick = {
-                // Aksi tombol kirim notifikasi manual
-                Toast.makeText(requireContext(), "Fitur Kirim Notifikasi", Toast.LENGTH_SHORT).show()
+                // PINDAH KE FRAGMENT LAPORAN/NOTIFIKASI
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, LaporanFragment())
+                    .addToBackStack(null)
+                    .commit()
             },
             onTugasClick = { tugas ->
-                // Menampilkan detail tugas saat item di list diklik
-                Toast.makeText(requireContext(), "Tugas: ${tugas.tugas}", Toast.LENGTH_SHORT).show()
+                // DIALOG DETAIL TUGAS
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Detail Tugas")
+                    .setMessage("Tugas: ${tugas.tugas}\nStatus: ${tugas.status}\nPetugas: ${tugas.worker_name}\nLokasi: ${tugas.villa_nama} - ${tugas.ruangan}")
+                    .setPositiveButton("Tutup", null)
+                    .show()
             },
             onReloadAnalisisClick = {
-                // FUNGSI RELOAD: Paksa ViewModel hitung ulang summary dari database
                 val uid = auth.currentUser?.uid
                 uid?.let {
                     viewModel.setManagerUid(it)
-                    Toast.makeText(requireContext(), "Memperbarui data...", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Data diperbarui", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -81,14 +91,13 @@ class DashboardFragment : Fragment() {
         viewModel.dashboardData.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // Tampilkan Shimmer atau Progress (Jika ada)
+                    // Opsional: binding.progressBar.visibility = View.VISIBLE
                 }
                 is Resource.Success -> {
-                    // Update data ke adapter secara dinamis
                     resource.data?.let { dashboardAdapter.updateData(it) }
                 }
                 is Resource.Error -> {
-                    Toast.makeText(requireContext(), "Gagal memuat data: ${resource.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Error: ${resource.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
     app:cardCornerRadius="24dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="@android:color/white">
+    app:cardBackgroundColor="#FFFFFF"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,51 +22,98 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Inventaris"
-            android:textColor="@android:color/black"
-            android:textSize="22sp"
+            android:textColor="@color/myBlack"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="3">
 
-            <TextView
-                android:id="@+id/tvPerluGanti"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
                 android:background="@color/myRedLight"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp"
-                android:text="Perlu Ganti : 12"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"
-                android:layout_marginEnd="8dp"/>
+                android:padding="10dp"
+                android:layout_marginEnd="6dp">
 
-            <TextView
-                android:id="@+id/tvPerluPeriksa"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/tvPerluGantiValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#C2185B"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ganti"
+                    android:textSize="11sp"
+                    android:textColor="#C2185B"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
                 android:background="@color/myOrangeLight"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp"
-                android:text="Perlu Periksa : 8"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"
-                android:layout_marginEnd="8dp"/>
+                android:padding="10dp"
+                android:layout_marginHorizontal="3dp">
 
-            <TextView
-                android:id="@+id/tvLayakPakai"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/tvPerluPeriksaValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="8"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#F57C00"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Periksa"
+                    android:textSize="11sp"
+                    android:textColor="#F57C00"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
                 android:background="@color/myGreenLight"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp"
-                android:text="Layak Pakai : 104"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"/>
+                android:padding="10dp"
+                android:layout_marginStart="6dp">
+
+                <TextView
+                    android:id="@+id/tvLayakPakaiValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="104"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#2E7D32"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Layak"
+                    android:textSize="11sp"
+                    android:textColor="#2E7D32"/>
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

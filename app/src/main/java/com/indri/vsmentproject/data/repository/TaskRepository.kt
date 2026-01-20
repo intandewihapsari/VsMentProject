@@ -32,30 +32,26 @@ class TaskRepository {
     // SINKRON: Mengembalikan Resource List untuk Dashboard
     fun getAllPendingTasks(): LiveData<Resource<List<TugasModel>>> {
         val liveData = MutableLiveData<Resource<List<TugasModel>>>()
-        liveData.postValue(Resource.Loading())
-
-        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val allTasks = mutableListOf<TugasModel>()
-                    snapshot.children.forEach { villaSnapshot ->
-                        villaSnapshot.child("tasks").children.forEach { taskSnapshot ->
-                            val task = taskSnapshot.getValue(TugasModel::class.java)
-                            if (task?.status?.lowercase() == "pending") {
-                                task.id = taskSnapshot.key ?: ""
-                                allTasks.add(task)
-                            }
+        // Looping semua villa untuk cari tugas pending
+        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val allPending = mutableListOf<TugasModel>()
+                snapshot.children.forEach { villa ->
+                    villa.child("list_tugas").children.forEach { tugasSnap ->
+                        val tugas = tugasSnap.getValue(TugasModel::class.java)
+                        if (tugas?.status?.equals("pending", true) == true) {
+                            allPending.add(tugas.apply { id = tugasSnap.key ?: "" })
                         }
                     }
-                    liveData.postValue(Resource.Success(allTasks))
                 }
-                override fun onCancelled(error: DatabaseError) {
-                    liveData.postValue(Resource.Error(error.message))
-                }
-            })
+                liveData.postValue(Resource.Success(allPending))
+            }
+            override fun onCancelled(e: DatabaseError) {
+                liveData.postValue(Resource.Error(e.message))
+            }
+        })
         return liveData
     }
-
     // Fungsi bawaan kamu tetap dipertahankan
     fun getVillaList(onResult: (DataSnapshot) -> Unit) {
         db.child(FirebaseConfig.PATH_VILLAS).addValueEventListener(object : ValueEventListener {

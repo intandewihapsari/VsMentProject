@@ -85,23 +85,25 @@ class LaporanFragment : Fragment() {
         }
     }
 
+    // ... di dalam LaporanFragment ...
+
     private fun applyFilter(list: List<LaporanModel>) {
         var filteredList = list
 
-        // 1. Filter berdasarkan Status
+        // 1. Filter Status (Samakan dengan field di Firebase)
         if (currentFilterStatus != "semua") {
-            filteredList = filteredList.filter { it.status == currentFilterStatus }
+            filteredList = filteredList.filter { it.status.equals(currentFilterStatus, ignoreCase = true) }
         }
 
-        // 2. Filter berdasarkan Villa
+        // 2. Filter Villa
         if (currentFilterVilla != "Semua Villa") {
             filteredList = filteredList.filter { it.villa_nama == currentFilterVilla }
         }
 
-        // 3. Update Adapter dan Handle Tampilan Kosong
+        // 3. Update UI secara Dinamis
         if (filteredList.isEmpty()) {
             binding.rvLaporan.visibility = View.GONE
-            binding.layoutEmptyState.visibility = View.VISIBLE // ID ini sudah ada di XML tadi
+            binding.layoutEmptyState.visibility = View.VISIBLE // Tampilkan ilustrasi "Tidak Ada Data"
         } else {
             binding.rvLaporan.visibility = View.VISIBLE
             binding.layoutEmptyState.visibility = View.GONE
@@ -110,19 +112,21 @@ class LaporanFragment : Fragment() {
     }
 
     private fun tampilkanDetailLaporan(laporan: LaporanModel) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Detail Laporan")
+        // Menggunakan MaterialAlertDialogBuilder agar desain bulat konsisten
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Detail Kerusakan")
             .setMessage("Barang: ${laporan.nama_barang}\nVilla: ${laporan.villa_nama}\nStatus: ${laporan.status}")
             .setPositiveButton("Tutup", null)
-            .setNeutralButton("Ubah Status") { _, _ ->
+            .setNeutralButton("Update Status") { _, _ ->
                 val opsi = arrayOf("belum_ditindaklanjuti", "proses", "selesai")
-                AlertDialog.Builder(requireContext()).setItems(opsi) { _, i ->
-                    viewModel.updateStatusLaporan(laporan.id, opsi[i]) { sukses ->
-                        if (sukses) Toast.makeText(requireContext(), "Berhasil Update", Toast.LENGTH_SHORT).show()
-                    }
-                }.show()
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Pilih Status Baru")
+                    .setItems(opsi) { _, i ->
+                        viewModel.updateStatusLaporan(laporan.id, opsi[i]) { sukses ->
+                            if (sukses) Toast.makeText(requireContext(), "Status diperbarui!", Toast.LENGTH_SHORT).show()
+                        }
+                    }.show()
             }.show()
     }
-
     override fun onDestroyView() { super.onDestroyView(); _binding = null }
 }

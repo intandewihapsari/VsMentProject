@@ -7,9 +7,9 @@ import com.indri.vsmentproject.databinding.ItemInventarisBinding
 class InventarisViewHolder(private val binding: ItemInventarisBinding) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(data: InventarisModel) {
-        // Menggunakan nama field yang BENAR sesuai InventarisModel kamu
-        binding.tvPerluGanti.text = data.total_rusak.toString()
-        binding.tvPerluPeriksa.text = data.total_perlu_cek.toString()
-        binding.tvLayakPakai.text = data.total_aman.toString()
+        // Pastikan ID ini sesuai dengan android:id di XML terbaru kita
+        binding.tvPerluGantiValue.text = data.total_rusak.toString()
+        binding.tvPerluPeriksaValue.text = data.total_perlu_cek.toString()
+        binding.tvLayakPakaiValue.text = data.total_aman.toString()
     }
 }
