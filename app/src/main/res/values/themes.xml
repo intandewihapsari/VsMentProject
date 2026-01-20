@@ -1,9 +1,29 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.VsMentProject" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
+    <style name="TitleTextStyle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">#333333</item>
     </style>
 
-    <style name="Theme.VsMentProject" parent="Base.Theme.VsMentProject" />
+    <style name="ShapeAppearance.App.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="CustomMaterialDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">#C2185B</item>
+        <item name="colorOnSurface">#333333</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TitleTextStyle</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.MediumComponent</item>
+    </style>
+
+    <style name="Theme.VsmentProject" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#C2185B</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="android:statusBarColor">#C2185B</item>
+
+        <item name="materialAlertDialogTheme">@style/CustomMaterialDialog</item>
+    </style>
+
 </resources>

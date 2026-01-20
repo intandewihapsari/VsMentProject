@@ -1,12 +1,9 @@
 package com.indri.vsmentproject.ui.manager.task
 
-import android.view.LayoutInflater
-import android.view.ViewGroup
+import android.view.*
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.data.model.task.TugasModel
-import com.indri.vsmentproject.data.model.task.VillaTugasGroup
-import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
-import com.indri.vsmentproject.databinding.ItemVillaGroupBinding
+import com.indri.vsmentproject.data.model.task.*
+import com.indri.vsmentproject.databinding.*
 
 class TugasVillaAdapter(
     private val onItemClick: (TugasModel) -> Unit,
@@ -27,17 +24,18 @@ class TugasVillaAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val group = items[position]
-        holder.binding.tvNamaVilla.text = group.namaVilla // Menampilkan ID Villa (V01/V02)
+        holder.binding.tvNamaVilla.text = group.namaVilla // Sekarang berisi Nama Asli Villa
         holder.binding.containerTugasVilla.removeAllViews()
+
         val inflater = LayoutInflater.from(holder.binding.root.context)
 
         group.listTugas.forEach { tugas ->
             val itemBinding = ItemTugasPendingListBinding.inflate(inflater, holder.binding.containerTugasVilla, false)
-            itemBinding.tvNamaTugas.text = tugas.tugas
-            itemBinding.tvStatus.text = "Status: ${tugas.status}"
 
-            // SINKRONISASI: Gunakan worker_name sesuai model terbaru
-            itemBinding.tvPIC.text = "Staff: ${tugas.worker_name}"
+            // Detail Sangat Jelas
+            itemBinding.tvNamaTugas.text = "[${tugas.ruangan}] ${tugas.tugas}"
+            itemBinding.tvStatus.text = "Status: ${tugas.status.uppercase()}"
+            itemBinding.tvPIC.text = "Staff: ${tugas.worker_name} | Prioritas: ${tugas.prioritas}"
 
             itemBinding.root.setOnClickListener { onItemClick(tugas) }
             itemBinding.root.setOnLongClickListener {

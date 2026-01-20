@@ -10,7 +10,7 @@ data class VillaModel(
     val nama: String = "",
     val alamat: String = "",          // Menambah detail lokasi
     val deskripsi: String = "",       // Penjelasan singkat tentang villa
-    val area: List<String> = emptyList(), // Daftar ruangan (Dapur, Kamar, dll)
+    val areas: List<String> = emptyList(), // Daftar ruangan (Dapur, Kamar, dll)
     val foto: String = "",            // URL Cloudinary
     val status_tersedia: Boolean = true // Untuk menandai villa aktif atau sedang renovasi
 ) : Parcelable

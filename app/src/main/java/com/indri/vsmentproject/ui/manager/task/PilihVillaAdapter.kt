@@ -19,23 +19,22 @@ class PilihVillaAdapter(
         return ViewHolder(ItemPilihVillaBinding.inflate(LayoutInflater.from(parent.context), parent, false))
     }
 
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val villa = listVilla[position]
         holder.binding.apply {
             tvNamaVilla.text = villa.nama
-            tvJumlahRuangan.text = "${villa.area.size} Ruangan"
+            tvJumlahRuangan.text = "${villa.areas.size} Ruangan" // Pakai areas
 
-            Glide.with(ivVilla.context)
+            com.bumptech.glide.Glide.with(ivVilla.context)
                 .load(villa.foto)
-                .placeholder(R.drawable.ic_launcher_background) // Gunakan drawable kamu
-                .error(android.R.drawable.stat_notify_error)
+                .placeholder(R.drawable.ic_launcher_background)
                 .centerCrop()
                 .into(ivVilla)
 
             root.setOnClickListener { onVillaClick(villa) }
         }
     }
-
     override fun getItemCount(): Int = listVilla.size
 
     fun updateData(newList: List<VillaModel>) {

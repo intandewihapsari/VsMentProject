@@ -37,7 +37,7 @@
 
     <include
         android:id="@+id/layoutFormTambahTugas"
-        layout="@layout/layout_tambah_tugas"
+        layout="@layout/item_progres_villa"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

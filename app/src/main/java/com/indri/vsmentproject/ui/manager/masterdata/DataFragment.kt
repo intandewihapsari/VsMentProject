@@ -1,20 +1,18 @@
 package com.indri.vsmentproject.ui.manager.masterdata
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.indri.vsmentproject.data.model.user.StaffModel
 import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.FragmentDataBinding
+import com.indri.vsmentproject.data.utils.FirebaseConfig
 
 class DataFragment : Fragment() {
     private var _binding: FragmentDataBinding? = null
@@ -33,7 +31,7 @@ class DataFragment : Fragment() {
         binding.btnManageStaff.setOnClickListener { showStaffList() }
     }
 
-    // --- LOGIC VILLA ---
+    // --- LOGIC VILLA (SINKRON DENGAN areas) ---
     private fun showVillaList() {
         val villas = viewModel.villaList.value ?: emptyList()
         val names = villas.map { it.nama }.toTypedArray()
@@ -45,7 +43,7 @@ class DataFragment : Fragment() {
     }
 
     private fun dialogOpsiVilla(villa: VillaModel) {
-        val opsi = arrayOf("Edit Nama Villa", "Kelola Ruangan", "Hapus Villa")
+        val opsi = arrayOf("Edit Detail", "Kelola Ruangan", "Hapus Villa")
         AlertDialog.Builder(requireContext()).setItems(opsi) { _, i ->
             when (i) {
                 0 -> dialogInputVilla(villa)
@@ -56,38 +54,66 @@ class DataFragment : Fragment() {
     }
 
     private fun dialogKelolaRuangan(villa: VillaModel) {
-        val list = villa.area.toMutableList()
+        // SINKRONISASI: Gunakan 'areas' sesuai JSON baru
+        val list = villa.areas.toMutableList()
         AlertDialog.Builder(requireContext())
             .setTitle("Ruangan: ${villa.nama}")
             .setItems(list.toTypedArray()) { _, i ->
-                // Dialog edit/hapus satu ruangan
-                list.removeAt(i)
-                updateRuangan(villa, list)
+                val roomName = list[i]
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Hapus Ruangan?")
+                    .setMessage("Hapus '$roomName' dari daftar?")
+                    .setPositiveButton("Hapus") { _, _ ->
+                        list.removeAt(i)
+                        updateRuangan(villa, list)
+                    }.setNegativeButton("Batal", null).show()
             }
             .setPositiveButton("Tambah") { _, _ ->
-                val et = EditText(requireContext())
-                AlertDialog.Builder(requireContext()).setTitle("Nama Ruangan").setView(et)
+                val et = EditText(requireContext()).apply { hint = "Nama Ruangan (Misal: Kamar 3)" }
+                AlertDialog.Builder(requireContext()).setTitle("Tambah Ruangan").setView(et)
                     .setPositiveButton("Simpan") { _, _ ->
-                        list.add(et.text.toString())
-                        updateRuangan(villa, list)
+                        if (et.text.isNotEmpty()) {
+                            list.add(et.text.toString())
+                            updateRuangan(villa, list)
+                        }
                     }.show()
             }.show()
     }
 
     private fun updateRuangan(villa: VillaModel, list: List<String>) {
-        val data = mapOf("nama" to villa.nama, "area" to list, "foto" to villa.foto)
+        // Gunakan field 'areas' agar tidak rusak
+        val data = mapOf(
+            "nama" to villa.nama,
+            "areas" to list,
+            "foto" to villa.foto,
+            "alamat" to villa.alamat
+        )
         viewModel.simpanVilla(villa.id, data)
     }
 
     private fun dialogInputVilla(villa: VillaModel?) {
-        val et = EditText(requireContext()).apply { setText(villa?.nama) }
-        AlertDialog.Builder(requireContext()).setView(et).setPositiveButton("Simpan") { _, _ ->
-            val data = mapOf("nama" to et.text.toString(), "area" to (villa?.area ?: listOf("Umum")), "foto" to (villa?.foto ?: ""))
-            viewModel.simpanVilla(villa?.id, data)
-        }.show()
+        val layout = LinearLayout(requireContext()).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 0) }
+        val etNama = EditText(requireContext()).apply { hint = "Nama Villa"; setText(villa?.nama) }
+        val etAlamat = EditText(requireContext()).apply { hint = "Alamat"; setText(villa?.alamat) }
+        layout.addView(etNama); layout.addView(etAlamat)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(if (villa == null) "Tambah Villa" else "Edit Villa")
+            .setView(layout)
+            .setPositiveButton("Simpan") { _, _ ->
+                val idFix = villa?.id ?: "V${System.currentTimeMillis().toString().takeLast(3)}"
+                val data = mapOf(
+                    "id" to idFix,
+                    "nama" to etNama.text.toString(),
+                    "alamat" to etAlamat.text.toString(),
+                    "areas" to (villa?.areas ?: listOf("Umum")),
+                    "foto" to (villa?.foto ?: "https://res.cloudinary.com/do8dnkpew/image/upload/v1766219984/WhatsApp_Image_2025-12-19_at_18.16.11_qdynh3.jpg")
+                )
+                viewModel.simpanVilla(idFix, data)
+            }.show()
     }
 
-    // --- LOGIC STAFF ---
+    // --- LOGIC STAFF (SINKRON DENGAN users/staffs) ---
     private fun showStaffList() {
         val staff = viewModel.staffList.value ?: emptyList()
         val names = staff.map { "${it.nama} (${it.posisi})" }.toTypedArray()
@@ -121,23 +147,26 @@ class DataFragment : Fragment() {
     }
 
     private fun registerStaffAuth(email: String, pass: String, nama: String, posisi: String) {
-        // Trik: Gunakan secondary Firebase App agar Manager TIDAK Logout
         val options = FirebaseApp.getInstance().options
-        val secondaryApp = try {
-            FirebaseApp.initializeApp(requireContext(), options, "secondary")
-        } catch (e: Exception) {
-            FirebaseApp.getInstance("secondary")
-        }
+        val secondaryApp = try { FirebaseApp.initializeApp(requireContext(), options, "secondary") }
+        catch (e: Exception) { FirebaseApp.getInstance("secondary") }
 
         FirebaseAuth.getInstance(secondaryApp).createUserWithEmailAndPassword(email, pass)
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid ?: ""
-                val data = mapOf("id" to uid, "nama" to nama, "email" to email, "posisi" to posisi, "role" to "staff")
+                // SINKRONISASI: Path 'users/staffs' & field lengkap
+                val data = mapOf(
+                    "uid" to uid,
+                    "nama" to nama,
+                    "email" to email,
+                    "posisi" to posisi,
+                    "role" to "staff",
+                    "foto_profil" to "https://res.cloudinary.com/do8dnkpew/image/upload/v1766219984/WhatsApp_Image_2025-12-19_at_18.16.11_qdynh3.jpg"
+                )
 
-                // Simpan ke master_data/staff
-                FirebaseDatabase.getInstance().getReference("master_data/staff").child(uid).setValue(data)
-                FirebaseAuth.getInstance(secondaryApp).signOut() // Logout staff dari app secondary
-                Toast.makeText(requireContext(), "Staff Berhasil!", Toast.LENGTH_SHORT).show()
+                FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_STAFFS).child(uid).setValue(data)
+                FirebaseAuth.getInstance(secondaryApp).signOut()
+                Toast.makeText(requireContext(), "Staff Berhasil Ditambah!", Toast.LENGTH_SHORT).show()
             }
     }
 
