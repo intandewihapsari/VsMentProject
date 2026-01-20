@@ -2,20 +2,21 @@ package com.indri.vsmentproject.data.model.task
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+
 @Parcelize
 data class TugasModel(
     var id: String = "",
-    val manager_id: String = "",       // Biar tau siapa yang ngasih tugas
-    val villa_id: String = "",         // Link ke Villa tertentu
+    val manager_id: String = "",
+    val villa_id: String = "",
     val villa_nama: String = "",
-    val staff_id: String = "",         // Link ke Staff tertentu
-    val staff_nama: String = "",
-
+    val ruangan: String = "Umum",
+    val worker_id: String = "",        // Pastikan ini 'worker_id'
+    val worker_name: String = "",
     val tugas: String = "",
-    val deskripsi: String = "",        // Ganti 'keterangan' biar lebih pro
-    val kategori: String = "",         // "Pembersihan", "Perbaikan", dll
-    val prioritas: String = "Normal",  // Tambahkan ini (Low, Normal, High)
-
-    val waktu_tenggat: String = "",    // Konsisten pakai ini
-    val status: String = "pending"     // "pending" atau "selesai"
+    val deskripsi: String = "",
+    val prioritas: String = "Medium",
+    val kategori: String = "Umum",
+    val deadline: String = "",
+    val created_at: Long = System.currentTimeMillis(),
+    val status: String = "pending"
 ) : Parcelable

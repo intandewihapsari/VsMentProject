@@ -19,7 +19,7 @@ class TugasPendingViewHolder(private val binding: ItemTugasPendingBinding) : Rec
             )
             itemBinding.tvNamaTugas.text = tugas.tugas
             itemBinding.tvStatus.text = tugas.status
-            itemBinding.tvPIC.text = tugas.staff_nama
+            itemBinding.tvPIC.text = tugas.worker_name
 
             itemBinding.root.setOnClickListener { onTugasClick(tugas) }
             binding.containerListTugas.addView(itemBinding.root)

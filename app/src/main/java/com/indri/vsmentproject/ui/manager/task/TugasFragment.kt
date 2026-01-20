@@ -17,6 +17,7 @@ import com.google.android.material.button.MaterialButton
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.R
+import com.indri.vsmentproject.data.model.user.StaffModel
 import com.indri.vsmentproject.databinding.FragmentTugasBinding
 import java.util.Calendar
 
@@ -28,7 +29,10 @@ class TugasFragment : Fragment() {
     private lateinit var villaAdapter: PilihVillaAdapter
     private var tanggalTerpilih = ""
     private var currentEditTaskId: String? = null
-    private var currentEditVillaName: String? = null
+
+    // PERBAIKAN: Gunakan ID Villa untuk akses database
+    private var currentVillaId: String? = null
+    private var currentVillaName: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTugasBinding.inflate(inflater, container, false)
@@ -40,12 +44,15 @@ class TugasFragment : Fragment() {
         setupMainRecyclerView()
         setupPilihVillaAdapter()
         setupStaffSpinner()
+
         binding.layoutFormInput.btnPilihTanggal.setOnClickListener { showDatePicker() }
+
         binding.fabTambahTugas.setOnClickListener {
             currentEditTaskId = null
             binding.layoutPilihVilla.visibility = View.VISIBLE
             viewModel.getVillaList()
         }
+
         binding.layoutFormInput.btnBatal.setOnClickListener {
             binding.layoutFormInput.root.visibility = View.GONE
             resetForm()
@@ -66,85 +73,100 @@ class TugasFragment : Fragment() {
     }
 
     private fun tampilkanDetailTugas(tugas: TugasModel) {
-        val villaGroup = viewModel.tugasGrouped.value?.find { group -> group.listTugas.any { it.id == tugas.id } }
-        val villaName = villaGroup?.namaVilla ?: ""
+        // Mencari Group berdasarkan ID tugas
+        val villaGroup = viewModel.tugasGrouped.value?.find { group ->
+            group.listTugas.any { it.id == tugas.id }
+        }
+
+        val villaId = villaGroup?.namaVilla ?: "" // Ingat: namaVilla di sini isinya ID Villa
 
         AlertDialog.Builder(requireContext())
             .setTitle("Opsi Tugas")
             .setMessage("Pilih tindakan untuk tugas:\n${tugas.tugas}")
             .setPositiveButton("Ubah/Edit") { _, _ ->
-                // Jika pilih Edit, buka form input seperti biasa
-                bukaFormEdit(tugas, villaName)
+                bukaFormEdit(tugas, villaId)
             }
             .setNeutralButton("Hapus") { _, _ ->
-                // Jika pilih Hapus, langsung panggil konfirmasi hapus
                 konfirmasiHapus(tugas)
             }
             .setNegativeButton("Batal", null)
             .show()
     }
 
-    private fun bukaFormEdit(tugas: TugasModel, villaName: String) {
+    private fun bukaFormEdit(tugas: TugasModel, villaId: String) {
         currentEditTaskId = tugas.id
-        currentEditVillaName = villaName
+        currentVillaId = villaId
 
         binding.layoutFormInput.root.visibility = View.VISIBLE
-        binding.layoutFormInput.tvHeaderVilla.text = "Ubah: $villaName"
+        binding.layoutFormInput.tvHeaderVilla.text = "Ubah Tugas"
         binding.layoutFormInput.etNamaTugas.setText(tugas.tugas)
         binding.layoutFormInput.etDeskripsiTugas.setText(tugas.deskripsi)
-        tanggalTerpilih = tugas.waktu_tenggat
-        binding.layoutFormInput.tvTanggalTerpilih.text = tugas.waktu_tenggat
+        tanggalTerpilih = tugas.deadline // Pakai field deadline sesuai V01
+        binding.layoutFormInput.tvTanggalTerpilih.text = tugas.deadline
 
         // Set Spinner Staff
-        val staffAdapter = binding.layoutFormInput.spinnerStaff.adapter
-        for (i in 0 until (staffAdapter?.count ?: 0)) {
-            if (staffAdapter?.getItem(i).toString() == tugas.staff_nama) {
-                binding.layoutFormInput.spinnerStaff.setSelection(i)
-                break
-            }
-        }
+        val listStaff = viewModel.staffList.value ?: emptyList()
+        val index = listStaff.indexOfFirst { it.uid == tugas.worker_id }
+        if (index != -1) binding.layoutFormInput.spinnerStaff.setSelection(index)
 
-        // Set RadioButton Kategori
+        // Set RadioButton Prioritas (Sesuai V01: High, Medium, Low)
         val radioGroup = binding.layoutFormInput.rgKategori
         for (i in 0 until radioGroup.childCount) {
             val rb = radioGroup.getChildAt(i) as? RadioButton
-            if (rb?.text.toString().equals(tugas.kategori, true)) {
+            if (rb?.text.toString().equals(tugas.prioritas, true)) {
                 rb?.isChecked = true
                 break
             }
         }
 
-        binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan(villaName, null) }
+        binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan(villaId, null) }
     }
+
     private fun konfirmasiHapus(tugas: TugasModel) {
-        val villaName = viewModel.tugasGrouped.value?.find { g -> g.listTugas.any { it.id == tugas.id } }?.namaVilla ?: ""
+        val villaId = viewModel.tugasGrouped.value?.find { g ->
+            g.listTugas.any { it.id == tugas.id }
+        }?.namaVilla ?: ""
+
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Tugas")
             .setMessage("Hapus '${tugas.tugas}'?")
             .setPositiveButton("Hapus") { _, _ ->
-                viewModel.hapusTugas(villaName, tugas.id) { sukses ->
+                viewModel.hapusTugas(villaId, tugas.id) { sukses ->
                     if (sukses) Toast.makeText(requireContext(), "Dihapus", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Batal", null).show()
     }
 
-    private fun prosesSimpan(namaVilla: String, namaRuangan: String?) {
+    // Bagian krusial di prosesSimpan agar sinkron dengan model baru
+    private fun prosesSimpan(villaId: String, namaRuangan: String?) {
         val namaTugasInput = binding.layoutFormInput.etNamaTugas.text.toString()
-        val staff = binding.layoutFormInput.spinnerStaff.selectedItem?.toString() ?: ""
-        val rbId = binding.layoutFormInput.rgKategori.checkedRadioButtonId
-        val kategori = binding.root.findViewById<RadioButton>(rbId)?.text?.toString() ?: "Lainnya"
 
-        if (namaTugasInput.isNotEmpty() && tanggalTerpilih.isNotEmpty()) {
+        // Ambil staff dari spinner secara dinamis
+        val selectedStaffPosition = binding.layoutFormInput.spinnerStaff.selectedItemPosition
+        val staffTerpilih = viewModel.staffList.value?.get(selectedStaffPosition)
+
+        val rbId = binding.layoutFormInput.rgKategori.checkedRadioButtonId
+        val prioritas = binding.root.findViewById<RadioButton>(rbId)?.text?.toString() ?: "Medium"
+
+        if (namaTugasInput.isNotEmpty() && tanggalTerpilih.isNotEmpty() && staffTerpilih != null) {
             val finalNama = if (currentEditTaskId == null) "[$namaRuangan] $namaTugasInput" else namaTugasInput
+
+            // SINKRONISASI: Gunakan struktur TugasModel terbaru
             val data = mapOf(
+                "villa_id" to villaId,
+                "villa_nama" to (currentVillaName ?: ""),
+                "ruangan" to (namaRuangan ?: "Umum"),
+                "worker_id" to staffTerpilih.uid,
+                "worker_name" to staffTerpilih.nama,
                 "tugas" to finalNama,
-                "keterangan" to binding.layoutFormInput.etDeskripsiTugas.text.toString(), // Pastikan key ini "keterangan"
-                "kategori" to kategori,
-                "staff_nama" to staff,
-                "waktu_tenggat" to tanggalTerpilih, // Gunakan "waktu_tenggat" agar sinkron dengan bukaFormEdit
-                "status" to "pending"
+                "deskripsi" to binding.layoutFormInput.etDeskripsiTugas.text.toString(),
+                "prioritas" to prioritas,
+                "deadline" to tanggalTerpilih,
+                "status" to "pending",
+                "created_at" to System.currentTimeMillis()
             )
+
             val cb = { sukses: Boolean ->
                 if (sukses) {
                     binding.layoutFormInput.root.visibility = View.GONE
@@ -152,11 +174,13 @@ class TugasFragment : Fragment() {
                     Toast.makeText(requireContext(), "Berhasil!", Toast.LENGTH_SHORT).show()
                 }
             }
-            if (currentEditTaskId == null) viewModel.simpanTugasLengkap(namaVilla, data, cb)
-            else viewModel.updateTugas(namaVilla, currentEditTaskId!!, data, cb)
+
+            if (currentEditTaskId == null) viewModel.simpanTugasLengkap(villaId, data, cb)
+            else viewModel.updateTugas(villaId, currentEditTaskId!!, data, cb)
+        } else {
+            Toast.makeText(requireContext(), "Data belum lengkap!", Toast.LENGTH_SHORT).show()
         }
     }
-
     private fun observeData() {
         viewModel.tugasGrouped.observe(viewLifecycleOwner) { data ->
             if (data != null) {
@@ -175,13 +199,17 @@ class TugasFragment : Fragment() {
                 }
             }
         }
-        viewModel.villaList.observe(viewLifecycleOwner) { list -> if (!list.isNullOrEmpty()) villaAdapter.updateData(list) }
+        viewModel.villaList.observe(viewLifecycleOwner) { list ->
+            if (!list.isNullOrEmpty()) villaAdapter.updateData(list)
+        }
     }
 
     private fun filterAndDisplay(data: List<VillaTugasGroup>, status: String) {
         if (status == "all") tugasVillaAdapter.updateList(data)
         else {
-            val filtered = data.map { g -> g.copy(listTugas = g.listTugas.filter { it.status.lowercase() == status.lowercase() }) }.filter { it.listTugas.isNotEmpty() }
+            val filtered = data.map { g ->
+                g.copy(listTugas = g.listTugas.filter { it.status.lowercase() == status.lowercase() })
+            }.filter { it.listTugas.isNotEmpty() }
             tugasVillaAdapter.updateList(filtered)
         }
     }
@@ -189,8 +217,13 @@ class TugasFragment : Fragment() {
     private fun updateFilterButtonUI(selectedId: Int) {
         listOf(R.id.btnAll, R.id.btnPending, R.id.btnDone).forEach { id ->
             val btn = binding.root.findViewById<MaterialButton>(id)
-            if (id == selectedId) { btn.setBackgroundColor(Color.WHITE); btn.setTextColor(Color.parseColor("#C2185B")) }
-            else { btn.setBackgroundColor(Color.TRANSPARENT); btn.setTextColor(Color.WHITE) }
+            if (id == selectedId) {
+                btn.setBackgroundColor(Color.WHITE)
+                btn.setTextColor(Color.parseColor("#C2185B"))
+            } else {
+                btn.setBackgroundColor(Color.TRANSPARENT)
+                btn.setTextColor(Color.WHITE)
+            }
         }
     }
 
@@ -204,42 +237,39 @@ class TugasFragment : Fragment() {
     }
 
     private fun setupPilihVillaAdapter() {
-        // Perhatikan: 'villa' di sini adalah objek VillaModel, bukan String nama
         villaAdapter = PilihVillaAdapter { villa ->
+            currentVillaId = villa.id // Simpan ID Villa
+            currentVillaName = villa.nama
+
             if (villa.area.isNotEmpty()) {
                 val areas = villa.area.toTypedArray()
-
                 AlertDialog.Builder(requireContext())
                     .setTitle("Pilih Ruangan di ${villa.nama}")
                     .setItems(areas) { _, i ->
-                        // Kirim nama villa dan area yang dipilih
-                        bukaFormInput(villa.nama, areas[i])
-                    }
-                    .show()
+                        bukaFormInput(villa.id, areas[i])
+                    }.show()
             } else {
-                // Jika area kosong, default ke "Umum"
-                bukaFormInput(villa.nama, "Umum")
+                bukaFormInput(villa.id, "Umum")
             }
         }
-
         binding.rvPilihVilla.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = villaAdapter
         }
     }
 
-    private fun bukaFormInput(namaVilla: String, namaRuangan: String) {
+    private fun bukaFormInput(villaId: String, namaRuangan: String) {
         currentEditTaskId = null
         binding.layoutPilihVilla.visibility = View.GONE
         binding.layoutFormInput.root.visibility = View.VISIBLE
-        binding.layoutFormInput.tvHeaderVilla.text = "$namaVilla - $namaRuangan"
-        binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan(namaVilla, namaRuangan) }
+        binding.layoutFormInput.tvHeaderVilla.text = "Input Tugas: $namaRuangan"
+        binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan(villaId, namaRuangan) }
     }
 
     private fun setupStaffSpinner() {
         viewModel.getStaffList()
         viewModel.staffList.observe(viewLifecycleOwner) { list ->
-            val names = list.map { it.nama }
+            val names = list.map { "${it.nama} (${it.posisi})" }
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, names)
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.layoutFormInput.spinnerStaff.adapter = adapter
@@ -260,6 +290,7 @@ class TugasFragment : Fragment() {
         tanggalTerpilih = ""
         binding.layoutFormInput.tvTanggalTerpilih.text = "Pilih Tanggal"
         currentEditTaskId = null
+        currentVillaId = null
     }
 
     override fun onDestroyView() { super.onDestroyView(); _binding = null }

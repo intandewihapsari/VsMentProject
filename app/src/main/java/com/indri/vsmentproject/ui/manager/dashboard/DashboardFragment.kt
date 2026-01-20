@@ -8,19 +8,18 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.indri.vsmentproject.data.utils.Resource
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.databinding.FragmentDashboardBinding
-// Import diarahkan ke package lokal dashboard
-import com.indri.vsmentproject.ui.manager.dashboard.DashboardAdapter
-import com.indri.vsmentproject.ui.manager.dashboard.DashboardViewModel
+import com.indri.vsmentproject.data.utils.Resource
 
 class DashboardFragment : Fragment() {
+
     private var _binding: FragmentDashboardBinding? = null
     private val binding get() = _binding!!
 
-    // Inisialisasi ViewModel secara otomatis
     private val viewModel: DashboardViewModel by viewModels()
     private lateinit var dashboardAdapter: DashboardAdapter
+    private val auth = FirebaseAuth.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,53 +33,62 @@ class DashboardFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
-        observeData()
+        observeDashboardData()
 
-        // Ambil UID manager yang sedang login secara dinamis
-        val currentUid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        viewModel.setManagerUid(currentUid)
+        // Pemicu pertama: Ambil UID Manager yang sedang login
+        val currentUid = auth.currentUser?.uid
+        currentUid?.let {
+            viewModel.setManagerUid(it)
+        } ?: run {
+            Toast.makeText(requireContext(), "Sesi berakhir, silakan login ulang", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupRecyclerView() {
+        // Inisialisasi Adapter dengan 5 Parameter Lengkap
         dashboardAdapter = DashboardAdapter(
+            items = emptyList(),
             onTambahTugasClick = {
-                // Navigasi ke form tambah tugas
-                Toast.makeText(context, "Membuka Form Tambah Tugas", Toast.LENGTH_SHORT).show()
+                // Navigasi ke Tab Tugas (Contoh pindah tab atau buka dialog)
+                Toast.makeText(requireContext(), "Buka Form Tambah Tugas", Toast.LENGTH_SHORT).show()
             },
             onKirimNotifClick = {
-                // Navigasi ke form kirim notifikasi
-                Toast.makeText(context, "Membuka Form Notifikasi", Toast.LENGTH_SHORT).show()
+                // Aksi tombol kirim notifikasi manual
+                Toast.makeText(requireContext(), "Fitur Kirim Notifikasi", Toast.LENGTH_SHORT).show()
             },
             onTugasClick = { tugas ->
-                // PERBAIKAN: Gunakan field 'tugas' sesuai TugasModel kamu
-                Toast.makeText(context, "Detail: ${tugas.tugas}", Toast.LENGTH_SHORT).show()
+                // Menampilkan detail tugas saat item di list diklik
+                Toast.makeText(requireContext(), "Tugas: ${tugas.tugas}", Toast.LENGTH_SHORT).show()
+            },
+            onReloadAnalisisClick = {
+                // FUNGSI RELOAD: Paksa ViewModel hitung ulang summary dari database
+                val uid = auth.currentUser?.uid
+                uid?.let {
+                    viewModel.setManagerUid(it)
+                    Toast.makeText(requireContext(), "Memperbarui data...", Toast.LENGTH_SHORT).show()
+                }
             }
         )
 
         binding.rvDashboard.apply {
-            layoutManager = LinearLayoutManager(requireContext())
             adapter = dashboardAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+            setHasFixedSize(true)
         }
     }
 
-    private fun observeData() {
+    private fun observeDashboardData() {
         viewModel.dashboardData.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // Opsional: Tampilkan progress bar utama
+                    // Tampilkan Shimmer atau Progress (Jika ada)
                 }
                 is Resource.Success -> {
-                    if (resource.data.isNullOrEmpty()) {
-                        binding.rvDashboard.visibility = View.GONE
-                        binding.layoutEmptyState.visibility = View.VISIBLE
-                    } else {
-                        binding.rvDashboard.visibility = View.VISIBLE
-                        binding.layoutEmptyState.visibility = View.GONE
-                        dashboardAdapter.updateData(resource.data!!)
-                    }
+                    // Update data ke adapter secara dinamis
+                    resource.data?.let { dashboardAdapter.updateData(it) }
                 }
                 is Resource.Error -> {
-                    Toast.makeText(context, "Error: ${resource.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Gagal memuat data: ${resource.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

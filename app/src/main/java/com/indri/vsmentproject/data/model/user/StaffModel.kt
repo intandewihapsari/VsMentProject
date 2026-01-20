@@ -5,7 +5,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class StaffModel(
-    var id: String = "",
+    var uid: String = "",
     val nama: String = "",
     val email: String = "",
     val posisi: String = "", // Tambahkan ini agar tidak error di Fragment

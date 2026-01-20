@@ -32,7 +32,7 @@ class DataViewModel : ViewModel() {
         db.child(FirebaseConfig.PATH_USERS).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(s: DataSnapshot) {
                 val list = s.children.mapNotNull {
-                    it.getValue(StaffModel::class.java)?.apply { id = it.key ?: "" }
+                    it.getValue(StaffModel::class.java)?.apply { uid = it.key ?: "" }
                 }
                 _staffList.postValue(list.filter { it.role == "staff" })
             }

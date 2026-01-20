@@ -27,7 +27,7 @@ class TugasVillaAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val group = items[position]
-        holder.binding.tvNamaVilla.text = group.namaVilla
+        holder.binding.tvNamaVilla.text = group.namaVilla // Menampilkan ID Villa (V01/V02)
         holder.binding.containerTugasVilla.removeAllViews()
         val inflater = LayoutInflater.from(holder.binding.root.context)
 
@@ -35,7 +35,9 @@ class TugasVillaAdapter(
             val itemBinding = ItemTugasPendingListBinding.inflate(inflater, holder.binding.containerTugasVilla, false)
             itemBinding.tvNamaTugas.text = tugas.tugas
             itemBinding.tvStatus.text = "Status: ${tugas.status}"
-            itemBinding.tvPIC.text = "Staff: ${tugas.staff_nama}"
+
+            // SINKRONISASI: Gunakan worker_name sesuai model terbaru
+            itemBinding.tvPIC.text = "Staff: ${tugas.worker_name}"
 
             itemBinding.root.setOnClickListener { onItemClick(tugas) }
             itemBinding.root.setOnLongClickListener {

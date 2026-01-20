@@ -8,7 +8,6 @@ import com.indri.vsmentproject.data.model.user.StaffModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 
 class TugasViewModel : ViewModel() {
-
     private val db = FirebaseDatabase.getInstance().reference
 
     private val _tugasGrouped = MutableLiveData<List<VillaTugasGroup>>()
@@ -20,88 +19,108 @@ class TugasViewModel : ViewModel() {
     private val _staffList = MutableLiveData<List<StaffModel>>()
     val staffList: LiveData<List<StaffModel>> = _staffList
 
-    fun getVillaList() {
-        // Gunakan FirebaseConfig agar konsisten dengan Dashboard
-        db.child(FirebaseConfig.PATH_VILLAS)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val list = snapshot.children.mapNotNull { it.getValue(VillaModel::class.java) }
-                    _villaList.postValue(list)
+    // Menghitung ulang persentase secara otomatis
+    private fun updateVillaSummary(villaId: String) {
+        val path = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas")
+        path.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val total = snapshot.childrenCount.toInt()
+                val completed = snapshot.children.count {
+                    it.child("status").value.toString().equals("selesai", ignoreCase = true)
                 }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                val progress = if (total > 0) (completed * 100 / total) else 0
+
+                db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("summary").setValue(
+                    mapOf("total" to total, "completed" to completed, "progress" to "$progress%")
+                )
+            }
+            override fun onCancelled(p0: DatabaseError) {}
+        })
     }
 
     fun getStaffList() {
-        // Ambil hanya yang role-nya staff agar Manager tidak salah pilih
-        db.child(FirebaseConfig.PATH_USERS).orderByChild("role").equalTo("staff")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val list = snapshot.children.mapNotNull { it.getValue(StaffModel::class.java) }
-                    _staffList.postValue(list)
-                }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+        db.child(FirebaseConfig.PATH_STAFFS).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(s: DataSnapshot) {
+                _staffList.postValue(s.children.mapNotNull { it.getValue(StaffModel::class.java) })
+            }
+            override fun onCancelled(e: DatabaseError) {}
+        })
+    }
+
+    fun getVillaList() {
+        db.child(FirebaseConfig.PATH_VILLAS).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(s: DataSnapshot) {
+                _villaList.postValue(s.children.mapNotNull {
+                    it.getValue(VillaModel::class.java)?.apply { id = it.key ?: "" }
+                })
+            }
+            override fun onCancelled(e: DatabaseError) {}
+        })
     }
 
 
     fun getTugasGroupedByVilla() {
-        FirebaseDatabase.getInstance().getReference("operational/task_management")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val groupList = mutableListOf<VillaTugasGroup>()
-
-                    for (villaSnapshot in snapshot.children) {
-                        // Ambil key (nama villa)
-                        val villaName = villaSnapshot.key ?: "Villa Tidak Diketahui"
-
-                        // Ambil list tugas di dalam child "tasks"
-                        val tasks = villaSnapshot.child("tasks").children.mapNotNull { taskSnapshot ->
-                            taskSnapshot.getValue(TugasModel::class.java)?.apply {
-                                id = taskSnapshot.key ?: "" // Pastikan ID terisi dari key Firebase
-                            }
-                        }
-
-                        // Hanya masukkan ke list jika ada tugasnya
-                        if (tasks.isNotEmpty()) {
-                            // Pastikan nama parameter sesuai dengan data class: namaVilla dan listTugas
-                            groupList.add(VillaTugasGroup(namaVilla = villaName, listTugas = tasks))
-                        }
+        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(s: DataSnapshot) {
+                val groups = s.children.mapNotNull { villaSnap ->
+                    // 1. Ambil list_tugas secara dinamis
+                    val tasks = villaSnap.child("list_tugas").children.mapNotNull {
+                        it.getValue(TugasModel::class.java)?.apply { id = it.key ?: "" }
                     }
-                    _tugasGrouped.postValue(groupList)
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    // Tambahkan log error agar mudah debugging saat sidang
-                }
-            })
-    }
-    fun simpanTugasLengkap(namaVilla: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
-        val taskRef = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(namaVilla).child("tasks").push()
 
-        taskRef.setValue(data).addOnCompleteListener { taskResult ->
-            if (taskResult.isSuccessful) {
-                // LOGIKA NOTIFIKASI SEMPURNA: Kirim ke Staff terkait
-                val staffNama = data["staff_nama"].toString()
-                val notifData = mapOf(
-                    "judul" to "Tugas Baru di $namaVilla",
-                    "pesan" to "Manager memberikan tugas: ${data["tugas"]}",
-                    "waktu" to System.currentTimeMillis(),
-                    "status" to "unread"
-                )
-                db.child(FirebaseConfig.PATH_NOTIFIKASI).child(staffNama).push().setValue(notifData)
+                    // 2. Ambil data summary untuk persentase
+                    val progress = villaSnap.child("summary/progress").value?.toString() ?: "0%"
+                    // Jika ingin nama villa yang asli (bukan ID), ambil dari salah satu tugas atau master_data
+                    val realName = tasks.firstOrNull()?.villa_nama ?: villaSnap.key ?: ""
+
+                    // 3. Masukkan ke group (SINKRONKAN SEMUA PARAMETER)
+                    if (tasks.isNotEmpty()) {
+                        VillaTugasGroup(
+                            villa_id = villaSnap.key ?: "", // Mengambil V01, V02, dst
+                            namaVilla = realName,
+                            listTugas = tasks,
+                            persentase_selesai = progress
+                        )
+                    } else null
+                }
+                _tugasGrouped.postValue(groups)
             }
-            onComplete(taskResult.isSuccessful)
+            override fun onCancelled(e: DatabaseError) {}
+        })
+    }
+
+    fun simpanTugasLengkap(villaId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
+        val ref = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas").push()
+        ref.setValue(data).addOnCompleteListener {
+            if (it.isSuccessful) {
+                updateVillaSummary(villaId)
+                // Notifikasi dinamis berdasarkan worker_id
+                db.child(FirebaseConfig.PATH_NOTIFIKASI).child(data["worker_id"].toString()).push().setValue(
+                    mapOf(
+                        "judul" to "Tugas Baru",
+                        "pesan" to "Tugas: ${data["tugas"]}",
+                        "is_read" to false,
+                        "timestamp" to System.currentTimeMillis()
+                    )
+                )
+            }
+            onComplete(it.isSuccessful)
         }
     }
 
-    fun updateTugas(namaVilla: String, taskId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
-        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-            .child(namaVilla).child("tasks").child(taskId).updateChildren(data)
-            .addOnCompleteListener { onComplete(it.isSuccessful) }
+    fun updateTugas(villaId: String, taskId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
+        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas").child(taskId)
+            .updateChildren(data).addOnCompleteListener {
+                if (it.isSuccessful) updateVillaSummary(villaId)
+                onComplete(it.isSuccessful)
+            }
     }
 
-    fun hapusTugas(namaVilla: String, taskId: String, onComplete: (Boolean) -> Unit) {
-        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(namaVilla).child("tasks").child(taskId)
-            .removeValue().addOnCompleteListener { onComplete(it.isSuccessful) }
+    fun hapusTugas(villaId: String, taskId: String, onComplete: (Boolean) -> Unit) {
+        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas").child(taskId)
+            .removeValue().addOnCompleteListener {
+                if (it.isSuccessful) updateVillaSummary(villaId)
+                onComplete(it.isSuccessful)
+            }
     }
 }

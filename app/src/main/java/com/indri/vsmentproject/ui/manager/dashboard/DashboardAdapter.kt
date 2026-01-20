@@ -5,26 +5,21 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.databinding.*
-import com.indri.vsmentproject.ui.manager.viewholder.AksiCepatViewHolder
-import com.indri.vsmentproject.ui.manager.viewholder.AnalisisCepatViewHolder
-import com.indri.vsmentproject.ui.manager.viewholder.InventarisViewHolder
-import com.indri.vsmentproject.ui.manager.viewholder.NotifikasiUrgentViewHolder
-import com.indri.vsmentproject.ui.manager.viewholder.TugasPendingViewHolder
+import com.indri.vsmentproject.ui.manager.viewholder.*
 
 class DashboardAdapter(
     private var items: List<DashboardItem> = emptyList(),
     private val onTambahTugasClick: () -> Unit,
     private val onKirimNotifClick: () -> Unit,
-    private val onTugasClick: (TugasModel) -> Unit
+    private val onTugasClick: (TugasModel) -> Unit,
+    private val onReloadAnalisisClick: () -> Unit // Tambahkan callback untuk reload data
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    // Fungsi untuk memperbarui data dari Fragment
     fun updateData(newItems: List<DashboardItem>) {
         items = newItems
         notifyDataSetChanged()
     }
 
-    // Menentukan jenis layout berdasarkan tipe DashboardItem
     override fun getItemViewType(position: Int): Int = when (items[position]) {
         is DashboardItem.NotifikasiUrgent -> 0
         is DashboardItem.AnalisisCepat -> 1
@@ -40,7 +35,8 @@ class DashboardAdapter(
                 ItemNotifikasiUrgentBinding.inflate(inflater, parent, false)
             )
             1 -> AnalisisCepatViewHolder(
-                ItemAnalisisCepatBinding.inflate(inflater, parent, false)
+                ItemAnalisisCepatBinding.inflate(inflater, parent, false),
+                onReloadAnalisisClick // Kirim fungsi reload ke ViewHolder
             )
             2 -> AksiCepatViewHolder(
                 ItemAksiCepatBinding.inflate(inflater, parent, false)
@@ -56,7 +52,6 @@ class DashboardAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        // Proses "Binding" atau pengisian data ke tiap-tiap ViewHolder
         when (val item = items[position]) {
             is DashboardItem.NotifikasiUrgent -> {
                 (holder as NotifikasiUrgentViewHolder).bind(item.data)
@@ -65,14 +60,12 @@ class DashboardAdapter(
                 (holder as AnalisisCepatViewHolder).bind(item.data)
             }
             is DashboardItem.AksiCepat -> {
-                // Aksi Cepat butuh lambda untuk handle klik tombol di Dashboard
                 (holder as AksiCepatViewHolder).bind(onTambahTugasClick, onKirimNotifClick)
             }
             is DashboardItem.Inventaris -> {
                 (holder as InventarisViewHolder).bind(item.data)
             }
             is DashboardItem.TugasPending -> {
-                // Tugas Pending butuh list data dan aksi saat item tugas diklik
                 (holder as TugasPendingViewHolder).bind(item.listTugas, onTugasClick)
             }
         }

@@ -100,7 +100,7 @@ class DataFragment : Fragment() {
 
     private fun dialogOpsiStaff(st: StaffModel) {
         AlertDialog.Builder(requireContext()).setItems(arrayOf("Edit", "Hapus")) { _, i ->
-            if (i == 0) dialogInputStaff(st) else viewModel.hapusStaff(st.id)
+            if (i == 0) dialogInputStaff(st) else viewModel.hapusStaff(st.uid)
         }.show()
     }
 
@@ -116,7 +116,7 @@ class DataFragment : Fragment() {
 
         AlertDialog.Builder(requireContext()).setView(layout).setPositiveButton("Simpan") { _, _ ->
             if (st == null) registerStaffAuth(etEmail.text.toString(), etPass.text.toString(), etNama.text.toString(), etPosisi.text.toString())
-            else viewModel.simpanStaff(st.id, mapOf("nama" to etNama.text.toString(), "posisi" to etPosisi.text.toString()))
+            else viewModel.simpanStaff(st.uid, mapOf("nama" to etNama.text.toString(), "posisi" to etPosisi.text.toString()))
         }.show()
     }
 
