@@ -27,7 +27,7 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        // 1. Cek Auto Login
+        // 1. Cek Auto Login jika session Firebase masih aktif
         auth.currentUser?.let {
             checkRole(it.uid)
         }
@@ -72,6 +72,7 @@ class LoginActivity : AppCompatActivity() {
 
         auth.signInWithEmailAndPassword(email, pass)
             .addOnSuccessListener { result ->
+                // Login Auth sukses, lanjut cek role di Realtime Database
                 checkRole(result.user?.uid)
             }
             .addOnFailureListener { e ->
@@ -87,12 +88,13 @@ class LoginActivity : AppCompatActivity() {
         val rootRef = FirebaseDatabase.getInstance().reference
         val currentUserEmail = auth.currentUser?.email
 
-        // 1. Cari di folder managers berdasarkan email
+        // 1. Cari di folder managers berdasarkan email (Menggunakan Query orderByChild)
         rootRef.child(FirebaseConfig.PATH_MANAGERS)
             .orderByChild("email").equalTo(currentUserEmail)
             .get().addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    saveIdToSession(snapshot) // Simpan ID untuk dipake di Fragment
+                    // Jika ketemu di Manager
+                    saveIdToSession(snapshot)
                     startActivity(Intent(this, ManagerActivity::class.java))
                     finish()
                 } else {
@@ -101,28 +103,33 @@ class LoginActivity : AppCompatActivity() {
                         .orderByChild("email").equalTo(currentUserEmail)
                         .get().addOnSuccessListener { staffSnap ->
                             if (staffSnap.exists()) {
-                                saveIdToSession(staffSnap) // Simpan ID (misal S02)
+                                // Jika ketemu di Staff
+                                saveIdToSession(staffSnap)
                                 startActivity(Intent(this, StaffActivity::class.java))
                                 finish()
                             } else {
+                                // Jika tidak ketemu di keduanya
                                 auth.signOut()
                                 resetUI()
-                                Toast.makeText(this, "Profil email tidak ditemukan!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, "Profil dengan email ini tidak ditemukan di Database!", Toast.LENGTH_SHORT).show()
                             }
+                        }.addOnFailureListener {
+                            handleError(it.message)
                         }
                 }
             }.addOnFailureListener {
-                resetUI()
-                Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+                handleError(it.message)
             }
     }
 
-    // Fungsi tambahan untuk simpan ID (S02) agar TugasStaffFragment bisa filter data
+    // Fungsi untuk menyimpan Key (UID) ke SharedPreferences agar Fragment bisa memfilter tugas
     private fun saveIdToSession(snapshot: DataSnapshot) {
-        val id = snapshot.children.firstOrNull()?.key // Mengambil "S02"
+        // snapshot.children.first().key akan mengambil UID panjang (W7lU... / MIzM...)
+        val id = snapshot.children.firstOrNull()?.key
         val sharedPref = getSharedPreferences("UserSession", MODE_PRIVATE)
         sharedPref.edit().putString("staff_id", id).apply()
     }
+
     private fun showForgotPasswordDialog() {
         val inputEmail = EditText(this).apply {
             hint = "Masukkan Email Terdaftar"
@@ -171,5 +178,10 @@ class LoginActivity : AppCompatActivity() {
     private fun setButtonsEnabled(enabled: Boolean) {
         binding.btnLogin.isEnabled = enabled
         binding.btnQuickStaff.isEnabled = enabled
+    }
+
+    private fun handleError(message: String?) {
+        resetUI()
+        Toast.makeText(this, "Error: $message", Toast.LENGTH_SHORT).show()
     }
 }
