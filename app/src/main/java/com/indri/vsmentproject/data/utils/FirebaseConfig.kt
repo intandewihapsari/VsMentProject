@@ -29,4 +29,6 @@ object FirebaseConfig {
     // Status Laporan (Sesuai JSON kamu)
     const val STATUS_WAITING = "Menunggu Validasi Manager"
     const val STATUS_DONE = "selesai"
+
+
 }

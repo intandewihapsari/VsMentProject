@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.FirebaseDatabase
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.ActivityLoginBinding
@@ -84,31 +85,44 @@ class LoginActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.VISIBLE
 
         val rootRef = FirebaseDatabase.getInstance().reference
+        val currentUserEmail = auth.currentUser?.email
 
-        // Cek di folder managers
-        rootRef.child(FirebaseConfig.PATH_MANAGERS).child(uid).get().addOnSuccessListener { snapshot ->
-            if (snapshot.exists()) {
-                startActivity(Intent(this, ManagerActivity::class.java))
-                finish()
-            } else {
-                // Cek di folder staffs
-                rootRef.child(FirebaseConfig.PATH_STAFFS).child(uid).get().addOnSuccessListener { staffSnap ->
-                    if (staffSnap.exists()) {
-                        startActivity(Intent(this, StaffActivity::class.java))
-                        finish()
-                    } else {
-                        auth.signOut()
-                        resetUI()
-                        Toast.makeText(this, "Profil tidak ditemukan!", Toast.LENGTH_SHORT).show()
-                    }
+        // 1. Cari di folder managers berdasarkan email
+        rootRef.child(FirebaseConfig.PATH_MANAGERS)
+            .orderByChild("email").equalTo(currentUserEmail)
+            .get().addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    saveIdToSession(snapshot) // Simpan ID untuk dipake di Fragment
+                    startActivity(Intent(this, ManagerActivity::class.java))
+                    finish()
+                } else {
+                    // 2. Jika tidak ada di manager, cari di staffs berdasarkan email
+                    rootRef.child(FirebaseConfig.PATH_STAFFS)
+                        .orderByChild("email").equalTo(currentUserEmail)
+                        .get().addOnSuccessListener { staffSnap ->
+                            if (staffSnap.exists()) {
+                                saveIdToSession(staffSnap) // Simpan ID (misal S02)
+                                startActivity(Intent(this, StaffActivity::class.java))
+                                finish()
+                            } else {
+                                auth.signOut()
+                                resetUI()
+                                Toast.makeText(this, "Profil email tidak ditemukan!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 }
+            }.addOnFailureListener {
+                resetUI()
+                Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
             }
-        }.addOnFailureListener {
-            resetUI()
-            Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
-        }
     }
 
+    // Fungsi tambahan untuk simpan ID (S02) agar TugasStaffFragment bisa filter data
+    private fun saveIdToSession(snapshot: DataSnapshot) {
+        val id = snapshot.children.firstOrNull()?.key // Mengambil "S02"
+        val sharedPref = getSharedPreferences("UserSession", MODE_PRIVATE)
+        sharedPref.edit().putString("staff_id", id).apply()
+    }
     private fun showForgotPasswordDialog() {
         val inputEmail = EditText(this).apply {
             hint = "Masukkan Email Terdaftar"
