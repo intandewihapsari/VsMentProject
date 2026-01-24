@@ -50,9 +50,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:backgroundTint="#D84361"
-        android:src="@drawable/ic_bell"
+        android:src="@drawable/ic_laporan"
         app:layout_anchor="@id/bottomAppBar"
-        app:tint="@color/white"
+        app:tint="@color/myWhite"
         app:maxImageSize="32dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
