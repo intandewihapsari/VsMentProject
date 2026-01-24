@@ -19,13 +19,11 @@
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone">
-
         <ImageView
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:src="@android:drawable/ic_menu_info_details"
             app:tint="#CBD5E0" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -35,8 +33,15 @@
     </LinearLayout>
 
     <include
+        android:id="@+id/layoutPilihVillaContainer"
+        layout="@layout/item_pilih_villa"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <include
         android:id="@+id/layoutFormTambahTugas"
-        layout="@layout/item_progres_villa"
+        layout="@layout/layout_form_tugas"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

@@ -7,7 +7,7 @@ import androidx.fragment.app.Fragment
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.ui.manager.masterdata.DataFragment
 import com.indri.vsmentproject.ui.manager.report.LaporanFragment
-import com.indri.vsmentproject.ui.manager.profile.ProfileFragment
+import com.indri.vsmentproject.ui.common.profile.ProfileFragment
 import com.indri.vsmentproject.ui.manager.task.TugasFragment
 import com.indri.vsmentproject.databinding.ActivityManagerBinding
 import com.indri.vsmentproject.ui.manager.dashboard.DashboardFragment

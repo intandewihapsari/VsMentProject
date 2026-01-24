@@ -82,4 +82,6 @@ dependencies {
 
     implementation("com.cloudinary:cloudinary-android:2.5.0")
 
+    implementation("io.coil-kt:coil:2.5.0")
+
 }

@@ -1,93 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@color/myRedLight">
-
-    <TextView
-        android:id="@+id/tv_header_notif"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Kirim Notifikasi Baru"
-        android:textAlignment="center"
-        android:textColor="@color/myWhite"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+    android:layout_margin="20dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/myWhite"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Terkait Villa" android:textColor="@color/myBlack" android:textStyle="bold"/>
-        <Spinner
-            android:id="@+id/spinner_villa_notif"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@color/myWhite"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Ditujukan Ke" android:textColor="@color/myBlack" android:textStyle="bold"/>
-        <Spinner
-            android:id="@+id/spinner_target_notif"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@color/myWhite"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Judul Notifikasi" android:textColor="@color/myBlack" android:textStyle="bold"/>
-        <EditText
-            android:id="@+id/et_judul_notif"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="Contoh: Gas Habis"
-            android:background="@color/myWhite"
-            android:paddingHorizontal="12dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="12dp"/>
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Pesan Notifikasi" android:textColor="@color/myBlack" android:textStyle="bold"/>
-        <EditText
-            android:id="@+id/et_pesan_notif"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:hint="Isi pesan..."
-            android:gravity="top"
-            android:padding="12dp"
-            android:background="@color/myWhite"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"/>
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switch_urgent"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tandai sebagai Urgent?"
-            android:textColor="@color/myBlack"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"
-            android:thumbTint="@color/myRedDark"
-            app:trackTint="@color/myRedLight"/>
-        <Button
-            android:id="@+id/btn_kirim_notif_firebase"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="KIRIM NOTIFIKASI"
-            android:backgroundTint="@color/myRedDark"
-            android:textColor="@color/myWhite"
-            app:cornerRadius="12dp"/>
+            android:background="@color/myRedDark"
+            android:padding="20dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="Notifikasi Operasional"
+                android:textColor="@color/myWhite"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btn_close_notif"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_alignParentEnd="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/myWhite" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Target Villa"
+                android:textColor="@color/myBlack"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_input_field">
+                <Spinner
+                    android:id="@+id/spinner_villa_notif"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingStart="8dp" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Target Staff"
+                android:textColor="@color/myBlack"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_pilih_staff"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/myWhite"
+                app:cardCornerRadius="12dp"
+                app:strokeColor="#CBD5E0"
+                app:strokeWidth="1dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_staff_terpilih"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Pilih Staff (Bisa pilih semua)"
+                        android:textColor="#718096"
+                        android:textSize="14sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="#718096" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Judul Notifikasi"
+                android:textColor="@color/myBlack"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_judul_notif"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_input_field"
+                android:hint="Contoh: Perbaikan AC"
+                android:inputType="textCapSentences"
+                android:paddingHorizontal="16dp"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Detail Pesan"
+                android:textColor="@color/myBlack"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_pesan_notif"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_input_field"
+                android:gravity="top"
+                android:hint="Tulis detail instruksi di sini..."
+                android:padding="16dp"
+                android:textSize="15sp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_urgent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="16dp"
+                android:text="Tandai Urgent (Prioritas Tinggi)"
+                android:textColor="@color/myRedDark"
+                android:textStyle="bold"
+                app:thumbTint="@color/myRedDark"
+                app:trackTint="@color/myRedLight" />
+
+            <Button
+                android:id="@+id/btn_kirim_notif_firebase"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/myRedDark"
+                android:text="KIRIM NOTIFIKASI"
+                android:textColor="@color/myWhite"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp" />
+
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</androidx.cardview.widget.CardView>
