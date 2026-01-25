@@ -22,17 +22,22 @@ class TugasChildAdapter(
 
     override fun onBindViewHolder(holder: ChildViewHolder, position: Int) {
         val tugas = listTugas[position]
-        holder.binding.tvNamaTugas.text = tugas.tugas
+        holder.binding.apply {
+            tvNamaTugas.text = tugas.tugas
 
-        // Atur warna atau status jika sudah selesai
-        if (tugas.status == "selesai") {
-            holder.binding.btnDone.setImageResource(R.drawable.ic_circle_checked) // Hijau penuh
-        } else {
-            holder.binding.btnDone.setImageResource(R.drawable.ic_circle_outline)
+            // Menampilkan nama villa agar staff tahu lokasi tugas
+            // Pastikan di item_tugas_child.xml ada TextView dengan id tvVillaTugas
+            tvNamaVilla.text = tugas.villa_nama
+
+            if (tugas.status == "selesai") {
+                btnDone.setImageResource(R.drawable.ic_circle_checked)
+            } else {
+                btnDone.setImageResource(R.drawable.ic_circle_outline)
+            }
+
+            btnDone.setOnClickListener { onDone(tugas) }
+            btnReport.setOnClickListener { onReport(tugas) }
         }
-
-        holder.binding.btnDone.setOnClickListener { onDone(tugas) }
-        holder.binding.btnReport.setOnClickListener { onReport(tugas) }
     }
 
     override fun getItemCount(): Int = listTugas.size

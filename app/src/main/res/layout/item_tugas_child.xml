@@ -2,27 +2,43 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp"
-    android:gravity="center_vertical"
+    android:layout_marginBottom="8dp"
     android:background="@color/myWhite"
-    android:layout_marginBottom="8dp">
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
 
-    <TextView
-        android:id="@+id/tvNamaTugas"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Cek fungsi kompor, rice cooker..."
-        android:textColor="@color/myBlack"
-        android:textSize="14sp" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvNamaTugas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cek fungsi kompor..."
+            android:textColor="@color/myBlack"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvNamaVilla"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Shankara Cottage"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/btnDone"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:src="@drawable/ic_circle_outline"
-        android:layout_marginEnd="8dp" />
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/ic_circle_outline" />
 
     <ImageView
         android:id="@+id/btnReport"
