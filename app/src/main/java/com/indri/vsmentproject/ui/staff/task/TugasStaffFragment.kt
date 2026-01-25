@@ -2,6 +2,7 @@ package com.indri.vsmentproject.ui.staff.task
 
 import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +21,8 @@ import com.indri.vsmentproject.databinding.FragmentTugasStaffBinding
 class TugasStaffFragment : Fragment() {
 
     private var _binding: FragmentTugasStaffBinding? = null
-    private val binding get() = _binding!!
+    // Gunakan backing property yang aman
+    private val binding get() = _binding
 
     private lateinit var villaAdapter: VillaTugasAdapter
     private lateinit var dbRef: DatabaseReference
@@ -28,9 +30,9 @@ class TugasStaffFragment : Fragment() {
     private var listTugasFull = mutableListOf<TugasModel>()
     private var currentFilter = "Seluruh Tugas"
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentTugasStaffBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -49,48 +51,50 @@ class TugasStaffFragment : Fragment() {
             onDoneClick = { tugas -> updateStatusTugas(tugas) },
             onReportClick = { tugas -> goToLaporanKerusakan(tugas) }
         )
-        binding.rvVillaTugas.apply {
+        binding?.rvVillaTugas?.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = villaAdapter
         }
     }
 
     private fun setupSearchBar() {
-        binding.etSearch.addTextChangedListener { text ->
+        binding?.etSearch?.addTextChangedListener { text ->
             filterData(text.toString(), currentFilter)
         }
     }
 
     private fun setupFilterTabs() {
-        val tabs = listOf(binding.tabAll, binding.tabPending, binding.tabSelesai)
-        tabs.forEach { tab ->
-            tab.setOnClickListener {
-                // UI Update: Reset Gaya Tab
-                tabs.forEach {
-                    it.setBackgroundResource(0)
-                    it.setTypeface(null, Typeface.NORMAL)
+        // Gunakan binding? agar aman
+        binding?.let { b ->
+            val tabs = listOf(b.tabAll, b.tabPending, b.tabSelesai)
+            tabs.forEach { tab ->
+                tab.setOnClickListener {
+                    tabs.forEach {
+                        it.setBackgroundResource(0)
+                        it.setTypeface(null, Typeface.NORMAL)
+                    }
+
+                    tab.setBackgroundColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.myWhite))
+                    tab.setTypeface(null, Typeface.BOLD)
+
+                    currentFilter = (it as TextView).text.toString()
+                    filterData(b.etSearch.text.toString(), currentFilter)
                 }
-
-                // UI Update: Highlight Tab Terpilih
-                tab.setBackgroundColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.myWhite))
-                tab.setTypeface(null, Typeface.BOLD)
-
-                currentFilter = (it as TextView).text.toString()
-                filterData(binding.etSearch.text.toString(), currentFilter)
             }
         }
     }
 
     private fun loadTugasFromFirebase() {
-        // 1. Ambil ID Staff yang sedang login (Contoh dari SharedPreferences)
         val sharedPref = requireActivity().getSharedPreferences("UserSession", android.content.Context.MODE_PRIVATE)
         val currentStaffId = sharedPref.getString("staff_id", "") ?: ""
 
-        // 2. Gunakan ID tersebut untuk query, bukan lagi NIM manual
         if (currentStaffId.isNotEmpty()) {
             dbRef.orderByChild("worker_id").equalTo(currentStaffId)
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
+                        // CEK NULL DISINI (Penting!)
+                        if (_binding == null) return
+
                         listTugasFull.clear()
                         for (data in snapshot.children) {
                             val tugas = data.getValue(TugasModel::class.java)
@@ -99,24 +103,22 @@ class TugasStaffFragment : Fragment() {
                                 listTugasFull.add(it)
                             }
                         }
-                        filterData(binding.etSearch.text.toString(), currentFilter)
+                        // Gunakan safe call binding?.etSearch
+                        filterData(binding?.etSearch?.text.toString(), currentFilter)
                     }
 
                     override fun onCancelled(error: DatabaseError) {
-                        Toast.makeText(context, "Error: ${error.message}", Toast.LENGTH_SHORT).show()
+                        Log.e("Firebase", error.message)
                     }
                 })
-        } else {
-            Toast.makeText(context, "ID Staff tidak ditemukan!", Toast.LENGTH_SHORT).show()
         }
     }
+
     private fun filterData(query: String, filterStatus: String) {
-        // Filter berdasarkan pencarian nama tugas atau nama villa
         var filteredList = listTugasFull.filter {
             it.tugas.contains(query, ignoreCase = true) || it.villa_nama.contains(query, ignoreCase = true)
         }
 
-        // Filter berdasarkan status tab
         when (filterStatus) {
             "Pending" -> filteredList = filteredList.filter { it.status == "pending" }
             "Selesai" -> filteredList = filteredList.filter { it.status == "selesai" }
@@ -139,17 +141,29 @@ class TugasStaffFragment : Fragment() {
     }
 
     private fun updateStatusTugas(tugas: TugasModel) {
-        // Toggle status: jika sudah selesai jadi pending, jika pending jadi selesai
         val newStatus = if (tugas.status == "selesai") "pending" else "selesai"
-        dbRef.child(tugas.id).child("status").setValue(newStatus)
+
+        // Gunakan map untuk update beberapa field sekaligus
+        val updates = HashMap<String, Any>()
+        updates["status"] = newStatus
+
+        // Jika dicentang selesai, catat waktu selesainya sekarang
+        if (newStatus == "selesai") {
+            updates["completed_at"] = System.currentTimeMillis()
+        } else {
+            updates["completed_at"] = 0L // Reset jika dikembalikan ke pending
+        }
+
+        dbRef.child(tugas.id).updateChildren(updates)
             .addOnFailureListener {
-                Toast.makeText(context, "Gagal update status", Toast.LENGTH_SHORT).show()
+                if (_binding != null) {
+                    Toast.makeText(context, "Gagal update status", Toast.LENGTH_SHORT).show()
+                }
             }
     }
 
     private fun goToLaporanKerusakan(tugas: TugasModel) {
         Toast.makeText(context, "Melaporkan: ${tugas.tugas}", Toast.LENGTH_SHORT).show()
-        // Navigasi ke LaporanFragment bisa ditambahkan di sini
     }
 
     override fun onDestroyView() {

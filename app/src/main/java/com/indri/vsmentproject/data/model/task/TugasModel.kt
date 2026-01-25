@@ -18,5 +18,6 @@ data class TugasModel(
     val kategori: String = "Umum",
     val deadline: String = "",
     val created_at: Long = System.currentTimeMillis(),
-    val status: String = "pending"
+    val status: String = "pending",
+    val completed_at: Long = 0L, // Tambahkan field ini
 ) : Parcelable

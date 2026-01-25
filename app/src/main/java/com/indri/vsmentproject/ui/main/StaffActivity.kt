@@ -10,9 +10,9 @@ import androidx.fragment.app.Fragment
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.ActivityStaffBinding
 import com.indri.vsmentproject.ui.common.profile.ProfileFragment
+import com.indri.vsmentproject.ui.staff.activity.AktivitasStaffFragment
 import com.indri.vsmentproject.ui.staff.dashboard.DashboardStaffFragment
 import com.indri.vsmentproject.ui.staff.task.TugasStaffFragment // Pastikan package ini sesuai
-import com.indri.vsmentproject.ui.staff.activity.AktivitasStaffFragment // Pastikan package ini sesuai
 import com.indri.vsmentproject.ui.staff.report.LaporanStaffFragment
 
 class StaffActivity : AppCompatActivity() {

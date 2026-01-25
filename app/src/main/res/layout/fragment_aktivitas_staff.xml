@@ -1,14 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.staff.activity.AktifitasStaffFragment">
+    android:background="#F8F9FA"
+    android:padding="16dp">
 
-    <!-- TODO: Update blank fragment layout -->
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Aktivitas"
+        android:textColor="#5E5E9E"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</FrameLayout>
+    <HorizontalScrollView
+        android:id="@+id/scrollFilterTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp">
+
+            <Button
+                android:id="@+id/btnSemuaWaktu"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Semua"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+
+            <Button
+                android:id="@+id/btnHariIni"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Hari Ini"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+
+            <Button
+                android:id="@+id/btnMingguIni"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Minggu Ini"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+
+            <Button
+                android:id="@+id/btnBulanIni"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Bulan Ini"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <HorizontalScrollView
+        android:id="@+id/scrollFilterType"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scrollFilterTime">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp">
+
+            <Button
+                android:id="@+id/btnSemuaJenis"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Semua Jenis"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+
+            <Button
+                android:id="@+id/btnTugas"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Tugas"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+
+            <Button
+                android:id="@+id/btnLaporan"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="45dp"
+                android:backgroundTint="@android:color/white"
+                android:text="Laporan"
+                android:textAllCaps="false"
+                android:textColor="#000000"
+                app:cornerRadius="25dp"
+                app:elevation="2dp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAktivitas"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scrollFilterType"
+        tools:listitem="@layout/item_aktivitas" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
