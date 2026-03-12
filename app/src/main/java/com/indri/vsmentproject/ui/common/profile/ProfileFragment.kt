@@ -36,7 +36,7 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel.getData()
 
-        // 1. Sinkronisasi Data User
+        // 1. Sinkronisasi Data User & Label
         viewModel.userData.observe(viewLifecycleOwner) { user ->
             with(binding) {
                 tvNamaUser.text = user.nama
@@ -47,24 +47,30 @@ class ProfileFragment : Fragment() {
                     transformations(CircleCropTransformation())
                 }
 
-                // Ubah Label Dinamis
+                // --- PERBAIKAN: Ubah Nama Label Sesuai Role ---
                 if (user.role == "staff") {
-                    tvLabelVilla.text = "Selesai"
-                    tvLabelStaff.text = "Proses"
-                    tvLabelLaporan.text = "Total"
+                    tvLabelVilla.text = "Tugas Beres"      // Menggantikan Total Villa
+                    tvLabelStaff.text = "Inisiatif Lapor"  // Menggantikan Total Staff
+                    tvLabelLaporan.text = "Sisa Tugas"    // Menggantikan Total Laporan
                 } else {
-                    tvLabelVilla.text = "Villa"
-                    tvLabelStaff.text = "Staff"
-                    tvLabelLaporan.text = "Pending"
+                    tvLabelVilla.text = "Total Villa"
+                    tvLabelStaff.text = "Total Staff"
+                    tvLabelLaporan.text = "Laporan Pending"
                 }
             }
         }
 
-        // 2. Sinkronisasi Statistik
+        // 2. Sinkronisasi Statistik (Angka)
         viewModel.summary.observe(viewLifecycleOwner) { stat ->
             with(binding) {
+                // Di sini kita tampilkan angkanya secara berurutan
+                // stat.totalVilla sekarang berisi "Tugas Beres" untuk Staff
                 tvCountVilla.text = stat.totalVilla.toString()
+
+                // stat.totalStaff sekarang berisi "Inisiatif Lapor" untuk Staff
                 tvCountStaff.text = stat.totalStaff.toString()
+
+                // stat.totalLaporanPending sekarang berisi "Sisa Tugas" untuk Staff
                 tvCountLaporan.text = stat.totalLaporanPending.toString()
             }
         }
@@ -73,8 +79,14 @@ class ProfileFragment : Fragment() {
         binding.btnEditFoto.setOnClickListener { galleryLauncher.launch("image/*") }
         binding.btnEditProfile.setOnClickListener { showEditDialog() }
         binding.btnLogout.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
-            activity?.finish()
+            AlertDialog.Builder(requireContext())
+                .setTitle("Logout")
+                .setMessage("Apakah Anda yakin ingin keluar?")
+                .setPositiveButton("Ya") { _, _ ->
+                    FirebaseAuth.getInstance().signOut()
+                    activity?.finish()
+                }
+                .setNegativeButton("Batal", null).show()
         }
     }
 
@@ -90,26 +102,32 @@ class ProfileFragment : Fragment() {
             .setTitle("Perbarui Profil")
             .setView(dialogBinding.root)
             .setPositiveButton("Simpan") { _, _ ->
-                viewModel.updateFullProfile(
-                    dialogBinding.etEditNama.text.toString(),
-                    dialogBinding.etEditTelp.text.toString(),
-                    dialogBinding.etEditEmail.text.toString()
-                ) { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                val newNama = dialogBinding.etEditNama.text.toString()
+                val newTelp = dialogBinding.etEditTelp.text.toString()
+                val newEmail = dialogBinding.etEditEmail.text.toString()
+
+                if (newNama.isNotEmpty() && newEmail.isNotEmpty()) {
+                    viewModel.updateFullProfile(newNama, newTelp, newEmail) { msg ->
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, "Nama dan Email tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                }
             }.setNegativeButton("Batal", null).show()
     }
 
     private fun uploadImage(uri: Uri) {
-        Toast.makeText(context, "Mengunggah...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Mengunggah foto...", Toast.LENGTH_SHORT).show()
         MediaManager.get().upload(uri).callback(object : UploadCallback {
             override fun onSuccess(requestId: String?, resultData: Map<*, *>?) {
                 val url = resultData?.get("secure_url").toString()
-                val user = viewModel.userData.value!!
+                val user = viewModel.userData.value ?: return
                 viewModel.updateFullProfile(user.nama, user.telepon, user.email, url) {
-                    Toast.makeText(context, "Foto berhasil diubah!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Foto profil diperbarui!", Toast.LENGTH_SHORT).show()
                 }
             }
             override fun onError(requestId: String?, error: ErrorInfo?) {
-                Toast.makeText(context, "Gagal: ${error?.description}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Upload gagal: ${error?.description}", Toast.LENGTH_SHORT).show()
             }
             override fun onStart(requestId: String?) {}
             override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
@@ -117,5 +135,8 @@ class ProfileFragment : Fragment() {
         }).dispatch()
     }
 
-    override fun onDestroyView() { super.onDestroyView(); _binding = null }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

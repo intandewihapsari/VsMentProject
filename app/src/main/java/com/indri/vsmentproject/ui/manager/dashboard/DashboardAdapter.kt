@@ -54,7 +54,10 @@ class DashboardAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
             is DashboardItem.NotifikasiUrgent -> {
-                (holder as NotifikasiUrgentViewHolder).bind(item.data)
+                // Ambil data pertama dari list jika tidak kosong
+                if (item.data.isNotEmpty()) {
+                    (holder as NotifikasiUrgentViewHolder).bind(item.data[0])
+                }
             }
             is DashboardItem.AnalisisCepat -> {
                 (holder as AnalisisCepatViewHolder).bind(item.data)

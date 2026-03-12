@@ -1,7 +1,11 @@
 package com.indri.vsmentproject.ui.staff.home
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.Date
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -9,7 +13,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.FragmentDashboardStaffBinding
@@ -22,6 +25,7 @@ class DashboardStaffFragment : Fragment() {
 
     private lateinit var rootRef: DatabaseReference
     private val listTugasHome = mutableListOf<TugasModel>()
+    private var staffId: String = ""
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentDashboardStaffBinding.inflate(inflater, container, false)
@@ -32,9 +36,11 @@ class DashboardStaffFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         rootRef = FirebaseDatabase.getInstance().reference
 
+        val sharedPref = activity?.getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+        staffId = sharedPref?.getString("staff_id", "") ?: ""
+
         setupRecyclerView()
 
-        // Gunakan Handler untuk menunda sedikit proses agar transisi Activity selesai dulu
         view.postDelayed({
             if (isAdded) {
                 loadDashboardData()
@@ -52,9 +58,6 @@ class DashboardStaffFragment : Fragment() {
     }
 
     private fun loadDashboardData() {
-        val sharedPref = activity?.getSharedPreferences("UserSession", Context.MODE_PRIVATE)
-        val staffId = sharedPref?.getString("staff_id", "") ?: ""
-
         if (staffId.isEmpty()) return
 
         rootRef.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
@@ -86,7 +89,7 @@ class DashboardStaffFragment : Fragment() {
                         binding?.rvTugasHome?.adapter = TugasChildAdapter(
                             sortedPending,
                             onDone = { t -> updateStatusTugas(t) },
-                            onReport = { /* Navigasi */ }
+                            onReport = { /* Navigasi report */ }
                         )
                     } catch (e: Exception) {
                         Log.e("DASHBOARD_ERROR", "Parsing error: ${e.message}")
@@ -97,24 +100,62 @@ class DashboardStaffFragment : Fragment() {
     }
 
     private fun loadJadwalPenting() {
-        rootRef.child(FirebaseConfig.PATH_NOTIFIKASI)
-            .limitToLast(1)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (_binding == null || !isAdded || !snapshot.exists()) return
+        if (staffId.isEmpty()) return
 
-                    val data = snapshot.children.firstOrNull()
-                    val notif = data?.getValue(NotifikasiModel::class.java)
-                    notif?.let {
-                        val jam = it.waktu.split(" ").lastOrNull() ?: "--:--"
-                        binding?.tvTime?.text = jam
-                        // Tambahkan binding judul/villa di sini
+        // 1. PASANG CLICK LISTENER DULU (Biar responsif)
+        binding?.cardJadwalPenting?.setOnClickListener {
+            val intent = Intent(requireContext(), JadwalPentingActivity::class.java)
+            startActivity(intent)
+        }
+
+        val query: Query = rootRef.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
+            .orderByChild("worker_id")
+            .equalTo(staffId)
+
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (_binding == null || !isAdded) return
+
+                val listTugasPending = mutableListOf<TugasModel>()
+                for (data in snapshot.children) {
+                    val tugas = data.getValue(TugasModel::class.java)
+                    if (tugas?.status == "pending") {
+                        listTugasPending.add(tugas!!)
                     }
                 }
-                override fun onCancelled(error: DatabaseError) {}
-            })
-    }
 
+                if (listTugasPending.isNotEmpty()) {
+                    // Cari yang paling urgent (High Priority & Deadline terdekat)
+                    val tugasUrgent = listTugasPending.sortedWith(
+                        compareByDescending<TugasModel> { it.prioritas == "High" }
+                            .thenByDescending { it.prioritas == "Medium" }
+                            .thenBy { it.deadline }
+                    ).first()
+
+                    // Tampilkan ke Card
+                    binding?.apply {
+                        tvJudulJadwal.text = tugasUrgent.tugas
+
+                        val rawDeadline = tugasUrgent.deadline ?: ""
+                        if (rawDeadline.contains(" ")) {
+                            val parts = rawDeadline.split(" ")
+                            tvTime.text = parts[1]
+                            tvDate.text = formatTgl(parts[0])
+                        } else {
+                            tvTime.text = "08:00"
+                            tvDate.text = formatTgl(rawDeadline)
+                        }
+                    }
+                } else {
+                    binding?.tvJudulJadwal?.text = "Semua tugas selesai! ✨"
+                    binding?.tvTime?.text = "--:--"
+                    binding?.tvDate?.text = "Justin hebat!"
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
     private fun updateStatUI(total: Int, selesai: Int, pending: Int) {
         binding?.let { b ->
             b.itemTotal.tvCount.text = total.toString()
@@ -124,11 +165,24 @@ class DashboardStaffFragment : Fragment() {
     }
 
     private fun updateStatusTugas(tugas: TugasModel) {
-        val updates = mapOf(
-            "status" to "selesai",
-            "completed_at" to System.currentTimeMillis()
-        )
+        val updates = mapOf("status" to "selesai", "completed_at" to System.currentTimeMillis())
         rootRef.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(tugas.id).updateChildren(updates)
+    }
+
+    private fun formatTgl(dateStr: String): String {
+        return try {
+            // Parser untuk membaca format dari Firebase (yyyy-MM-dd)
+            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+            // Formatter untuk mengubah ke tampilan cantik (Contoh: 25 Jan 2026)
+            val formatter = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
+
+            val date = parser.parse(dateStr)
+            if (date != null) formatter.format(date) else dateStr
+        } catch (e: Exception) {
+            // Jika format salah, kembalikan teks aslinya agar aplikasi tidak crash
+            dateStr
+        }
     }
 
     override fun onDestroyView() {
