@@ -16,12 +16,25 @@ class NotificationRepository {
         val liveData = MutableLiveData<Resource<List<NotifikasiModel>>>()
         liveData.postValue(Resource.Loading())
 
-        db.child(myUid).addValueEventListener(object : ValueEventListener {
+        // GUNAKAN QUERY FILTER: Cari yang user_id nya sesuai UID kita
+        val query = db.orderByChild("user_id").equalTo(myUid)
+
+        query.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val list = snapshot.children.mapNotNull { it.getValue(NotifikasiModel::class.java) }
-                // Urutkan dari yang terbaru
-                liveData.postValue(Resource.Success(list.reversed()))
+                val list = mutableListOf<NotifikasiModel>()
+                for (data in snapshot.children) {
+                    val notif = data.getValue(NotifikasiModel::class.java)
+                    notif?.let {
+                        // Jangan lupa copy ID-nya dari key Firebase (misal: NOTIF_J01)
+                        list.add(it.copy(id = data.key ?: ""))
+                    }
+                }
+
+                // Urutkan berdasarkan timestamp terbaru (karena reversed() aja gak cukup kalau ID-nya acak)
+                val sortedList = list.sortedByDescending { it.timestamp }
+                liveData.postValue(Resource.Success(sortedList))
             }
+
             override fun onCancelled(error: DatabaseError) {
                 liveData.postValue(Resource.Error(error.message))
             }

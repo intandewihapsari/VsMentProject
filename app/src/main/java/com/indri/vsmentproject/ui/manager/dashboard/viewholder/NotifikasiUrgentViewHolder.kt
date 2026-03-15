@@ -6,10 +6,14 @@ import com.indri.vsmentproject.databinding.ItemNotifikasiUrgentBinding
 
 class NotifikasiUrgentViewHolder(private val binding: ItemNotifikasiUrgentBinding) : RecyclerView.ViewHolder(binding.root) {
 
-    // Perbaiki parameter agar menerima satu objek model, bukan List (agar lebih efisien)
     fun bind(notif: NotifikasiModel) {
-        // Sesuaikan ID dengan XML yang Anda kirim (tvJudulJadwal dan tvTime)
-        binding.tvJudulJadwal.text = notif.judul ?: "Pemberitahuan Baru"
-        binding.tvTime.text = notif.pesan ?: "Cek detail kegiatan penting Anda"
+        // Kalau judul kosong di Firebase, tampilkan "Pemberitahuan"
+        binding.tvJudulJadwal.text = if (notif.judul.isNotEmpty()) notif.judul else "Pemberitahuan"
+
+        // Menampilkan pesan
+        binding.tvTime.text = notif.pesan
+
+        // Tips: Kalau mau nampilin waktu dari timestamp Long:
+        // binding.tvWaktu.text = DateUtils.getRelativeTimeSpanString(notif.timestamp)
     }
 }

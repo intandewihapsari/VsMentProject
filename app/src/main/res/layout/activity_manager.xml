@@ -5,30 +5,51 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient_home"
     tools:context=".ui.main.ManagerActivity">
 
-    <!-- Fragment Container -->
+    <RelativeLayout
+        android:id="@+id/layoutHeader"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvTitlePage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Home"
+            android:paddingTop="18dp"
+            android:textColor="@color/myBlueDark"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- Progress Banner -->
+
+        <ProgressBar
+            android:id="@+id/progressBarBanner"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="6dp"
+            android:indeterminate="false"
+            android:max="100"
+            android:progress="75"
+            android:progressTint="@color/myBlueDark"
+            android:backgroundTint="@color/myBlueLight"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="MissingConstraints" />
+    </RelativeLayout>
+
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toBottomOf="@id/layoutHeader"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation" />
-
-    <!-- Progress Banner -->
-    <ProgressBar
-        android:id="@+id/progressBarBanner"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="0dp"
-        android:layout_height="6dp"
-        android:indeterminate="false"
-        android:max="100"
-        android:progress="75"
-        android:progressTint="@color/myBlueDark"
-        android:backgroundTint="@color/myBlueLight"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:ignore="MissingConstraints" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

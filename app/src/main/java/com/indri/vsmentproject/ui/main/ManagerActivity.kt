@@ -54,6 +54,37 @@ class ManagerActivity : AppCompatActivity() {
                 else -> false
             }
         }
+        // Di dalam onCreate ManagerActivity
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_home -> {
+                    binding.tvTitlePage.text = "Home"
+                    replaceFragment(DashboardFragment())
+                    true
+                }
+                R.id.navigation_tugas -> {
+                    binding.tvTitlePage.text = "Tugas"
+                    replaceFragment(TugasFragment())
+                    true
+                }
+                R.id.navigation_laporan -> {
+                    binding.tvTitlePage.text = "Laporan"
+                    replaceFragment(LaporanFragment())
+                    true
+                }
+                R.id.navigation_data -> {
+                    binding.tvTitlePage.text = "Data Villa & Staff"
+                    replaceFragment(DataFragment())
+                    true
+                }
+                R.id.navigation_profile -> {
+                    binding.tvTitlePage.text = "Profile"
+                    replaceFragment(ProfileFragment())
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     // Fungsi bantu untuk ganti fragment (ID fragmentContainer TETAP SAMA)
