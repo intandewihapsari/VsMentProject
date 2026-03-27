@@ -11,6 +11,8 @@
         <item name="cornerSize">24dp</item>
     </style>
 
+
+
     <style name="CustomMaterialDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">#C2185B</item>
         <item name="colorOnSurface">#333333</item>
@@ -22,7 +24,8 @@
         <item name="colorPrimary">#C2185B</item>
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="android:statusBarColor">#C2185B</item>
-
+        <item name="colorContainer">@android:color/transparent</item>
+        <item name="colorControlHighlight">#20C63D54</item>
         <item name="materialAlertDialogTheme">@style/CustomMaterialDialog</item>
     </style>
 

@@ -34,28 +34,26 @@
                         android:id="@+id/imgAksen"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:src="@android:drawable/ic_dialog_info"
-                        app:tint="#C63D54" />
-
-                    <TextView
-                        android:id="@+id/tv_title_analisis"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="Analisis Cepat"
-                        android:textColor="#0E1724"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:src="@drawable/ic_custom_analisis" /> <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="Analisis Cepat"
+                    android:textColor="#0E1724"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
                 </LinearLayout>
 
                 <ImageView
                     android:id="@+id/btnRefresh"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_alignParentEnd="true"
-                    android:padding="8dp"
+                    android:layout_centerVertical="true"
+                    android:padding="10dp"
                     android:background="@drawable/circle_grey_light"
-                    android:src="@android:drawable/stat_notify_sync"
+                    android:src="@drawable/ic_refresh_modern"
+                    android:contentDescription="Refresh Data"
                     app:tint="#4A5568" />
             </RelativeLayout>
 
@@ -91,7 +89,7 @@
                             android:layout_width="30dp"
                             android:layout_height="30dp"
                             android:layout_gravity="center"
-                            android:src="@android:drawable/ic_menu_edit"
+                            android:src="@drawable/ic_task"
                             app:tint="#C63D54" />
                     </FrameLayout>
 
@@ -127,7 +125,7 @@
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@android:drawable/ic_dialog_alert"
+                            android:src="@drawable/ic_siren"
                             app:tint="#1E4E8C" />
 
                         <LinearLayout
@@ -166,7 +164,7 @@
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:src="@android:drawable/ic_delete"
+                            android:src="@drawable/ic_fragile"
                             app:tint="#C63D54" />
 
                         <LinearLayout
