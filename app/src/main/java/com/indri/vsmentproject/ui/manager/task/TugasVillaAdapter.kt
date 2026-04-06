@@ -1,9 +1,19 @@
 package com.indri.vsmentproject.ui.manager.task
 
-import android.view.*
+import android.graphics.Color
+import android.graphics.Typeface
+import android.util.TypedValue
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.data.model.task.*
-import com.indri.vsmentproject.databinding.*
+import com.bumptech.glide.Glide
+import com.indri.vsmentproject.data.model.task.TugasModel
+import com.indri.vsmentproject.data.model.task.VillaTugasGroup
+import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
+import com.indri.vsmentproject.databinding.ItemVillaGroupBinding
+import java.text.SimpleDateFormat
+import java.util.*
 
 class TugasVillaAdapter(
     private val onItemClick: (TugasModel) -> Unit,
@@ -23,27 +33,45 @@ class TugasVillaAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val group = items[position]
-        holder.binding.tvNamaVilla.text = group.namaVilla // Sekarang berisi Nama Asli Villa
+        val group = items[position] // Group Waktu (Hari Ini, Besok, dll)
+
+        holder.binding.tvNamaVilla.text = group.namaVilla
+        holder.binding.tvNamaVilla.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
         holder.binding.containerTugasVilla.removeAllViews()
 
         val inflater = LayoutInflater.from(holder.binding.root.context)
 
-        group.listTugas.forEach { tugas ->
-            val itemBinding = ItemTugasPendingListBinding.inflate(inflater, holder.binding.containerTugasVilla, false)
+        // Kelompokkan lagi berdasarkan Nama Villa di dalam hari tersebut
+        val tugasPerVilla = group.listTugas.groupBy { it.villa_nama }
 
-            // Detail Sangat Jelas
-            itemBinding.tvNamaTugas.text = "[${tugas.ruangan}] ${tugas.tugas}"
-            itemBinding.tvStatus.text = "Status: ${tugas.status.uppercase()}"
-            itemBinding.tvPIC.text = "Staff: ${tugas.worker_name} | Prioritas: ${tugas.prioritas}"
-
-            itemBinding.root.setOnClickListener { onItemClick(tugas) }
-            itemBinding.root.setOnLongClickListener {
-                onItemLongClick(tugas)
-                true
+        tugasPerVilla.forEach { (namaVilla, tasks) ->
+            // Tambahkan Sub-Header Nama Villa
+            val tvSubVilla = TextView(holder.binding.root.context).apply {
+                text = namaVilla
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                setPadding(0, 20, 0, 8)
+                setTextColor(Color.BLACK)
+                setTypeface(null, Typeface.BOLD)
             }
+            holder.binding.containerTugasVilla.addView(tvSubVilla)
 
-            holder.binding.containerTugasVilla.addView(itemBinding.root)
+            // Tambahkan List Tugas
+            tasks.forEach { tugas ->
+                val itemBinding = ItemTugasPendingListBinding.inflate(inflater, holder.binding.containerTugasVilla, false)
+
+                itemBinding.tvNamaTugas.text = "[${tugas.ruangan}] ${tugas.tugas}"
+                itemBinding.tvPIC.text = "Staff: ${tugas.worker_name}"
+
+                // LOAD FOTO STAFF DISINI
+
+                itemBinding.root.setOnClickListener { onItemClick(tugas) }
+                itemBinding.root.setOnLongClickListener {
+                    onItemLongClick(tugas)
+                    true
+                }
+
+                holder.binding.containerTugasVilla.addView(itemBinding.root)
+            }
         }
     }
 

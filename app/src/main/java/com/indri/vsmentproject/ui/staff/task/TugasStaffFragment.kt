@@ -2,12 +2,12 @@ package com.indri.vsmentproject.ui.staff.task
 
 import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,12 +17,12 @@ import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.FragmentTugasStaffBinding
+import com.indri.vsmentproject.ui.staff.report.LaporanStaffFragment
 
 class TugasStaffFragment : Fragment() {
 
     private var _binding: FragmentTugasStaffBinding? = null
-    // Gunakan backing property yang aman
-    private val binding get() = _binding
+    private val binding get() = _binding!!
 
     private lateinit var villaAdapter: VillaTugasAdapter
     private lateinit var dbRef: DatabaseReference
@@ -30,9 +30,9 @@ class TugasStaffFragment : Fragment() {
     private var listTugasFull = mutableListOf<TugasModel>()
     private var currentFilter = "Seluruh Tugas"
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTugasStaffBinding.inflate(inflater, container, false)
-        return binding?.root
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,50 +51,21 @@ class TugasStaffFragment : Fragment() {
             onDoneClick = { tugas -> updateStatusTugas(tugas) },
             onReportClick = { tugas -> goToLaporanKerusakan(tugas) }
         )
-        binding?.rvVillaTugas?.apply {
+        binding.rvVillaTugas.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = villaAdapter
         }
     }
 
-    private fun setupSearchBar() {
-        binding?.etSearch?.addTextChangedListener { text ->
-            filterData(text.toString(), currentFilter)
-        }
-    }
-
-    private fun setupFilterTabs() {
-        // Gunakan binding? agar aman
-        binding?.let { b ->
-            val tabs = listOf(b.tabAll, b.tabPending, b.tabSelesai)
-            tabs.forEach { tab ->
-                tab.setOnClickListener {
-                    tabs.forEach {
-                        it.setBackgroundResource(0)
-                        it.setTypeface(null, Typeface.NORMAL)
-                    }
-
-                    tab.setBackgroundColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.myWhite))
-                    tab.setTypeface(null, Typeface.BOLD)
-
-                    currentFilter = (it as TextView).text.toString()
-                    filterData(b.etSearch.text.toString(), currentFilter)
-                }
-            }
-        }
-    }
-
     private fun loadTugasFromFirebase() {
-        val sharedPref = requireActivity().getSharedPreferences("UserSession", android.content.Context.MODE_PRIVATE)
-        val currentStaffId = sharedPref.getString("staff_id", "") ?: ""
+        val sharedPref = requireActivity().getSharedPreferences("UserSession", 0)
+        val staffId = sharedPref.getString("staff_id", "") ?: ""
 
-        if (currentStaffId.isNotEmpty()) {
-            dbRef.orderByChild("worker_id").equalTo(currentStaffId)
+        if (staffId.isNotEmpty()) {
+            dbRef.orderByChild("worker_id").equalTo(staffId)
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        // CEK NULL DISINI (Penting!)
                         if (_binding == null) return
-
                         listTugasFull.clear()
                         for (data in snapshot.children) {
                             val tugas = data.getValue(TugasModel::class.java)
@@ -103,13 +74,9 @@ class TugasStaffFragment : Fragment() {
                                 listTugasFull.add(it)
                             }
                         }
-                        // Gunakan safe call binding?.etSearch
-                        filterData(binding?.etSearch?.text.toString(), currentFilter)
+                        filterData(binding.etSearch.text.toString(), currentFilter)
                     }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        Log.e("Firebase", error.message)
-                    }
+                    override fun onCancelled(error: DatabaseError) {}
                 })
         }
     }
@@ -142,28 +109,48 @@ class TugasStaffFragment : Fragment() {
 
     private fun updateStatusTugas(tugas: TugasModel) {
         val newStatus = if (tugas.status == "selesai") "pending" else "selesai"
-
-        // Gunakan map untuk update beberapa field sekaligus
         val updates = HashMap<String, Any>()
         updates["status"] = newStatus
-
-        // Jika dicentang selesai, catat waktu selesainya sekarang
-        if (newStatus == "selesai") {
-            updates["completed_at"] = System.currentTimeMillis()
-        } else {
-            updates["completed_at"] = 0L // Reset jika dikembalikan ke pending
-        }
+        updates["completed_at"] = if (newStatus == "selesai") System.currentTimeMillis() else 0L
 
         dbRef.child(tugas.id).updateChildren(updates)
-            .addOnFailureListener {
-                if (_binding != null) {
-                    Toast.makeText(context, "Gagal update status", Toast.LENGTH_SHORT).show()
-                }
-            }
     }
 
     private fun goToLaporanKerusakan(tugas: TugasModel) {
-        Toast.makeText(context, "Melaporkan: ${tugas.tugas}", Toast.LENGTH_SHORT).show()
+        val fragment = LaporanStaffFragment()
+        val bundle = Bundle().apply {
+            putString("VILLA_NAMA", tugas.villa_nama)
+            putString("RUANGAN_NAMA", tugas.ruangan)
+            putString("BARANG_NAMA", tugas.tugas)
+        }
+        fragment.arguments = bundle
+
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun setupFilterTabs() {
+        val tabs = listOf(binding.tabAll, binding.tabPending, binding.tabSelesai)
+        tabs.forEach { tab ->
+            tab.setOnClickListener {
+                tabs.forEach {
+                    it.setBackgroundResource(0)
+                    it.setTypeface(null, Typeface.NORMAL)
+                }
+                tab.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.myWhite))
+                tab.setTypeface(null, Typeface.BOLD)
+                currentFilter = tab.text.toString()
+                filterData(binding.etSearch.text.toString(), currentFilter)
+            }
+        }
+    }
+
+    private fun setupSearchBar() {
+        binding.etSearch.addTextChangedListener { text ->
+            filterData(text.toString(), currentFilter)
+        }
     }
 
     override fun onDestroyView() {

@@ -20,4 +20,5 @@ data class TugasModel(
     val created_at: Long = System.currentTimeMillis(),
     val status: String = "pending",
     val completed_at: Long = 0L, // Tambahkan field ini
+    val worker_photo: String = "" // Tambahkan ini untuk URL foto
 ) : Parcelable

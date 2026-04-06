@@ -100,15 +100,14 @@
                         android:layout_marginTop="8dp"
                         android:text="0% Tugas"
                         android:textColor="#1A202C"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:textSize="15sp" />
                 </LinearLayout>
 
                 <View
                     android:id="@+id/dividerVertical"
                     android:layout_width="1.5dp"
                     android:layout_height="100dp"
-                    android:background="#E2E8F0" />
+                    android:background="@color/myRedDark" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -123,8 +122,8 @@
                         android:gravity="center_vertical">
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
                             android:src="@drawable/ic_siren"
                             app:tint="#1E4E8C" />
 
@@ -154,7 +153,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="12dp"
-                        android:background="#E2E8F0" />
+                        android:background="@color/myRedDark" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -162,8 +161,8 @@
                         android:gravity="center_vertical">
 
                         <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
                             android:src="@drawable/ic_fragile"
                             app:tint="#C63D54" />
 

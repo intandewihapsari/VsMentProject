@@ -1,60 +1,174 @@
 package com.indri.vsmentproject.ui.staff.report
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.indri.vsmentproject.R
+import android.widget.ArrayAdapter
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.fragment.app.Fragment
+import com.google.firebase.database.*
+import com.indri.vsmentproject.data.model.report.LaporanModel
+import com.indri.vsmentproject.data.utils.CloudinaryHelper
+import com.indri.vsmentproject.data.utils.FirebaseConfig
+import com.indri.vsmentproject.data.utils.Resource
+import com.indri.vsmentproject.databinding.FragmentLaporanStaffBinding
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [LaporanStaffFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class LaporanStaffFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    private var _binding: FragmentLaporanStaffBinding? = null
+    private val binding get() = _binding!!
+    private var currentPhotoUri: Uri? = null
+    private val villaNames = mutableListOf<String>()
+    private val villaIds = mutableListOf<String>()
+
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) startCameraFlow() else Toast.makeText(context, "Izin Kamera Ditolak", Toast.LENGTH_SHORT).show()
+    }
+
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) currentPhotoUri?.let { showForm(it) }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentLaporanStaffBinding.inflate(inflater, container, false)
+        CloudinaryHelper.init(requireContext())
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupVillaDropdown()
+        setupStatusDropdown()
+        checkIncomingArguments()
+
+        binding.ivPreviewForm.setOnClickListener { checkCameraPermission() }
+        binding.btnLaporkan.setOnClickListener { validateAndUpload() }
+
+        checkCameraPermission()
+    }
+
+    private fun checkIncomingArguments() {
         arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+            binding.actvVilla.setText(it.getString("VILLA_NAMA"), false)
+            binding.actvLokasi.setText(it.getString("RUANGAN_NAMA"), false)
+            binding.actvLokasi.isEnabled = true
+            binding.etNamaBarang.setText(it.getString("BARANG_NAMA"))
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_laporan_staff, container, false)
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCameraFlow()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment LaporanStaffFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            LaporanStaffFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun startCameraFlow() {
+        binding.layoutForm.visibility = View.GONE
+        binding.layoutCamera.visibility = View.VISIBLE
+        val photoFile = File.createTempFile("IMG_LAPOR_", ".jpg", requireContext().cacheDir)
+        currentPhotoUri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", photoFile)
+        cameraLauncher.launch(currentPhotoUri)
+    }
+
+    private fun showForm(uri: Uri) {
+        binding.layoutCamera.visibility = View.GONE
+        binding.layoutForm.visibility = View.VISIBLE
+        binding.ivPreviewForm.setImageURI(uri)
+    }
+
+    private fun setupVillaDropdown() {
+        val dbVillas = FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_VILLAS)
+        dbVillas.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                villaNames.clear()
+                villaIds.clear()
+                for (ds in snapshot.children) {
+                    villaNames.add(ds.child("nama").value.toString())
+                    villaIds.add(ds.key ?: "")
                 }
+                binding.actvVilla.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, villaNames))
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+
+        binding.actvVilla.setOnItemClickListener { _, _, position, _ ->
+            fetchAreas(villaIds[position])
+        }
+    }
+
+    private fun fetchAreas(villaId: String) {
+        binding.actvLokasi.setText("")
+        FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_VILLAS).child(villaId).child("areas")
+            .get().addOnSuccessListener { snapshot ->
+                val areas = snapshot.children.map { it.value.toString() }
+                binding.actvLokasi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, areas))
+                binding.actvLokasi.isEnabled = true
             }
     }
+
+    private fun setupStatusDropdown() {
+        binding.actvKondisi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, arrayOf("Low", "Normal", "Urgent")))
+        binding.actvKondisi.setText("Normal", false)
+    }
+
+    private fun validateAndUpload() {
+        if (binding.etNamaBarang.text.isEmpty() || currentPhotoUri == null) {
+            Toast.makeText(context, "Mohon lengkapi data!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        binding.btnLaporkan.isEnabled = false
+        binding.progressBar.visibility = View.VISIBLE
+
+        CloudinaryHelper.uploadImage(currentPhotoUri!!, "laporan") { res ->
+            if (res is Resource.Success) {
+                saveToFirebase(res.data?.secure_url ?: "")
+            } else if (res is Resource.Error) {
+                binding.btnLaporkan.isEnabled = true
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(context, res.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun saveToFirebase(url: String) {
+        val db = FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+        val id = db.push().key ?: ""
+        val pref = requireActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+
+        val laporan = LaporanModel(
+            id = id,
+            villa_nama = binding.actvVilla.text.toString(),
+            area = binding.actvLokasi.text.toString(),
+            staff_id = pref.getString("staff_id", "") ?: "",
+            staff_nama = pref.getString("nama", "Staff") ?: "",
+            nama_barang = binding.etNamaBarang.text.toString(),
+            prioritas = binding.actvKondisi.text.toString(),
+            foto_url = url,
+            waktu_lapor = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+        )
+
+        db.child(id).setValue(laporan).addOnCompleteListener {
+            if (it.isSuccessful) {
+                Toast.makeText(context, "Laporan Berhasil!", Toast.LENGTH_SHORT).show()
+                parentFragmentManager.popBackStack()
+            }
+        }
+    }
+
+    override fun onDestroyView() { super.onDestroyView(); _binding = null }
 }

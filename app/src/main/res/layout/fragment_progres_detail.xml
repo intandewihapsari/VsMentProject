@@ -8,8 +8,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:background="@color/myWhite">
+        android:padding="16dp">
 
         <ImageButton
             android:id="@+id/btnBack"

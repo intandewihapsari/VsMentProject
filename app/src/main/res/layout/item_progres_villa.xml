@@ -7,7 +7,8 @@
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
     app:cardCornerRadius="24dp"
-    app:cardElevation="2dp">
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/myWhite">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,82 +19,120 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <TextView
                 android:id="@+id/tvNamaVilla"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toStartOf="@id/ivStaffProfile"
+                android:layout_alignParentStart="true"
+                android:layout_marginEnd="12dp"
                 android:text="Nama Villa"
                 android:textColor="#333333"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-            <ImageView
-                android:layout_width="80dp"
-                android:layout_height="30dp"
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivStaffProfile"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:layout_alignParentEnd="true"
-                android:src="@drawable/ic_launcher_background" />
+                android:layout_centerVertical="true"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_report_image"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
+                app:strokeColor="#F0F0F0"
+                app:strokeWidth="1dp" />
         </RelativeLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal">
-            <TextView
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#E8F5E9"
+                app:cardCornerRadius="6dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"> <TextView
                 android:id="@+id/tvSelesaiCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@color/myGreenLight"
-                android:paddingHorizontal="8dp"
-                android:text="Selesai : 3"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Selesai : 0"
                 android:textColor="#2E7D32"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/tvPendingCount"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:background="@color/myRedLight"
-                android:paddingHorizontal="8dp"
-                android:text="Pending : 1"
+                app:cardBackgroundColor="#FCE4EC"
+                app:cardCornerRadius="6dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"> <TextView
+                android:id="@+id/tvPendingCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Pending : 0"
                 android:textColor="#C2185B"
-                android:textSize="12sp" />
+                android:textSize="11sp"
+                android:textStyle="bold" />
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
             <ProgressBar
                 android:id="@+id/pbProgres"
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="12dp"
-                android:layout_toStartOf="@id/layoutPersen"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="16dp"
-                android:progress="75"
+                android:layout_width="0dp"
+                android:layout_height="10dp"
+                android:layout_weight="1"
+                android:progress="0"
                 android:progressDrawable="@drawable/custom_proges_bar" />
+
             <LinearLayout
                 android:id="@+id/layoutPersen"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
+                android:layout_marginStart="16dp"
                 android:gravity="center"
                 android:orientation="vertical">
+
                 <TextView
                     android:id="@+id/tvPersen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="75%"
+                    android:text="0%"
                     android:textColor="#333333"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
+                    android:includeFontPadding="false"
                     android:textStyle="bold" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Progres"
-                    android:textSize="11sp" />
+                    android:textSize="10sp"
+                    android:layout_marginTop="-2dp"
+                    android:textColor="#999999" />
             </LinearLayout>
-        </RelativeLayout>
+        </LinearLayout>
+
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

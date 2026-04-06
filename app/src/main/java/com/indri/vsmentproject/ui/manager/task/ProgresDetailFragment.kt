@@ -24,16 +24,17 @@ class ProgresDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup RecyclerView
         progresAdapter = ProgresVillaAdapter()
         binding.rvProgresDetail.apply {
             adapter = progresAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        // Ambil data grouped dari ViewModel
-        viewModel.getTugasGroupedByVilla()
-        viewModel.tugasGrouped.observe(viewLifecycleOwner) { groups ->
+        // GANTI KE FUNGSI BARU
+        viewModel.getTugasGroupedByVillaMurni()
+
+        // OBSERVE LIVEDATA YANG BARU
+        viewModel.progresPerVilla.observe(viewLifecycleOwner) { groups ->
             if (groups != null) {
                 progresAdapter.setList(groups)
             }

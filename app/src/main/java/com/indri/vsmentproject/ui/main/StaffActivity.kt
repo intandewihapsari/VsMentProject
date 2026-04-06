@@ -81,8 +81,16 @@ class StaffActivity : AppCompatActivity() {
     private fun setupFab() {
         // Aksi Tombol Lonceng (FAB Alert)
         binding.fabAlert.setOnClickListener {
-            // Contoh aksi darurat
-            Toast.makeText(this, "Emergency Alert Dikirim ke Manager!", Toast.LENGTH_SHORT).show()
+            // 1. Jalankan fragment transaksi
+            val fragment = LaporanStaffFragment()
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment) // Ganti R.id.fragment_container dengan ID FrameLayout di layout activity-mu
+                .addToBackStack(null) // Agar saat tekan 'Back' tidak langsung keluar aplikasi
+                .commit()
+
+            // 2. Notifikasi tambahan (Opsional)
+            Toast.makeText(this, "Membuka Menu Laporan...", Toast.LENGTH_SHORT).show()
         }
     }
 
