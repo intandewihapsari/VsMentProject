@@ -5,75 +5,68 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient_home"
     tools:context=".ui.main.StaffActivity">
 
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="60dp" />
-
-    <ProgressBar
-        android:id="@+id/progressBarBanner"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="6dp"
-        android:progress="75"
-        android:progressTint="#2196F3"
-        app:layout_anchor="@id/bottom_navigation"
-        app:layout_anchorGravity="top" />
+        android:layout_marginBottom="85dp" />
 
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottomAppBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="80dp"
         android:layout_gravity="bottom"
-        app:fabAlignmentMode="center"
-        app:fabCradleMargin="10dp"
-        app:fabCradleRoundedCornerRadius="20dp"
-        app:fabCradleVerticalOffset="10dp">
+        app:backgroundTint="#FFFFFF"
+        app:fabCradleMargin="12dp"
+        app:fabCradleRoundedCornerRadius="16dp"
+        app:fabCradleVerticalOffset="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetEnd="0dp">
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:background="@android:color/transparent"
-            app:elevation="0dp"
+            android:background="@color/myWhite"
+            app:elevation="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:menu="@menu/bottom_nav_menu_staff"
             app:labelVisibilityMode="labeled"
-            app:menu="@menu/bottom_nav_menu_staff" />
+            app:itemRippleColor="@null"
+            app:itemIconTint="@color/nav_item_color"
+            app:itemTextColor="@color/nav_item_color"
+            app:itemActiveIndicatorStyle="@null" />
 
     </com.google.android.material.bottomappbar.BottomAppBar>
 
     <FrameLayout
-        android:id="@+id/containerSiren"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clipChildren="false"
-        android:clipToPadding="false"
         app:layout_anchor="@id/bottomAppBar"
-        app:layout_anchorGravity="center_horizontal">
+        app:layout_anchorGravity="top|center_horizontal"
+        android:layout_marginBottom="20dp">
 
+        <View
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_siren_ring" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabAlert"
+            android:id="@+id/fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
-            android:background="@drawable/bg_fab_siren"
-            app:backgroundTint="@null"
-
+            android:layout_gravity="center"
             android:src="@drawable/ic_siren"
+            app:backgroundTint="#D81B60"
             app:tint="#FFFFFF"
-            app:maxImageSize="32dp"
-
-            app:elevation="0dp"
-            app:pressedTranslationZ="0dp"
+            app:maxImageSize="34dp"
+            app:elevation="12dp"
             app:borderWidth="0dp"
-
-            app:layout_anchor="@id/bottomAppBar"
-            app:layout_anchorGravity="center_horizontal" />
-
+            app:fabSize="normal" />
     </FrameLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

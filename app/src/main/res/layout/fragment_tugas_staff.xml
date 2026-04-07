@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:background="#FDF2F5"> <androidx.cardview.widget.CardView
+    >
+    <androidx.cardview.widget.CardView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="20dp"
@@ -23,46 +24,66 @@
         android:textSize="14sp" />
 </androidx.cardview.widget.CardView>
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardFilter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:weightSum="3">
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        app:cardBackgroundColor="#FCE4EC"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="0dp">
 
-        <TextView
-            android:id="@+id/tabAll"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:background="@color/myWhite"
-            android:gravity="center"
-            android:text="Seluruh Tugas"
-            android:textColor="#E91E63"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleGroupFilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            app:checkedButton="@+id/tabAll"
+            app:selectionRequired="true"
+            app:singleSelection="true">
 
-        <TextView
-            android:id="@+id/tabPending"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Pending"
-            android:textColor="#E91E63"
-            android:textSize="12sp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabAll"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Seluruh Tugas"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textColor="#E91E63"
+                app:backgroundTint="@color/selector_filter_tab"
+                app:cornerRadius="12dp" />
 
-        <TextView
-            android:id="@+id/tabSelesai"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Selesai"
-            android:textColor="#E91E63"
-            android:textSize="12sp" />
-    </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabPending"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pending"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textColor="#E91E63"
+                app:backgroundTint="@color/selector_filter_tab"
+                app:cornerRadius="12dp" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabSelesai"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Selesai"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textColor="#E91E63"
+                app:backgroundTint="@color/selector_filter_tab"
+                app:cornerRadius="12dp" />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+    </com.google.android.material.card.MaterialCardView>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvVillaTugas"
         android:layout_width="match_parent"

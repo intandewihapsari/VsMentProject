@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.ActivityStaffBinding
 import com.indri.vsmentproject.ui.common.profile.ProfileFragment
@@ -28,6 +30,10 @@ class StaffActivity : AppCompatActivity() {
         // 2. Inisialisasi Binding
         binding = ActivityStaffBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val navView: BottomNavigationView = findViewById(R.id.bottom_navigation)
+
+// Paksa sistem untuk menggunakan selector dari XML kita
+        navView.itemIconTintList = ContextCompat.getColorStateList(this, R.color.nav_item_color)
 
         // 3. Setup Window Insets (Padding System Bar)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -80,7 +86,7 @@ class StaffActivity : AppCompatActivity() {
 
     private fun setupFab() {
         // Aksi Tombol Lonceng (FAB Alert)
-        binding.fabAlert.setOnClickListener {
+        binding.fab.setOnClickListener {
             // 1. Jalankan fragment transaksi
             val fragment = LaporanStaffFragment()
 
