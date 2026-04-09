@@ -112,7 +112,7 @@ class LaporanStaffFragment : Fragment() {
 
     private fun fetchAreas(villaId: String) {
         binding.actvLokasi.setText("")
-        FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_VILLAS).child(villaId).child("areas")
+        FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_VILLAS).child(villaId).child("area")
             .get().addOnSuccessListener { snapshot ->
                 val areas = snapshot.children.map { it.value.toString() }
                 binding.actvLokasi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, areas))
@@ -121,8 +121,8 @@ class LaporanStaffFragment : Fragment() {
     }
 
     private fun setupStatusDropdown() {
-        binding.actvKondisi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, arrayOf("Low", "Normal", "Urgent")))
-        binding.actvKondisi.setText("Normal", false)
+        binding.actvKondisi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, arrayOf("Habis", "Rusak", "Hilang")))
+        binding.actvKondisi.setText("Rusak", false)
     }
 
     private fun validateAndUpload() {
@@ -144,31 +144,63 @@ class LaporanStaffFragment : Fragment() {
             }
         }
     }
+    private fun generateReportId(callback: (String) -> Unit) {
+        val db = FirebaseDatabase.getInstance()
+            .getReference(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
 
-    private fun saveToFirebase(url: String) {
-        val db = FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
-        val id = db.push().key ?: ""
-        val pref = requireActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE)
-
-        val laporan = LaporanModel(
-            id = id,
-            villa_nama = binding.actvVilla.text.toString(),
-            area = binding.actvLokasi.text.toString(),
-            staff_id = pref.getString("staff_id", "") ?: "",
-            staff_nama = pref.getString("nama", "Staff") ?: "",
-            nama_barang = binding.etNamaBarang.text.toString(),
-            prioritas = binding.actvKondisi.text.toString(),
-            foto_url = url,
-            waktu_lapor = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
-        )
-
-        db.child(id).setValue(laporan).addOnCompleteListener {
-            if (it.isSuccessful) {
-                Toast.makeText(context, "Laporan Berhasil!", Toast.LENGTH_SHORT).show()
-                parentFragmentManager.popBackStack()
-            }
+        db.get().addOnSuccessListener { snapshot ->
+            val count = snapshot.childrenCount.toInt() + 1
+            val newId = "REP_" + String.format("%03d", count)
+            callback(newId)
         }
     }
 
+    private fun saveToFirebase(url: String) {
+        val db = FirebaseDatabase.getInstance()
+            .getReference(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+
+        val pref = requireActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+
+        val newRef = db.push() // ✅ ini key asli firebase
+        val firebaseKey = newRef.key ?: return
+
+        // 🔥 ambil index villa
+        val selectedVillaIndex = villaNames.indexOf(binding.actvVilla.text.toString())
+        val selectedVillaId = if (selectedVillaIndex != -1) villaIds[selectedVillaIndex] else ""
+
+        val laporan = LaporanModel(
+            id = firebaseKey, // tetap pakai ini biar aman
+
+            villa_id = selectedVillaId,
+            villa_nama = binding.actvVilla.text.toString(),
+            area = binding.actvLokasi.text.toString(),
+
+            staff_id = pref.getString("staff_id", "") ?: "",
+            staff_nama = pref.getString("nama", "Staff") ?: "",
+
+            tipe_laporan = binding.actvKondisi.text.toString(),
+            nama_barang = binding.etNamaBarang.text.toString(),
+            deskripsi = binding.etDeskripsi.text.toString(),
+
+            foto_url = url,
+            status = "pending",
+            catatan_manager = "",
+
+            waktu_lapor = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
+            waktu_selesai = ""
+        )
+
+        newRef.setValue(laporan).addOnCompleteListener {
+            binding.btnLaporkan.isEnabled = true
+            binding.progressBar.visibility = View.GONE
+
+            if (it.isSuccessful) {
+                Toast.makeText(context, "Laporan Berhasil!", Toast.LENGTH_SHORT).show()
+                parentFragmentManager.popBackStack()
+            } else {
+                Toast.makeText(context, "Gagal kirim laporan", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     override fun onDestroyView() { super.onDestroyView(); _binding = null }
 }

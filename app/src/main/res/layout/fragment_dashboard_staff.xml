@@ -81,21 +81,21 @@
 
                         <include
                             android:id="@+id/itemTotal"
-                            layout="@layout/item_stat_home"
+                            layout="@layout/item_stat_home_sum"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginEnd="8dp" />
                         <include
                             android:id="@+id/itemDone"
-                            layout="@layout/item_stat_home_filled"
+                            layout="@layout/item_stat_home_pending"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginEnd="8dp" />
                         <include
                             android:id="@+id/itemPending"
-                            layout="@layout/item_stat_home"
+                            layout="@layout/item_stat_home_finish"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />

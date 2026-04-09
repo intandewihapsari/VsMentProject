@@ -35,7 +35,10 @@
                 android:scaleType="centerCrop"
                 android:background="#F0F0F0" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nama Barang" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nama Barang" />
             <EditText android:id="@+id/etNamaBarang" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Masukkan Barang" />
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Jumlah Barang" />
@@ -66,6 +69,14 @@
                 android:hint="Pilih Kondisi Barang">
                 <AutoCompleteTextView android:id="@+id/actvKondisi" android:layout_width="match_parent" android:layout_height="wrap_content" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <EditText
+                android:id="@+id/etDeskripsi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Deskripsi kerusakan"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"/>
 
             <Button
                 android:id="@+id/btnLaporkan"

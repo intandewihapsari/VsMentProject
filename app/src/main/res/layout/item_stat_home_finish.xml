@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_margin="6dp"
     app:cardCornerRadius="16dp"
-    app:cardBackgroundColor="#D84361"
+    app:cardBackgroundColor="@color/myGreenDark"
     app:cardElevation="4dp"
     app:strokeWidth="0dp">
 
@@ -21,8 +21,8 @@
             android:id="@+id/tvCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="19"
-            android:textColor="@color/myWhite"
+            android:text="7"
+            android:textColor="@color/myGreen"
             android:textSize="32sp"
             android:textStyle="bold" />
 
@@ -31,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tugas Selesai"
-            android:textColor="@color/myWhite"
+            android:textColor="@color/myGreen"
             android:textSize="10sp"
             android:alpha="0.9" />
 

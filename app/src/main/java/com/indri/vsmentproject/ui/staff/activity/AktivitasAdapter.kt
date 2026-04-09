@@ -41,12 +41,11 @@ class AktivitasAdapter(private var list: List<Any>) : RecyclerView.Adapter<Aktiv
                     viewIndicator.setBackgroundColor(Color.parseColor(color))
                     tvLabel.text = "Laporan ${item.tipe_laporan.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}"
                     tvLabel.setTextColor(Color.parseColor(color))
-                    tvDesc.text = "${item.nama_barang}: ${item.keterangan}"
+                    tvDesc.text = "${item.nama_barang} ${item.deskripsi}"
                     tvLocation.text = "Area: ${item.area}, ${item.villa_nama}"
 
                     // Laporan biasanya sudah String (yyyy-MM-dd HH:mm), tampilkan langsung
-                    tvDateTime.text = item.waktu_lapor
-
+                    tvDateTime.text = formatWaktuLapor(item.waktu_lapor)
                     tvDateTime.setTextColor(Color.parseColor(color))
                 }
             }
@@ -65,6 +64,20 @@ class AktivitasAdapter(private var list: List<Any>) : RecyclerView.Adapter<Aktiv
             // Menggunakan Locale Indonesia agar nama hari dalam Bahasa Indonesia
             val sdf = SimpleDateFormat("HH.mm | EEEE, d MMM", Locale("id", "ID"))
             sdf.format(date)
+        } catch (e: Exception) {
+            "-"
+        }
+    }
+    private fun formatWaktuLapor(waktu: String): String {
+        return try {
+            // format dari Firebase
+            val parser = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+
+            // format yang kamu mau
+            val formatter = SimpleDateFormat("HH.mm | EEEE, d MMM", Locale("id", "ID"))
+
+            val date = parser.parse(waktu)
+            if (date != null) formatter.format(date) else "-"
         } catch (e: Exception) {
             "-"
         }

@@ -17,7 +17,7 @@ data class LaporanModel(
     // Konten Laporan
     val tipe_laporan: String = "",    // "kerusakan" atau "stok_habis"
     val nama_barang: String = "",
-    val keterangan: String = "",
+    val deskripsi: String = "",
     val prioritas: String = "Normal", // "Low", "Normal", "Urgent"
 
     // Bukti Visual (Cloudinary)
