@@ -1,14 +1,14 @@
 package com.indri.vsmentproject.ui.manager.task
 
-import android.graphics.Color
+import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemProgresVillaBinding
-
 class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>() {
 
     private var items = listOf<VillaTugasGroup>()
@@ -40,52 +40,64 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
             binding.apply {
 
                 // 🏠 Nama Villa
-                tvNamaVilla.text = group.namaVilla.ifEmpty { "-" }
+                tvNamaVilla.text = group.namaVilla
 
-                // 🔥 HITUNG REALTIME DARI listTugas
+                // 📊 Hitung ulang biar aman
                 val total = group.listTugas.size
-
                 val selesai = group.listTugas.count {
                     it.status.equals("selesai", true)
                 }
-
-                val pending = group.listTugas.count {
-                    it.status.equals("pending", true)
-                }
+                val pending = total - selesai
 
                 tvSelesaiCount.text = "Selesai : $selesai"
                 tvPendingCount.text = "Pending : $pending"
 
-                // 🔥 PROGRESS AUTO
+                // 🔥 HITUNG PERSENTASE LANGSUNG (ANTI BUG)
                 val progressInt = if (total > 0) {
                     (selesai * 100) / total
                 } else 0
 
-                pbProgres.progress = progressInt
                 tvPersen.text = "$progressInt%"
 
-                // 🎨 WARNA PROGRESS (BIAR HIDUP)
-                val drawable = DrawableCompat.wrap(pbProgres.progressDrawable)
-                when {
-                    progressInt >= 80 -> DrawableCompat.setTint(drawable, Color.parseColor("#4CAF50")) // hijau
-                    progressInt >= 50 -> DrawableCompat.setTint(drawable, Color.parseColor("#FFC107")) // kuning
-                    else -> DrawableCompat.setTint(drawable, Color.parseColor("#F44336")) // merah
+                // 💣 RESET DULU (WAJIB DI RECYCLER)
+                pbProgres.progress = 0
+                pbProgres.max = 100
+
+                // 💥 SET PROGRESS
+                pbProgres.post {
+                    pbProgres.progress = progressInt
                 }
 
-                // 🧑 FOTO STAFF
-                val tugasPertama = group.listTugas.firstOrNull()
+                // 🎨 WARNA (HANYA PROGRESS LAYER)
+                val drawable = pbProgres.progressDrawable
+                if (drawable is LayerDrawable) {
+                    val progressLayer =
+                        drawable.findDrawableByLayerId(android.R.id.progress)
 
-                if (!tugasPertama?.worker_photo.isNullOrEmpty()) {
-                    Glide.with(root.context)
-                        .load(tugasPertama?.worker_photo)
-                        .circleCrop()
-                        .placeholder(android.R.drawable.ic_menu_report_image)
-                        .error(android.R.drawable.ic_menu_report_image)
-                        .into(ivStaffProfile)
-                } else {
-                    ivStaffProfile.setImageResource(
-                        android.R.drawable.ic_menu_report_image
-                    )
+                    val context = binding.root.context
+
+                    when {
+                        progressInt >= 80 -> {
+                            DrawableCompat.setTint(
+                                progressLayer,
+                                ContextCompat.getColor(context, R.color.myGreenDark)
+                            )
+                        }
+
+                        progressInt >= 50 -> {
+                            DrawableCompat.setTint(
+                                progressLayer,
+                                ContextCompat.getColor(context, R.color.myOrangeDark)
+                            )
+                        }
+
+                        else -> {
+                            DrawableCompat.setTint(
+                                progressLayer,
+                                ContextCompat.getColor(context, R.color.myRedDark)
+                            )
+                        }
+                    }
                 }
             }
         }

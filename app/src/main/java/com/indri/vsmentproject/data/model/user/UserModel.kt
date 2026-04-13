@@ -8,9 +8,10 @@ data class UserModel(
     var uid: String = "",
     val nama: String = "",
     val email: String = "",
-    val role: String = "",     // "manager" atau "staff"
-    val posisi: String = "",   // Pengganti 'jabatan' agar konsisten dengan field registrasi
-    val foto_profil: String = "", // URL Cloudinary
-    val manager_id: String = "", // Jika user ini adalah staff, simpan ID managernya di sini
-    val telepon: String = ""
+    val role: String = "",          // manager / staff
+    val posisi: String = "",
+    val telepon: String = "",
+    val foto_profil: String = "",
+    val manager_id: String = "",
+    val status: String = "aktif"
 ) : Parcelable

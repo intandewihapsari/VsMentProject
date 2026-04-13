@@ -27,7 +27,7 @@ class TugasPendingViewHolder(private val binding: ItemTugasPendingBinding) : Rec
             // 4. Set Data ke TextView
             itemBinding.tvNamaTugas.text = tugas.tugas
             itemBinding.tvStatus.text = "Status: ${tugas.status}"
-            itemBinding.tvPIC.text = "PIC: ${tugas.worker_name}"
+            itemBinding.tvPIC.text = "PIC: ${tugas.staff_name}"
 
             // 5. Logika Klik: Direct ke detail
             itemBinding.root.setOnClickListener {

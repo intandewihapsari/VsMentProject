@@ -35,10 +35,13 @@ class DataFragment : Fragment() {
         setupNavigation()
         observeRiwayat()
 
-        // Ambil UID Manager untuk melihat riwayat instruksi yang pernah dikirim
         val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        viewModel.getRiwayatInstruksi(managerUid)
+
+        if (managerUid.isNotEmpty()) {
+            viewModel.getRiwayatInstruksi(managerUid)
+        }
     }
+
 
     private fun setupRecyclerView() {
         adapterRiwayat = LaporanAdapter { laporan ->

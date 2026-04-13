@@ -60,7 +60,7 @@ class TugasVillaAdapter(
                 val itemBinding = ItemTugasPendingListBinding.inflate(inflater, holder.binding.containerTugasVilla, false)
 
                 itemBinding.tvNamaTugas.text = "[${tugas.ruangan}] ${tugas.tugas}"
-                itemBinding.tvPIC.text = "Staff: ${tugas.worker_name}"
+                itemBinding.tvPIC.text = "Staff: ${tugas.staff_name}"
 
                 // LOAD FOTO STAFF DISINI
 

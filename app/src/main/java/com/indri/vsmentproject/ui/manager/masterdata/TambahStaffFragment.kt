@@ -40,54 +40,48 @@ class TambahStaffFragment : Fragment() {
     }
 
     private fun registerStaffKeFirebase() {
+
         val nama = binding.etNamaStaff.text.toString().trim()
         val email = binding.etEmailStaff.text.toString().trim()
         val posisi = binding.etPosisiStaff.text.toString().trim()
         val password = binding.etPasswordStaff.text.toString().trim()
 
         if (nama.isEmpty() || email.isEmpty() || posisi.isEmpty() || password.isEmpty()) {
-            Toast.makeText(requireContext(), "Semua kolom wajib diisi!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Isi semua data!", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Inisialisasi Secondary App agar Manager tidak ter-logout saat mendaftarkan Staff
         val options = FirebaseApp.getInstance().options
-        val secondaryApp = try {
-            FirebaseApp.initializeApp(requireContext(), options, "secondary")
-        } catch (e: Exception) {
-            FirebaseApp.getInstance("secondary")
-        }
+        val secondaryApp = FirebaseApp.initializeApp(requireContext(), options, "secondary")
 
-        FirebaseAuth.getInstance(secondaryApp).createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener { result ->
-                val uid = result.user?.uid ?: ""
+        FirebaseAuth.getInstance(secondaryApp!!)
+            .createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
 
-                // Menyusun data sesuai StaffModel
-                val dataStaff = mapOf(
+                val uid = it.user?.uid ?: ""
+                val managerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+                val data = mapOf(
                     "uid" to uid,
                     "nama" to nama,
                     "email" to email,
                     "posisi" to posisi,
                     "role" to "staff",
+                    "manager_id" to managerId,
+                    "foto_profil" to "",
                     "status" to "aktif"
                 )
 
-                // Simpan ke path users/staffs
-                FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_STAFFS)
+                FirebaseDatabase.getInstance()
+                    .getReference(FirebaseConfig.PATH_STAFFS)
                     .child(uid)
-                    .setValue(dataStaff)
-                    .addOnCompleteListener {
-                        FirebaseAuth.getInstance(secondaryApp).signOut() // Logout secondary app
-                        Toast.makeText(requireContext(), "Staff $nama berhasil didaftarkan!", Toast.LENGTH_SHORT).show()
+                    .setValue(data)
+                    .addOnSuccessListener {
+                        Toast.makeText(requireContext(), "Berhasil tambah staff", Toast.LENGTH_SHORT).show()
                         parentFragmentManager.popBackStack()
                     }
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Gagal: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-    }
-
-    override fun onDestroyView() {
+    }    override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }

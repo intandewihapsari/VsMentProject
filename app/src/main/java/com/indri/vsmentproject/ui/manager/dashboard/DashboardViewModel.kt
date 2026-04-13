@@ -6,7 +6,7 @@ import com.google.firebase.database.*
 import com.indri.vsmentproject.data.model.notification.AnalisisCepatModel
 import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.data.model.report.LaporanModel
-import com.indri.vsmentproject.data.model.user.StaffModel
+import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.data.repository.*
 import com.indri.vsmentproject.data.utils.Resource
@@ -27,8 +27,8 @@ class DashboardViewModel : ViewModel() {
     val villaList: LiveData<List<VillaModel>> = _villaList
 
     // LiveData untuk Dialog Multi-Pilih Staff
-    private val _staffList = MutableLiveData<List<StaffModel>>()
-    val staffList: LiveData<List<StaffModel>> = _staffList
+    private val _staffList = MutableLiveData<List<UserModel>>()
+    val staffList: LiveData<List<UserModel>> = _staffList
 
     private val _analisisNyata = MutableLiveData<AnalisisCepatModel>()
 
@@ -74,7 +74,7 @@ class DashboardViewModel : ViewModel() {
         db.child(FirebaseConfig.PATH_STAFFS)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val list = snapshot.children.mapNotNull { it.getValue(StaffModel::class.java) }
+                    val list = snapshot.children.mapNotNull { it.getValue(UserModel::class.java) }
                     _staffList.postValue(list)
                 }
                 override fun onCancelled(error: DatabaseError) {}

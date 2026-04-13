@@ -77,7 +77,7 @@ class AktivitasStaffFragment : Fragment() {
                         tugas?.let {
                             it.id = ds.key ?: ""
 
-                            if (it.worker_id == staffId) {
+                            if (it.staff_id == staffId) {
                                 listTugas.add(it)
                             }
                         }

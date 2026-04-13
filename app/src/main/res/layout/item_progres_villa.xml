@@ -99,10 +99,11 @@
 
             <ProgressBar
                 android:id="@+id/pbProgres"
-                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="0dp"
                 android:layout_height="10dp"
                 android:layout_weight="1"
+                android:max="100"
                 android:progress="0"
                 android:progressDrawable="@drawable/custom_proges_bar" />
 
