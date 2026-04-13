@@ -1,7 +1,9 @@
 package com.indri.vsmentproject.ui.manager.task
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
@@ -26,40 +28,64 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        // Kirim SATU GRUP (VillaTugasGroup) ke ViewHolder, bukan cuma satu tugas
         holder.bind(items[position])
     }
 
     override fun getItemCount() = items.size
 
-    class ViewHolder(private val binding: ItemProgresVillaBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(private val binding: ItemProgresVillaBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
         fun bind(group: VillaTugasGroup) {
             binding.apply {
-                // 1. Set Nama Villa
-                tvNamaVilla.text = group.namaVilla
 
-                // 2. Hitung Selesai & Pending dari list tugas di dalam grup ini
-                val selesai = group.listTugas.count { it.status.equals("selesai", true) }
-                val pending = group.listTugas.count { it.status.equals("pending", true) }
+                // 🏠 Nama Villa
+                tvNamaVilla.text = group.namaVilla.ifEmpty { "-" }
+
+                // 🔥 HITUNG REALTIME DARI listTugas
+                val total = group.listTugas.size
+
+                val selesai = group.listTugas.count {
+                    it.status.equals("selesai", true)
+                }
+
+                val pending = group.listTugas.count {
+                    it.status.equals("pending", true)
+                }
 
                 tvSelesaiCount.text = "Selesai : $selesai"
                 tvPendingCount.text = "Pending : $pending"
 
-                // 3. Set Progress Bar & Persentase teks
-                val progressInt = group.persentase_selesai.replace("%", "").toIntOrNull() ?: 0
-                pbProgres.progress = progressInt
-                tvPersen.text = group.persentase_selesai
+                // 🔥 PROGRESS AUTO
+                val progressInt = if (total > 0) {
+                    (selesai * 100) / total
+                } else 0
 
-                // 4. LOAD FOTO STAFF (Ambil dari tugas pertama di villa ini)
+                pbProgres.progress = progressInt
+                tvPersen.text = "$progressInt%"
+
+                // 🎨 WARNA PROGRESS (BIAR HIDUP)
+                val drawable = DrawableCompat.wrap(pbProgres.progressDrawable)
+                when {
+                    progressInt >= 80 -> DrawableCompat.setTint(drawable, Color.parseColor("#4CAF50")) // hijau
+                    progressInt >= 50 -> DrawableCompat.setTint(drawable, Color.parseColor("#FFC107")) // kuning
+                    else -> DrawableCompat.setTint(drawable, Color.parseColor("#F44336")) // merah
+                }
+
+                // 🧑 FOTO STAFF
                 val tugasPertama = group.listTugas.firstOrNull()
-                if (tugasPertama != null) {
-                    Glide.with(binding.root.context)
+
+                if (!tugasPertama?.worker_photo.isNullOrEmpty()) {
+                    Glide.with(root.context)
                         .load(tugasPertama?.worker_photo)
                         .circleCrop()
-                        // Pakai icon bawaan sistem Android (gambar foto/image)
                         .placeholder(android.R.drawable.ic_menu_report_image)
                         .error(android.R.drawable.ic_menu_report_image)
-                        .into(binding.ivStaffProfile)
+                        .into(ivStaffProfile)
+                } else {
+                    ivStaffProfile.setImageResource(
+                        android.R.drawable.ic_menu_report_image
+                    )
                 }
             }
         }

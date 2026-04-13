@@ -12,14 +12,16 @@ class DashboardAdapter(
     private val onTambahTugasClick: () -> Unit,
     private val onKirimNotifClick: () -> Unit,
     private val onTugasClick: (TugasModel) -> Unit,
-    private val onReloadAnalisisClick: () -> Unit // Tambahkan callback untuk reload data
+    private val onReloadAnalisisClick: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    // 🔄 Update data
     fun updateData(newItems: List<DashboardItem>) {
         items = newItems
         notifyDataSetChanged()
     }
 
+    // 🎯 Tentukan tipe item
     override fun getItemViewType(position: Int): Int = when (items[position]) {
         is DashboardItem.NotifikasiUrgent -> 0
         is DashboardItem.AnalisisCepat -> 1
@@ -28,48 +30,65 @@ class DashboardAdapter(
         is DashboardItem.TugasPending -> 4
     }
 
+    // 🏗️ Buat ViewHolder
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
+
         return when (viewType) {
             0 -> NotifikasiUrgentViewHolder(
                 ItemNotifikasiUrgentBinding.inflate(inflater, parent, false)
             )
+
             1 -> AnalisisCepatViewHolder(
                 ItemAnalisisCepatBinding.inflate(inflater, parent, false),
-                onReloadAnalisisClick // Kirim fungsi reload ke ViewHolder
+                onReloadAnalisisClick
             )
+
             2 -> AksiCepatViewHolder(
                 ItemAksiCepatBinding.inflate(inflater, parent, false)
             )
+
             3 -> InventarisViewHolder(
                 ItemInventarisBinding.inflate(inflater, parent, false)
             )
+
             4 -> TugasPendingViewHolder(
                 ItemTugasPendingBinding.inflate(inflater, parent, false)
             )
+
             else -> throw IllegalArgumentException("Tipe View Tidak Dikenal")
         }
     }
 
+    // 🔗 Bind data ke ViewHolder
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
+
             is DashboardItem.NotifikasiUrgent -> {
-                // Ambil data pertama dari list jika tidak kosong
                 if (item.data.isNotEmpty()) {
-                    (holder as NotifikasiUrgentViewHolder).bind(item.data[0])
+                    (holder as NotifikasiUrgentViewHolder)
+                        .bind(item.data[0]) // 🔥 kirim 1 data terbaru
                 }
             }
+
             is DashboardItem.AnalisisCepat -> {
-                (holder as AnalisisCepatViewHolder).bind(item.data)
+                (holder as AnalisisCepatViewHolder)
+                    .bind(item.data)
             }
+
             is DashboardItem.AksiCepat -> {
-                (holder as AksiCepatViewHolder).bind(onTambahTugasClick, onKirimNotifClick)
+                (holder as AksiCepatViewHolder)
+                    .bind(onTambahTugasClick, onKirimNotifClick)
             }
+
             is DashboardItem.Inventaris -> {
-                (holder as InventarisViewHolder).bind(item.data)
+                (holder as InventarisViewHolder)
+                    .bind(item.data)
             }
+
             is DashboardItem.TugasPending -> {
-                (holder as TugasPendingViewHolder).bind(item.listTugas, onTugasClick)
+                (holder as TugasPendingViewHolder)
+                    .bind(item.listTugas, onTugasClick)
             }
         }
     }

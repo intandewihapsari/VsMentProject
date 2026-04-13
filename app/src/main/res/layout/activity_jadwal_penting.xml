@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FDF2F5"
-    tools:context=".ui.staff.home.JadwalPentingActivity">
+    tools:context=".ui.staff.dashboard.JadwalPentingActivity">
 
     <RelativeLayout
         android:id="@+id/layoutHeader"
@@ -56,7 +56,7 @@
         android:paddingBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvInfo"
-        tools:listitem="@layout/item_tugas_child" />
+        tools:listitem="@layout/item_notifikasi" />
 
     <LinearLayout
         android:id="@+id/tvEmpty"

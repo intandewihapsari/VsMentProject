@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.indri.vsmentproject.data.model.notification.AnalisisCepatModel
 import com.indri.vsmentproject.data.model.notification.NotifikasiModel
+import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.user.StaffModel
 import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.data.repository.*
@@ -79,34 +80,101 @@ class DashboardViewModel : ViewModel() {
                 override fun onCancelled(error: DatabaseError) {}
             })
     }
+    private fun getLatestLaporan(): LiveData<LaporanModel?> {
+        val result = MutableLiveData<LaporanModel?>()
 
+        db.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+            .addValueEventListener(object : ValueEventListener {
+
+                override fun onDataChange(snapshot: DataSnapshot) {
+
+                    val latest = snapshot.children
+                        .mapNotNull { child ->
+                            child.getValue(LaporanModel::class.java)?.apply {
+                                id = child.key ?: ""
+                            }
+                        }
+                        // 🔥 FILTER cuma rusak & hilang
+                        .filter {
+                            val tipe = it.tipe_laporan?.lowercase()
+                            tipe == "rusak" || tipe == "hilang"
+                        }
+                        // 🔥 AMBIL TERBARU
+                        .maxByOrNull { it.id }
+
+                    result.postValue(latest)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    result.postValue(null)
+                }
+            })
+
+        return result
+    }
     private fun hitungAnalisisRealtime() {
+
         val pathTugas = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
+        val pathLaporan = db.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+
         pathTugas.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
+            override fun onDataChange(snapshotTugas: DataSnapshot) {
+
                 var totalSeluruhTugas = 0
                 var totalSelesai = 0
 
-                snapshot.children.forEach { villaSnap ->
+                snapshotTugas.children.forEach { villaSnap ->
                     val listTugas = villaSnap.child("list_tugas")
+
                     totalSeluruhTugas += listTugas.childrenCount.toInt()
+
                     listTugas.children.forEach { tugas ->
                         val status = tugas.child("status").value.toString()
-                        if (status.equals("selesai", ignoreCase = true)) totalSelesai++
+                        if (status.equals("selesai", ignoreCase = true)) {
+                            totalSelesai++
+                        }
                     }
                 }
 
-                val progressPercent = if (totalSeluruhTugas > 0) (totalSelesai * 100 / totalSeluruhTugas) else 0
-                _analisisNyata.postValue(AnalisisCepatModel(
-                    progressTugas = "$progressPercent%",
-                    jumlahLaporan = 0,
-                    barangRusak = 0
-                ))
+                val progressPercent =
+                    if (totalSeluruhTugas > 0)
+                        (totalSelesai * 100 / totalSeluruhTugas)
+                    else 0
+
+                // 🔥 LANJUT AMBIL DATA LAPORAN
+                pathLaporan.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshotLaporan: DataSnapshot) {
+
+                        var jumlahLaporan = 0
+                        var barangRusak = 0
+
+                        snapshotLaporan.children.forEach { child ->
+                            val tipe = child.child("tipe_laporan").value?.toString()?.lowercase()
+
+                            jumlahLaporan++
+
+                            if (tipe == "rusak") {
+                                barangRusak++
+                            }
+                        }
+
+                        // 🔥 UPDATE KE UI
+                        _analisisNyata.postValue(
+                            AnalisisCepatModel(
+                                progressTugas = "$progressPercent%",
+                                jumlahLaporan = jumlahLaporan,
+                                barangRusak = barangRusak
+                            )
+                        )
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {}
+                })
             }
+
             override fun onCancelled(error: DatabaseError) {}
         })
     }
-
     /**
      * Kirim notifikasi ke satu, beberapa, atau seluruh staff
      */
@@ -170,6 +238,7 @@ class DashboardViewModel : ViewModel() {
         mediator.value = Resource.Loading()
 
         val notifSource = notifRepo.getMyNotifications(uid)
+        val laporanSource = getLatestLaporan()
         val inventarisSource = taskRepo.getInventarisSummary()
         val pendingTaskSource = taskRepo.getAllPendingTasks()
 
@@ -181,10 +250,26 @@ class DashboardViewModel : ViewModel() {
 
             if (notifRes !is Resource.Loading && inventarisRes !is Resource.Loading) {
                 val items = mutableListOf<DashboardItem>()
-
+                val timestamp = System.currentTimeMillis()
                 // 1. Notifikasi Urgent
-                notifRes?.data?.let { if (it.isNotEmpty()) items.add(DashboardItem.NotifikasiUrgent(it)) }
+                val laporan = laporanSource.value
+                laporan?.let {
+                    val notif = NotifikasiModel(
+                        id = it.id,
+                        judul = "Laporan ${it.tipe_laporan}",
+                        pesan = "${it.nama_barang} - ${it.deskripsi}",
+                        tipe = it.tipe_laporan, // 🔥 penting
+                        status_baca = false,
+                        waktu = it.waktu_lapor,
+                        target_uid = "",
+                        target_role = "",
+                        sender_id = it.staff_id,
+                        villa_id = it.villa_id,
+                        villa_nama = it.villa_nama // 🔥 INI YANG KAMU MAU
+                    )
 
+                    items.add(DashboardItem.NotifikasiUrgent(listOf(notif)))
+                }
                 // 2. Analisis Progres
                 analisisData?.let { items.add(DashboardItem.AnalisisCepat(it)) }
 
@@ -207,6 +292,7 @@ class DashboardViewModel : ViewModel() {
         }
 
         mediator.addSource(notifSource) { updateCombinedResult() }
+        mediator.addSource(laporanSource) { updateCombinedResult() }
         mediator.addSource(_analisisNyata) { updateCombinedResult() }
         mediator.addSource(inventarisSource) { updateCombinedResult() }
         mediator.addSource(pendingTaskSource) { updateCombinedResult() }

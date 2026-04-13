@@ -1,158 +1,160 @@
-package com.indri.vsmentproject.ui.staff.home
+package com.indri.vsmentproject.ui.staff.dashboard
 
 import android.content.Context
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.CheckBox
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.task.TugasModel
+import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.ActivityJadwalPentingBinding
-import com.indri.vsmentproject.ui.staff.task.TugasChildAdapter
-import java.text.SimpleDateFormat
-import java.util.*
+import com.indri.vsmentproject.R
 
 class JadwalPentingActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityJadwalPentingBinding
     private lateinit var dbRef: DatabaseReference
+
     private var staffId: String = ""
     private var listener: ValueEventListener? = null
 
+    private val listData = mutableListOf<NotifikasiModel>()
+    private lateinit var adapter: RecyclerView.Adapter<*>
+
+    // =========================
+    // VIEW HOLDER (WAJIB DI LUAR ADAPTER)
+    // =========================
+    private inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView = view.findViewById(R.id.tvInfo)
+        val check: CheckBox = view.findViewById(R.id.cbRead)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityJadwalPentingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val sharedPref = getSharedPreferences("UserSession", Context.MODE_PRIVATE)
-        staffId = sharedPref.getString("staff_id", "") ?: ""
+        staffId = getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+            .getString("staff_id", "") ?: ""
 
         dbRef = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_TASK_MANAGEMENT)
+            .getReference(FirebaseConfig.PATH_NOTIFIKASI)
 
-        setupRecyclerView()
-        loadJadwal()
+        setupRecycler()
+        loadData()
 
         binding.btnBack.setOnClickListener { finish() }
     }
 
-    private fun setupRecyclerView() {
+    // =========================
+    // SETUP RECYCLER
+    // =========================
+    private fun setupRecycler() {
         binding.rvJadwalPenting.layoutManager = LinearLayoutManager(this)
+
+        adapter = object : RecyclerView.Adapter<VH>() {
+
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_notifikasi, parent, false)
+                return VH(view)
+            }
+
+            override fun getItemCount(): Int = listData.size
+
+            override fun onBindViewHolder(holder: VH, position: Int) {
+                val item = listData[position]
+
+                holder.title.text = item.judul
+                holder.check.isChecked = item.is_read
+
+                // =========================
+                // CHECKLIST = MARK AS READ
+                // =========================
+                holder.check.setOnClickListener {
+                    markAsRead(item)
+                }
+
+                holder.itemView.setOnClickListener {
+                    Toast.makeText(
+                        this@JadwalPentingActivity,
+                        item.judul,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
+        binding.rvJadwalPenting.adapter = adapter
     }
 
-    private fun loadJadwal() {
+    // =========================
+    // LOAD DATA FIREBASE
+    // =========================
+    private fun loadData() {
+
         if (staffId.isEmpty()) return
 
         binding.progressBar.visibility = View.VISIBLE
 
         listener = object : ValueEventListener {
+
             override fun onDataChange(snapshot: DataSnapshot) {
 
-                val listPending = mutableListOf<TugasModel>()
-                val listSelesai = mutableListOf<TugasModel>()
+                listData.clear()
 
                 for (data in snapshot.children) {
+                    val item = data.getValue(NotifikasiModel::class.java)
 
-                    // 🔥 Ambil TASK langsung (TASK_J01 dll)
-                    val tugas = data.getValue(TugasModel::class.java)
-                    tugas?.let {
+                    item?.let {
                         it.id = data.key ?: ""
 
-                        if (it.worker_id == staffId) {
-                            if (it.status == "pending") {
-                                listPending.add(it)
-                            } else {
-                                listSelesai.add(it)
-                            }
-                        }
-                    }
-
-                    // 🔥 Ambil nested task (V01 > list_tugas)
-                    val listTugas = data.child("list_tugas")
-                    for (child in listTugas.children) {
-                        val tugasVilla = child.getValue(TugasModel::class.java)
-                        tugasVilla?.let {
-                            it.id = child.key ?: ""
-
-                            if (it.worker_id == staffId || it.worker_name.isNotEmpty()) {
-                                if (it.status == "pending") {
-                                    listPending.add(it)
-                                } else {
-                                    listSelesai.add(it)
-                                }
-                            }
+                        if (it.target_uid == staffId || it.target_role == "staff") {
+                            listData.add(it)
                         }
                     }
                 }
 
-                // 🔥 SORTING (ini penting banget)
-                val sortedPending = listPending.sortedWith(
-                    compareBy<TugasModel> { parseDate(it.deadline) }
-                        .thenByDescending { it.prioritas == "High" }
-                        .thenByDescending { it.prioritas == "Medium" }
-                )
-
-                val sortedSelesai = listSelesai.sortedByDescending {
-                    it.completed_at ?: 0
-                }
-
-                val finalList = mutableListOf<TugasModel>()
-                finalList.addAll(sortedPending)
-                finalList.addAll(sortedSelesai)
-
-                binding.rvJadwalPenting.adapter = TugasChildAdapter(
-                    finalList,
-                    onDone = { updateStatus(it) },
-                    onReport = { bukaLaporan(it) }
-                )
+                listData.sortByDescending { it.timestamp ?: 0L }
 
                 binding.progressBar.visibility = View.GONE
                 binding.tvEmpty.visibility =
-                    if (finalList.isEmpty()) View.VISIBLE else View.GONE
+                    if (listData.isEmpty()) View.VISIBLE else View.GONE
+
+                adapter.notifyDataSetChanged()
             }
 
             override fun onCancelled(error: DatabaseError) {
                 binding.progressBar.visibility = View.GONE
+                Toast.makeText(
+                    this@JadwalPentingActivity,
+                    error.message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
         dbRef.addValueEventListener(listener!!)
     }
 
-    private fun parseDate(dateStr: String?): Long {
-        return try {
-            val format1 = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            val format2 = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    // =========================
+    // UPDATE IS_READ
+    // =========================
+    private fun markAsRead(notif: NotifikasiModel) {
 
-            val date = format1.parse(dateStr ?: "")
-                ?: format2.parse(dateStr ?: "")
-
-            date?.time ?: Long.MAX_VALUE
-        } catch (e: Exception) {
-            Long.MAX_VALUE
-        }
-    }
-
-    private fun updateStatus(tugas: TugasModel) {
         val updates = mapOf(
-            "status" to "selesai",
-            "completed_at" to ServerValue.TIMESTAMP
+            "is_read" to true
         )
 
-        dbRef.child(tugas.id).updateChildren(updates)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Tugas selesai!", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun bukaLaporan(tugas: TugasModel) {
-        Toast.makeText(
-            this,
-            "Laporan untuk ${tugas.tugas}",
-            Toast.LENGTH_SHORT
-        ).show()
+        dbRef.child(notif.id).updateChildren(updates)
     }
 
     override fun onDestroy() {

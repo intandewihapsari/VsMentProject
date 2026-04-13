@@ -35,16 +35,11 @@
 
 
 
+
     <ImageView
-        android:id="@+id/btnDone"
+        android:id="@+id/cbRead"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_marginEnd="8dp"
         android:src="@drawable/ic_circle_outline" />
-
-    <ImageView
-        android:id="@+id/btnReport"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:src="@drawable/ic_laporan" />
 </LinearLayout>
