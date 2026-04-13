@@ -1,9 +1,11 @@
 package com.indri.vsmentproject.ui.common.profile
 
+import android.util.Log
 import androidx.lifecycle.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.indri.vsmentproject.data.model.user.*
+import com.indri.vsmentproject.data.model.user.ProfileSummary
+import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 
 class ProfileViewModel : ViewModel() {
@@ -17,13 +19,20 @@ class ProfileViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseDatabase.getInstance().reference
 
+
     fun getData() {
         val uid = auth.currentUser?.uid ?: return
 
-        db.addValueEventListener(object : ValueEventListener {
+        db.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
 
-                // 🔹 Ambil data user (manager / staff)
+                val uid = auth.currentUser?.uid ?: return
+
+                // 🔥 TARUH LOG DI SINI
+                Log.d("PROFILE", "UID: $uid")
+                Log.d("PROFILE", "MANAGER DATA: ${snapshot.child(FirebaseConfig.PATH_MANAGERS).child(uid).value}")
+                Log.d("PROFILE", "STAFF DATA: ${snapshot.child(FirebaseConfig.PATH_STAFFS).child(uid).value}")
+
                 var user = snapshot.child(FirebaseConfig.PATH_MANAGERS)
                     .child(uid)
                     .getValue(UserModel::class.java)
@@ -34,13 +43,12 @@ class ProfileViewModel : ViewModel() {
                         .getValue(UserModel::class.java)
                 }
 
-                user?.let {
-                    it.uid = uid
-                    _userData.postValue(it)
+                if (user == null) return
 
-                    // 🔥 Hitung statistik
-                    calculateStats(snapshot, it)
-                }
+                user.uid = uid
+                _userData.postValue(user)
+
+                calculateStats(snapshot, user)
             }
 
             override fun onCancelled(error: DatabaseError) {}
@@ -52,18 +60,16 @@ class ProfileViewModel : ViewModel() {
         if (user.role == "manager") {
 
             // ================= MANAGER =================
-            val totalVilla = snapshot
-                .child(FirebaseConfig.PATH_VILLAS)
+            val totalVilla = snapshot.child(FirebaseConfig.PATH_VILLAS)
                 .childrenCount.toInt()
 
-            val totalStaff = snapshot
-                .child(FirebaseConfig.PATH_STAFFS)
+            val totalStaff = snapshot.child(FirebaseConfig.PATH_STAFFS)
                 .childrenCount.toInt()
 
-            val totalLaporanPending = snapshot
-                .child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+            val totalLaporanPending = snapshot.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
                 .children.count {
-                    it.child(FirebaseConfig.FIELD_STATUS).value.toString() != FirebaseConfig.STATUS_DONE
+                    it.child("status").getValue(String::class.java)
+                        ?.lowercase() != FirebaseConfig.STATUS_DONE
                 }
 
             _summary.postValue(
@@ -77,20 +83,24 @@ class ProfileViewModel : ViewModel() {
         } else {
 
             // ================= STAFF =================
-            var totalBeres = 0        // Tugas selesai
-            var totalLaporan = 0      // Inisiatif lapor
-            var sisaTugas = 0         // Tugas belum selesai
+            var totalBeres = 0
+            var totalLaporan = 0
+            var sisaTugas = 0
 
             val uid = user.uid
 
-            // 🔹 HITUNG TUGAS
+            // ================= TASK =================
             val taskRef = snapshot.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
 
             taskRef.children.forEach { task ->
-                val workerId = task.child("worker_id").value.toString()
-                val status = task.child(FirebaseConfig.FIELD_STATUS).value.toString()
 
-                if (workerId == uid) {
+                val staffId = task.child("staff_id")
+                    .getValue(String::class.java) ?: ""
+
+                val status = task.child(FirebaseConfig.FIELD_STATUS)
+                    .getValue(String::class.java) ?: ""
+
+                if (staffId == uid) {
                     if (status == FirebaseConfig.STATUS_DONE) {
                         totalBeres++
                     } else {
@@ -99,31 +109,32 @@ class ProfileViewModel : ViewModel() {
                 }
             }
 
-            // 🔹 HITUNG LAPORAN (INI YANG KEMARIN ERROR)
+            // ================= LAPORAN =================
             val reportRef = snapshot.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
 
             reportRef.children.forEach { report ->
-                val staffId = report.child("staff_id").value.toString()
-                val status = report.child("status").value.toString()
 
-                // ✅ FIX: pakai staff_id, bukan reporter_id
-                if (staffId == uid && status != "ditolak") {
+                val staffId = report.child("staff_id")
+                    .getValue(String::class.java) ?: ""
+
+                val status = report.child("status")
+                    .getValue(String::class.java) ?: ""
+
+                if (staffId == uid && status != FirebaseConfig.STATUS_REJECTED) {
                     totalLaporan++
                 }
             }
 
-            // 🔥 KIRIM KE UI
             _summary.postValue(
                 ProfileSummary(
-                    totalBeres,     // ➜ Tugas Beres
-                    totalLaporan,   // ➜ Inisiatif Lapor
-                    sisaTugas       // ➜ Sisa Tugas
+                    totalBeres,
+                    totalLaporan,
+                    sisaTugas
                 )
             )
         }
     }
 
-    // ================= UPDATE PROFILE =================
     fun updateFullProfile(
         name: String,
         phone: String,
@@ -145,7 +156,9 @@ class ProfileViewModel : ViewModel() {
             "email" to email
         )
 
-        photoUrl?.let { updates["foto_profil"] = it }
+        photoUrl?.let {
+            updates["foto_profil"] = it
+        }
 
         db.child(path)
             .child(uid)
@@ -154,7 +167,7 @@ class ProfileViewModel : ViewModel() {
                 onResult("Profil berhasil diperbarui")
             }
             .addOnFailureListener {
-                onResult("Gagal memperbarui")
+                onResult("Gagal memperbarui profil")
             }
     }
 }

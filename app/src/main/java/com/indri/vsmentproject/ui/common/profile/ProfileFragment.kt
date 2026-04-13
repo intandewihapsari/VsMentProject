@@ -65,13 +65,13 @@ class ProfileFragment : Fragment() {
             with(binding) {
                 // Di sini kita tampilkan angkanya secara berurutan
                 // stat.totalVilla sekarang berisi "Tugas Beres" untuk Staff
-                tvCountVilla.text = stat.totalVilla.toString()
+                tvCountVilla.text = stat.first.toString()
 
                 // stat.totalStaff sekarang berisi "Inisiatif Lapor" untuk Staff
-                tvCountStaff.text = stat.totalStaff.toString()
+                tvCountStaff.text = stat.second.toString()
 
                 // stat.totalLaporanPending sekarang berisi "Sisa Tugas" untuk Staff
-                tvCountLaporan.text = stat.totalLaporanPending.toString()
+                tvCountLaporan.text = stat.third.toString()
             }
         }
 

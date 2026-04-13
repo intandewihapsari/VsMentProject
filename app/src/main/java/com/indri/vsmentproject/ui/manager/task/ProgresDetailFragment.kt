@@ -13,10 +13,15 @@ class ProgresDetailFragment : Fragment() {
 
     private var _binding: FragmentProgresDetailBinding? = null
     private val binding get() = _binding!!
+
     private val viewModel: TugasViewModel by viewModels()
     private lateinit var progresAdapter: ProgresVillaAdapter
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentProgresDetailBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -25,15 +30,15 @@ class ProgresDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         progresAdapter = ProgresVillaAdapter()
+
         binding.rvProgresDetail.apply {
             adapter = progresAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        // GANTI KE FUNGSI BARU
+        // load data
         viewModel.getTugasGroupedByVillaMurni()
 
-        // OBSERVE LIVEDATA YANG BARU
         viewModel.progresPerVilla.observe(viewLifecycleOwner) { groups ->
             if (groups != null) {
                 progresAdapter.setList(groups)

@@ -33,73 +33,59 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
 
     override fun getItemCount() = items.size
 
-    class ViewHolder(private val binding: ItemProgresVillaBinding) :
+    inner class ViewHolder(private val binding: ItemProgresVillaBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(group: VillaTugasGroup) {
-            binding.apply {
 
-                // 🏠 Nama Villa
-                tvNamaVilla.text = group.namaVilla
+            binding.tvNamaVilla.text = group.namaVilla
 
-                // 📊 Hitung ulang biar aman
-                val total = group.listTugas.size
-                val selesai = group.listTugas.count {
-                    it.status.equals("selesai", true)
-                }
-                val pending = total - selesai
+            val total = group.listTugas.size
+            val selesai = group.listTugas.count { it.status.equals("selesai", true) }
+            val pending = total - selesai
 
-                tvSelesaiCount.text = "Selesai : $selesai"
-                tvPendingCount.text = "Pending : $pending"
+            binding.tvSelesaiCount.text = "Selesai : $selesai"
+            binding.tvPendingCount.text = "Pending : $pending"
 
-                // 🔥 HITUNG PERSENTASE LANGSUNG (ANTI BUG)
-                val progressInt = if (total > 0) {
-                    (selesai * 100) / total
-                } else 0
+            val progressInt = if (total > 0) (selesai * 100) / total else 0
 
-                tvPersen.text = "$progressInt%"
+            binding.tvPersen.text = "$progressInt%"
 
-                // 💣 RESET DULU (WAJIB DI RECYCLER)
-                pbProgres.progress = 0
-                pbProgres.max = 100
-
-                // 💥 SET PROGRESS
-                pbProgres.post {
-                    pbProgres.progress = progressInt
-                }
-
-                // 🎨 WARNA (HANYA PROGRESS LAYER)
-                val drawable = pbProgres.progressDrawable
-                if (drawable is LayerDrawable) {
-                    val progressLayer =
-                        drawable.findDrawableByLayerId(android.R.id.progress)
-
-                    val context = binding.root.context
-
-                    when {
-                        progressInt >= 80 -> {
-                            DrawableCompat.setTint(
-                                progressLayer,
-                                ContextCompat.getColor(context, R.color.myGreenDark)
-                            )
-                        }
-
-                        progressInt >= 50 -> {
-                            DrawableCompat.setTint(
-                                progressLayer,
-                                ContextCompat.getColor(context, R.color.myOrangeDark)
-                            )
-                        }
-
-                        else -> {
-                            DrawableCompat.setTint(
-                                progressLayer,
-                                ContextCompat.getColor(context, R.color.myRedDark)
-                            )
-                        }
-                    }
-                }
+            binding.pbProgres.progress = 0
+            binding.pbProgres.max = 100
+            binding.pbProgres.post {
+                binding.pbProgres.progress = progressInt
             }
+
+            // 🔥 AMBIL STAFF ID DARI TASK PERTAMA
+            val staffId = group.listTugas.firstOrNull()?.staff_id
+
+            if (!staffId.isNullOrEmpty()) {
+                loadStaffPhoto(staffId)
+            } else {
+                binding.ivStaffProfile.setImageResource(
+                    android.R.drawable.ic_menu_report_image
+                )
+            }
+        }
+
+        private fun loadStaffPhoto(staffId: String) {
+
+            com.google.firebase.database.FirebaseDatabase.getInstance()
+                .getReference("users/staffs")
+                .child(staffId)
+                .get()
+                .addOnSuccessListener { snapshot ->
+
+                    val photo = snapshot.child("foto_profil")
+                        .getValue(String::class.java)
+
+                    com.bumptech.glide.Glide.with(binding.root.context)
+                        .load(photo)
+                        .placeholder(android.R.drawable.ic_menu_report_image)
+                        .error(android.R.drawable.ic_menu_report_image)
+                        .into(binding.ivStaffProfile)
+                }
         }
     }
 }

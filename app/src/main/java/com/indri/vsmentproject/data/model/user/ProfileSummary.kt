@@ -5,7 +5,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class ProfileSummary(
-    val totalVilla: Int = 0,
-    val totalStaff: Int = 0,
-    val totalLaporanPending: Int = 0
+    val first: Int = 0,
+    val second: Int = 0,
+    val third: Int = 0
 ) : Parcelable

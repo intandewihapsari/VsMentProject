@@ -34,5 +34,5 @@ object FirebaseConfig {
     // --- Status ---
     const val STATUS_PENDING = "pending"
     const val STATUS_DONE = "selesai"
-    const val STATUS_WAITING = "Menunggu Validasi Manager"
+    const val STATUS_REJECTED = "ditolak"
 }
