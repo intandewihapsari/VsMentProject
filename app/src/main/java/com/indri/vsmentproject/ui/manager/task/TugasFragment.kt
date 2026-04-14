@@ -103,8 +103,8 @@ class TugasFragment : Fragment() {
             currentVillaId = villa.id
             currentVillaName = villa.nama
 
-            if (!villa.areas.isNullOrEmpty()) {
-                val list = villa.areas.toTypedArray()
+            if (!villa.area.isNullOrEmpty()) {
+                val list = villa.area.toTypedArray()
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Pilih Lokasi di ${villa.nama}")
                     .setItems(list) { _, i ->

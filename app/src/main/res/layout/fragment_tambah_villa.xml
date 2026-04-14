@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FF">
+
+   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -64,7 +70,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Jumlah Ruangan (Gunakan koma)"
+                android:text="Nama Ruangan (Gunakan koma)"
                 android:textStyle="bold" />
 
             <EditText
@@ -75,6 +81,21 @@
                 android:background="@drawable/bg_input_field"
                 android:hint="Contoh: Dapur, Kamar 1, Teras"
                 android:paddingStart="15dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Fasilitas (Gunakan koma)"
+                android:textStyle="bold" />
+            <EditText
+                android:id="@+id/etFasilitas"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_input_field"
+                android:hint="Fasilitas (WiFi, Water Heater)"
+                android:paddingStart="15dp" />
+
 
             <TextView
                 android:layout_width="wrap_content"
@@ -106,3 +127,4 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout>
+</ScrollView>

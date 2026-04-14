@@ -1,5 +1,6 @@
 package com.indri.vsmentproject.ui.manager.task
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -24,15 +25,17 @@ class PilihVillaAdapter(
         val villa = listVilla[position]
         holder.binding.apply {
             tvNamaVilla.text = villa.nama
-            tvJumlahRuangan.text = "${villa.areas.size} Ruangan" // Pakai areas
+            tvJumlahRuangan.text = "${villa.area.size} Ruangan" // Pakai areas
 
             com.bumptech.glide.Glide.with(ivVilla.context)
-                .load(villa.foto)
+                .load(villa.foto_villa)
                 .placeholder(R.drawable.ic_launcher_background)
                 .centerCrop()
                 .into(ivVilla)
 
             root.setOnClickListener { onVillaClick(villa) }
+            Log.d("CHECK_FOTO", villa.foto_villa)
+            Log.d("DEBUG_VILLA_FOTO", "[${villa.foto_villa}]")
         }
     }
     override fun getItemCount(): Int = listVilla.size

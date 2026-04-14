@@ -12,7 +12,6 @@ import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.FragmentVillaListBinding
 import com.indri.vsmentproject.ui.manager.task.PilihVillaAdapter
-
 class VillaListFragment : Fragment() {
 
     private var _binding: FragmentVillaListBinding? = null
@@ -28,9 +27,7 @@ class VillaListFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
 
-        // Setup Adapter dengan listener klik untuk menu Edit/Hapus
         val adapter = PilihVillaAdapter { villa ->
             showMenuOpsi(villa)
         }
@@ -40,13 +37,12 @@ class VillaListFragment : Fragment() {
             this.adapter = adapter
         }
 
-        // Observasi Data
         viewModel.getData()
+
         viewModel.villaList.observe(viewLifecycleOwner) { list ->
             adapter.updateData(list)
         }
 
-        // Navigasi ke Fragment Tambah Villa
         binding.btnTambahVilla.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, TambahVillaFragment())
@@ -60,23 +56,28 @@ class VillaListFragment : Fragment() {
     }
 
     private fun showMenuOpsi(villa: VillaModel) {
+
         val opsi = arrayOf("Edit Detail Villa", "Hapus Villa")
+
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(villa.nama)
             .setItems(opsi) { _, which ->
+
                 when (which) {
+
                     0 -> {
-                        // Navigasi ke TambahVillaFragment dengan membawa data (Mode Edit)
                         val fragment = TambahVillaFragment.newInstance(villa)
+
                         parentFragmentManager.beginTransaction()
                             .replace(R.id.fragmentContainer, fragment)
                             .addToBackStack(null)
                             .commit()
                     }
+
                     1 -> {
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Hapus Villa")
-                            .setMessage("Apakah Anda yakin ingin menghapus ${villa.nama}?")
+                            .setMessage("Hapus ${villa.nama}?")
                             .setPositiveButton("Hapus") { _, _ ->
                                 viewModel.hapusVilla(villa.id)
                             }
@@ -84,7 +85,8 @@ class VillaListFragment : Fragment() {
                             .show()
                     }
                 }
-            }.show()
+            }
+            .show()
     }
 
     override fun onDestroyView() {
