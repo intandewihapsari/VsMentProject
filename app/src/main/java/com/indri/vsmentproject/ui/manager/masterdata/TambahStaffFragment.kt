@@ -1,37 +1,65 @@
 package com.indri.vsmentproject.ui.manager.masterdata
 
+import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.google.firebase.FirebaseApp
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.indri.vsmentproject.data.model.user.UserModel
+import com.indri.vsmentproject.data.utils.CloudinaryHelper
 import com.indri.vsmentproject.data.utils.FirebaseConfig
+import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.databinding.FragmentTambahStaffBinding
 
 class TambahStaffFragment : Fragment() {
 
     private var _binding: FragmentTambahStaffBinding? = null
     private val binding get() = _binding!!
+
     private val viewModel: DataViewModel by viewModels()
 
+    private var selectedImageUri: Uri? = null
+
+    private var isEditMode = false
+    private var staffId: String? = null
+
+    // =============================
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
+    ): View? {
         _binding = FragmentTambahStaffBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // =============================
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val staff = arguments?.getParcelable<UserModel>(ARG_STAFF)
+
+        if (staff != null) {
+            setupEditMode(staff)
+        } else {
+            setupAddMode()
+        }
+
+        binding.ivFotoStaff.setOnClickListener {
+            pickImage.launch("image/*")
+        }
+
         binding.btnSimpanStaff.setOnClickListener {
-            registerStaffKeFirebase()
+            if (isEditMode) {
+                updateStaff()
+            } else {
+                createStaff()
+            }
         }
 
         binding.btnBack.setOnClickListener {
@@ -39,49 +67,216 @@ class TambahStaffFragment : Fragment() {
         }
     }
 
-    private fun registerStaffKeFirebase() {
+    // =============================
+    private fun setupAddMode() {
+        isEditMode = false
+        binding.tvTitle.text = "Tambah Staff"
+        binding.btnSimpanStaff.text = "Simpan Data"
+        binding.etPasswordStaff.visibility = View.VISIBLE
+    }
+
+    // =============================
+    private fun setupEditMode(staff: UserModel) {
+        isEditMode = true
+        staffId = staff.uid
+
+        binding.tvTitle.text = "Edit Staff"
+        binding.btnSimpanStaff.text = "Update Data"
+
+        binding.etNamaStaff.setText(staff.nama)
+        binding.etEmailStaff.setText(staff.email)
+        binding.etPosisiStaff.setText(staff.posisi)
+        binding.etTeleponStaff.setText(staff.telepon)
+
+        binding.swStatusStaff.isChecked = staff.status == "aktif"
+
+        binding.etPasswordStaff.visibility = View.GONE
+
+        if (staff.foto_profil.isNotEmpty()) {
+            Glide.with(this)
+                .load(staff.foto_profil)
+                .into(binding.ivFotoStaff)
+        }
+    }
+
+    // =============================
+    private val pickImage =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                selectedImageUri = uri
+                binding.ivFotoStaff.setImageURI(uri)
+            }
+        }
+
+    // =============================
+    // 🔥 CREATE STAFF (FIX TOTAL)
+    // =============================
+    private fun createStaff() {
 
         val nama = binding.etNamaStaff.text.toString().trim()
         val email = binding.etEmailStaff.text.toString().trim()
         val posisi = binding.etPosisiStaff.text.toString().trim()
         val password = binding.etPasswordStaff.text.toString().trim()
+        val telepon = binding.etTeleponStaff.text.toString().trim()
+        val status = if (binding.swStatusStaff.isChecked) "aktif" else "nonaktif"
 
         if (nama.isEmpty() || email.isEmpty() || posisi.isEmpty() || password.isEmpty()) {
-            Toast.makeText(requireContext(), "Isi semua data!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Berhasil update", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val options = FirebaseApp.getInstance().options
-        val secondaryApp = FirebaseApp.initializeApp(requireContext(), options, "secondary")
+        val managerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        FirebaseAuth.getInstance(secondaryApp!!)
+        // 1️⃣ BUAT AKUN FIREBASE AUTH DULU
+        FirebaseAuth.getInstance()
             .createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener {
+            .addOnSuccessListener { auth ->
 
-                val uid = it.user?.uid ?: ""
-                val managerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                val uid = auth.user?.uid ?: ""
 
-                val data = mapOf(
-                    "uid" to uid,
-                    "nama" to nama,
-                    "email" to email,
-                    "posisi" to posisi,
-                    "role" to "staff",
-                    "manager_id" to managerId,
-                    "foto_profil" to "",
-                    "status" to "aktif"
-                )
+                // 2️⃣ CEK ADA FOTO ATAU TIDAK
+                val imageUri = selectedImageUri
 
-                FirebaseDatabase.getInstance()
-                    .getReference(FirebaseConfig.PATH_STAFFS)
-                    .child(uid)
-                    .setValue(data)
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Berhasil tambah staff", Toast.LENGTH_SHORT).show()
-                        parentFragmentManager.popBackStack()
+                if (imageUri != null) {
+
+                    // 🔥 UPLOAD CLOUDINARY
+                    CloudinaryHelper.uploadImage(imageUri, "staff") { result ->
+
+                        when (result) {
+
+                            is Resource.Success -> {
+
+                                val url = result.data?.secure_url ?: ""
+
+                                simpanKeFirebase(
+                                    uid, nama, email, posisi,
+                                    telepon, status, url, managerId
+                                )
+                            }
+
+                            is Resource.Error -> {
+                                Toast.makeText(requireContext(), "Upload gagal", Toast.LENGTH_SHORT).show()
+                            }
+
+                            else -> {}
+                        }
                     }
+
+                } else {
+                    // TANPA FOTO
+                    simpanKeFirebase(
+                        uid, nama, email, posisi,
+                        telepon, status, "", managerId
+                    )
+                }
             }
-    }    override fun onDestroyView() {
+    }
+
+    // =============================
+    // 🔥 UPDATE STAFF
+    // =============================
+    private fun updateStaff() {
+
+        val nama = binding.etNamaStaff.text.toString()
+        val email = binding.etEmailStaff.text.toString()
+        val posisi = binding.etPosisiStaff.text.toString()
+        val telepon = binding.etTeleponStaff.text.toString()
+        val status = if (binding.swStatusStaff.isChecked) "aktif" else "nonaktif"
+
+        val id = staffId ?: return
+
+        val imageUri = selectedImageUri
+
+        if (imageUri != null) {
+
+            // upload foto baru
+            CloudinaryHelper.uploadImage(imageUri, "staff") { result ->
+
+                if (result is Resource.Success) {
+
+                    val url = result.data?.secure_url ?: ""
+
+                    val data = mapOf(
+                        "nama" to nama,
+                        "email" to email,
+                        "posisi" to posisi,
+                        "telepon" to telepon,
+                        "status" to status,
+                        "foto_profil" to url
+                    )
+
+                    viewModel.simpanStaff(id, data)
+
+                    Toast.makeText(requireContext(), "Berhasil update", Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
+                }
+            }
+
+        } else {
+
+            val data = mapOf(
+                "nama" to nama,
+                "email" to email,
+                "posisi" to posisi,
+                "telepon" to telepon,
+                "status" to status
+            )
+
+            viewModel.simpanStaff(id, data)
+
+            Toast.makeText(requireContext(), "Berhasil update", Toast.LENGTH_SHORT).show()
+            parentFragmentManager.popBackStack()
+        }
+    }
+
+    // =============================
+    private fun simpanKeFirebase(
+        uid: String,
+        nama: String,
+        email: String,
+        posisi: String,
+        telepon: String,
+        status: String,
+        fotoUrl: String,
+        managerId: String
+    ) {
+
+        val data = mapOf(
+            "uid" to uid,
+            "nama" to nama,
+            "email" to email,
+            "posisi" to posisi,
+            "telepon" to telepon,
+            "status" to status,
+            "foto_profil" to fotoUrl,
+            "role" to "staff",
+            "manager_id" to managerId
+        )
+
+        FirebaseDatabase.getInstance()
+            .getReference(FirebaseConfig.PATH_STAFFS)
+            .child(uid)
+            .setValue(data)
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Staff berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                parentFragmentManager.popBackStack()
+            }
+    }
+
+    // =============================
+    companion object {
+        private const val ARG_STAFF = "arg_staff"
+
+        fun newInstance(staff: UserModel): TambahStaffFragment {
+            return TambahStaffFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable(ARG_STAFF, staff)
+                }
+            }
+        }
+    }
+
+    override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
