@@ -1,5 +1,6 @@
 package com.indri.vsmentproject.ui.common.profile
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
@@ -17,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentProfileBinding
 import com.indri.vsmentproject.databinding.DialogEditProfileBinding
+import com.indri.vsmentproject.ui.auth.LoginActivity
 
 class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
@@ -84,7 +86,9 @@ class ProfileFragment : Fragment() {
                 .setMessage("Apakah Anda yakin ingin keluar?")
                 .setPositiveButton("Ya") { _, _ ->
                     FirebaseAuth.getInstance().signOut()
-                    activity?.finish()
+                    val intent = Intent(requireContext(), LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
                 }
                 .setNegativeButton("Batal", null).show()
         }

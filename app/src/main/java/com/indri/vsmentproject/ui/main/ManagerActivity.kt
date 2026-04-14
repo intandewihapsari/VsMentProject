@@ -1,6 +1,7 @@
 package com.indri.vsmentproject.ui.main
 
 import android.os.Bundle
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -85,6 +86,10 @@ class ManagerActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+    fun setHeaderVisible(isVisible: Boolean) {
+        val header = findViewById<View>(R.id.layoutHeader)
+        header.visibility = if (isVisible) View.VISIBLE else View.GONE
     }
 
     // Fungsi bantu untuk ganti fragment (ID fragmentContainer TETAP SAMA)

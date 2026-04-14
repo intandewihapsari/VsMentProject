@@ -13,6 +13,7 @@ import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.databinding.FragmentStaffListBinding
+import com.indri.vsmentproject.ui.main.ManagerActivity
 import com.indri.vsmentproject.ui.manager.report.LaporanAdapter
 class StaffListFragment : Fragment() {
 
@@ -95,6 +96,10 @@ class StaffListFragment : Fragment() {
                 }
             }
             .show()
+    }
+    override fun onResume() {
+        super.onResume()
+        (activity as? ManagerActivity)?.setHeaderVisible(false)
     }
 
     override fun onDestroyView() {

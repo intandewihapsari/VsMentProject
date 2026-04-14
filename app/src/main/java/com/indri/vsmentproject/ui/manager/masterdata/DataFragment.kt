@@ -1,16 +1,13 @@
 package com.indri.vsmentproject.ui.manager.masterdata
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentDataBinding
-import com.indri.vsmentproject.ui.manager.report.LaporanAdapter
 
 class DataFragment : Fragment() {
 
@@ -18,7 +15,7 @@ class DataFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: DataViewModel by viewModels()
-    private lateinit var adapterRiwayat: LaporanAdapter
+    private lateinit var adapterRiwayat: NotifikasiAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,32 +39,37 @@ class DataFragment : Fragment() {
         }
     }
 
-
+    // =========================
+    // RECYCLER
+    // =========================
     private fun setupRecyclerView() {
-        adapterRiwayat = LaporanAdapter { laporan ->
-            // Aksi saat item riwayat diklik (opsional)
+        adapterRiwayat = NotifikasiAdapter { notif ->
+            // klik item opsional
         }
 
         binding.rvRiwayatNotif.apply {
             adapter = adapterRiwayat
             layoutManager = LinearLayoutManager(requireContext())
-            // Matikan nested scrolling agar scroll lancar di dalam NestedScrollView
             isNestedScrollingEnabled = false
         }
     }
 
+    // =========================
+    // NAVIGATION
+    // =========================
     private fun setupNavigation() {
-        // Navigasi ke Kelola Villa
         binding.btnManageVilla.setOnClickListener {
             navigasiKe(VillaListFragment())
         }
 
-        // Navigasi ke Kelola Staff
         binding.btnManageStaff.setOnClickListener {
             navigasiKe(StaffListFragment())
         }
     }
 
+    // =========================
+    // OBSERVER
+    // =========================
     private fun observeRiwayat() {
         viewModel.riwayatNotif.observe(viewLifecycleOwner) { list ->
             if (list.isNullOrEmpty()) {
@@ -81,9 +83,9 @@ class DataFragment : Fragment() {
         }
     }
 
+    // =========================
     private fun navigasiKe(fragment: Fragment) {
         parentFragmentManager.beginTransaction()
-//            .setCustomAnimations(R.anim.slide_in, R.anim.fade_out, R.anim.fade_in, R.anim.slide_out)
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()

@@ -11,6 +11,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.FragmentVillaListBinding
+import com.indri.vsmentproject.ui.main.ManagerActivity
 import com.indri.vsmentproject.ui.manager.task.PilihVillaAdapter
 class VillaListFragment : Fragment() {
 
@@ -53,6 +54,10 @@ class VillaListFragment : Fragment() {
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
+    }
+    override fun onResume() {
+        super.onResume()
+        (activity as? ManagerActivity)?.setHeaderVisible(false)
     }
 
     private fun showMenuOpsi(villa: VillaModel) {

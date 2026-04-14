@@ -7,14 +7,19 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.databinding.FragmentRiwayatInstruksiBinding
-import com.indri.vsmentproject.ui.manager.report.LaporanAdapter
 
 class RiwayatInstruksiFragment : Fragment() {
+
     private var _binding: FragmentRiwayatInstruksiBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: DataViewModel by viewModels()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    private val viewModel: DataViewModel by viewModels()
+    private lateinit var adapter: NotifikasiAdapter
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentRiwayatInstruksiBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -22,19 +27,56 @@ class RiwayatInstruksiFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = LaporanAdapter { /* Aksi klik riwayat */ }
-        binding.rvRiwayatInstruksi.adapter = adapter
-        binding.rvRiwayatInstruksi.layoutManager = LinearLayoutManager(requireContext())
+        setupRecycler()
+        loadData()
+        observeData()
 
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        viewModel.getRiwayatInstruksi(uid)
-
-        viewModel.riwayatNotif.observe(viewLifecycleOwner) { list ->
-            if (list != null) {
-                adapter.updateList(list)
-                binding.layoutEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
-            }
+        binding.btnBack.setOnClickListener {
+            parentFragmentManager.popBackStack()
         }
-        binding.btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
+    }
+
+    // =========================
+    // SETUP RECYCLER
+    // =========================
+    private fun setupRecycler() {
+        adapter = NotifikasiAdapter { notif ->
+            // optional klik item
+        }
+
+        binding.rvRiwayatInstruksi.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = this@RiwayatInstruksiFragment.adapter
+            isNestedScrollingEnabled = false
+        }
+    }
+
+    // =========================
+    // LOAD DATA
+    // =========================
+    private fun loadData() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        if (uid.isNotEmpty()) {
+            viewModel.getRiwayatInstruksi(uid)
+        }
+    }
+
+    // =========================
+    // OBSERVE DATA
+    // =========================
+    private fun observeData() {
+        viewModel.riwayatNotif.observe(viewLifecycleOwner) { list ->
+
+            adapter.updateList(list)
+
+            binding.layoutEmpty.visibility =
+                if (list.isEmpty()) View.VISIBLE else View.GONE
+        }
+    }
+
+    // =========================
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

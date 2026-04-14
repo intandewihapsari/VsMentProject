@@ -54,6 +54,11 @@ class LoginActivity : AppCompatActivity() {
             binding.etPassword.setText("asdfghjkl")
             performLogin("cobajustin@vsment.com", "asdfghjkl")
         }
+        binding.btnQuickManager.setOnClickListener {
+            binding.etEmail.setText("intan@vsment.com")
+            binding.etPassword.setText("asdfghjkl")
+            performLogin("intan@vsment.com", "asdfghjkl")
+        }
 
         // Lupa Password
         binding.tvForgotPassword.setOnClickListener {

@@ -4,8 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.*
+import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.data.model.villa.VillaModel
-import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 
@@ -20,16 +20,16 @@ class DataViewModel : ViewModel() {
     val villaList: LiveData<List<VillaModel>> = _villaList
 
     // =========================
-    // STAFF (pakai UserModel)
+    // STAFF
     // =========================
     private val _staffList = MutableLiveData<List<UserModel>>()
     val staffList: LiveData<List<UserModel>> = _staffList
 
     // =========================
-    // RIWAYAT NOTIF / INSTRUKSI
+    // RIWAYAT INSTRUKSI (PAKAI NOTIF)
     // =========================
-    private val _riwayatNotif = MutableLiveData<List<LaporanModel>>()
-    val riwayatNotif: LiveData<List<LaporanModel>> = _riwayatNotif
+    private val _riwayatNotif = MutableLiveData<List<NotifikasiModel>>()
+    val riwayatNotif: LiveData<List<NotifikasiModel>> = _riwayatNotif
 
     // =========================
     // GET SEMUA DATA
@@ -68,7 +68,7 @@ class DataViewModel : ViewModel() {
     }
 
     // =========================
-    // GET RIWAYAT INSTRUKSI
+    // GET RIWAYAT INSTRUKSI (DARI NOTIF)
     // =========================
     fun getRiwayatInstruksi(managerUid: String) {
 
@@ -79,28 +79,21 @@ class DataViewModel : ViewModel() {
 
                 override fun onDataChange(snapshot: DataSnapshot) {
 
-                    val list = snapshot.children.mapNotNull { snap ->
+                    val list = mutableListOf<NotifikasiModel>()
 
-                        val judul = snap.child("judul").value?.toString() ?: "-"
-                        val tipe = snap.child("tipe").value?.toString() ?: "info"
-                        val villa = snap.child("villa_nama").value?.toString() ?: "Umum"
+                    for (snap in snapshot.children) {
 
-                        val statusText = when (tipe) {
-                            "urgent" -> "Urgent"
-                            "warning" -> "Perhatian"
-                            else -> "Terkirim"
+                        val notif = snap.getValue(NotifikasiModel::class.java)
+
+                        notif?.let {
+                            it.id = snap.key ?: ""
+                            list.add(it)
                         }
-
-                        LaporanModel(
-                            id = snap.key ?: "",
-                            nama_barang = judul,
-                            tipe_laporan = "Instruksi",
-                            status = statusText,
-                            villa_nama = villa
-                        )
                     }
 
-                    _riwayatNotif.postValue(list.reversed())
+                    _riwayatNotif.postValue(
+                        list.sortedByDescending { it.timestamp }
+                    )
                 }
 
                 override fun onCancelled(error: DatabaseError) {}
