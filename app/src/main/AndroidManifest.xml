@@ -23,7 +23,7 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:allowBackup">
         <activity
-            android:name=".ui.staff.home.JadwalPentingActivity"
+            android:name=".ui.staff.dashboard.JadwalPentingActivity"
             android:exported="false" />
         <activity
             android:name=".ui.main.StaffActivity"

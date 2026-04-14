@@ -62,7 +62,7 @@ class TugasStaffFragment : Fragment() {
         val staffId = sharedPref.getString("staff_id", "") ?: ""
 
         if (staffId.isNotEmpty()) {
-            dbRef.orderByChild("worker_id").equalTo(staffId)
+            dbRef.orderByChild("staff_id").equalTo(staffId)
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         if (_binding == null) return

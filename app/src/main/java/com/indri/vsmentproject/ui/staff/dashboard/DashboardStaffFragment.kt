@@ -1,4 +1,4 @@
-package com.indri.vsmentproject.ui.staff.home
+package com.indri.vsmentproject.ui.staff.dashboard
 
 import android.content.Context
 import android.content.Intent
@@ -70,13 +70,18 @@ class DashboardStaffFragment : Fragment() {
     // 🔹 TASK LIST (BAWAH)
     // =========================
     private fun loadDashboardData() {
-        if (staffId.isEmpty()) return
+        if (staffId.isEmpty()) {
+            Log.e("ERROR", "Staff ID kosong!")
+            return
+        }
+
+        Log.d("STAFF_ID", "Current Staff: $staffId")
 
         rootRef.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-            .orderByChild("worker_id")
-            .equalTo(staffId)
             .addValueEventListener(object : ValueEventListener {
+
                 override fun onDataChange(snapshot: DataSnapshot) {
+
                     if (_binding == null || !isAdded) return
 
                     listTugasHome.clear()
@@ -85,11 +90,16 @@ class DashboardStaffFragment : Fragment() {
                     var selesai = 0
                     var pending = 0
 
-                    try {
-                        for (data in snapshot.children) {
-                            val tugas = data.getValue(TugasModel::class.java)
-                            tugas?.let {
-                                it.id = data.key ?: ""
+                    for (data in snapshot.children) {
+                        val tugas = data.getValue(TugasModel::class.java)
+
+                        tugas?.let {
+                            it.id = data.key ?: ""
+
+                            Log.d("TASK_DEBUG", "Task staff_id: ${it.staff_id}")
+
+                            if (it.staff_id == staffId) {
+
                                 total++
 
                                 if (it.status == "selesai") {
@@ -100,27 +110,23 @@ class DashboardStaffFragment : Fragment() {
                                 }
                             }
                         }
-
-                        updateStatUI(total, selesai, pending)
-
-                        val sortedPending =
-                            listTugasHome.sortedByDescending { it.created_at }
-
-                        binding?.rvTugasHome?.adapter = TugasChildAdapter(
-                            sortedPending,
-                            onDone = { t -> updateStatusTugas(t) },
-                            onReport = { t -> bukaLaporanDariTugas(t) } // 🔥 INI
-                        )
-
-                    } catch (e: Exception) {
-                        Log.e("DASHBOARD_ERROR", "Error: ${e.message}")
                     }
+
+                    updateStatUI(total, selesai, pending)
+
+                    val sortedPending =
+                        listTugasHome.sortedByDescending { it.created_at }
+
+                    binding?.rvTugasHome?.adapter = TugasChildAdapter(
+                        sortedPending,
+                        onDone = { t -> updateStatusTugas(t) },
+                        onReport = { t -> bukaLaporanDariTugas(t) }
+                    )
                 }
 
                 override fun onCancelled(error: DatabaseError) {}
             })
     }
-
     // =========================
     // 🔥 NOTIFIKASI (CARD ATAS)
     // =========================
