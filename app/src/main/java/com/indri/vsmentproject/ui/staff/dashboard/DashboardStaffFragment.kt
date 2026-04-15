@@ -171,6 +171,7 @@ class DashboardStaffFragment : Fragment() {
 
                         binding?.apply {
                             tvJudulJadwal.text = latest?.judul ?: "-"
+                            tvPesan.text = latest?.pesan ?: "-"
                             tvTime.text = sdfTime.format(date)
                             tvDate.text = sdfDate.format(date)
                         }
@@ -178,6 +179,7 @@ class DashboardStaffFragment : Fragment() {
                     } else {
                         binding?.apply {
                             tvJudulJadwal.text = "Tidak ada notifikasi"
+                            tvPesan.text = ""
                             tvTime.text = "--:--"
                             tvDate.text = "-"
                         }

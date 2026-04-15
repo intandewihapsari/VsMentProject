@@ -55,7 +55,6 @@ class StaffActivity : AppCompatActivity() {
 
     private fun setupBottomNav() {
         // Agar icon tidak berwarna abu-abu (mengikuti warna asli icon jika perlu)
-        binding.bottomNavigation.itemIconTintList = null
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {

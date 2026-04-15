@@ -178,6 +178,7 @@
                                     android:textStyle="bold" />
 
                                 <TextView
+                                    android:id="@+id/tvPesan"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:alpha="0.7"

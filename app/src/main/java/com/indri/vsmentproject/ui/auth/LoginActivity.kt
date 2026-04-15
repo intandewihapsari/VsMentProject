@@ -183,6 +183,7 @@ class LoginActivity : AppCompatActivity() {
     private fun setButtonsEnabled(enabled: Boolean) {
         binding.btnLogin.isEnabled = enabled
         binding.btnQuickStaff.isEnabled = enabled
+        binding.btnQuickManager.isEnabled = enabled
     }
 
     private fun handleError(message: String?) {

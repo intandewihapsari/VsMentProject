@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -26,14 +26,16 @@ class JadwalPentingActivity : AppCompatActivity() {
     private var listener: ValueEventListener? = null
 
     private val listData = mutableListOf<NotifikasiModel>()
-    private lateinit var adapter: RecyclerView.Adapter<*>
+    private lateinit var adapter: RecyclerView.Adapter<VH>
 
     // =========================
-    // VIEW HOLDER (WAJIB DI LUAR ADAPTER)
+    // VIEW HOLDER (ONLY 1 - FIXED)
     // =========================
     private inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val title: TextView = view.findViewById(R.id.tvInfo)
-        val check: CheckBox = view.findViewById(R.id.cbRead)
+
+        val title: TextView = view.findViewById(R.id.tvNamaTugas)
+        val pesan: TextView = view.findViewById(R.id.tvNamaVilla)
+        val check: ImageView = view.findViewById(R.id.cbRead)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +60,7 @@ class JadwalPentingActivity : AppCompatActivity() {
     // SETUP RECYCLER
     // =========================
     private fun setupRecycler() {
+
         binding.rvJadwalPenting.layoutManager = LinearLayoutManager(this)
 
         adapter = object : RecyclerView.Adapter<VH>() {
@@ -71,14 +74,21 @@ class JadwalPentingActivity : AppCompatActivity() {
             override fun getItemCount(): Int = listData.size
 
             override fun onBindViewHolder(holder: VH, position: Int) {
+
                 val item = listData[position]
 
                 holder.title.text = item.judul
-                holder.check.isChecked = item.is_read
+                holder.pesan.text = item.pesan
 
-                // =========================
-                // CHECKLIST = MARK AS READ
-                // =========================
+                // status read icon
+                holder.check.setImageResource(
+                    if (item.is_read)
+                        R.drawable.ic_circle_checked
+                    else
+                        R.drawable.ic_circle_outline
+                )
+
+                // mark as read
                 holder.check.setOnClickListener {
                     markAsRead(item)
                 }
@@ -90,6 +100,7 @@ class JadwalPentingActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+                android.util.Log.d("TEST_NOTIF", "pesan = ${item.pesan}")
             }
         }
 
@@ -112,6 +123,7 @@ class JadwalPentingActivity : AppCompatActivity() {
                 listData.clear()
 
                 for (data in snapshot.children) {
+
                     val item = data.getValue(NotifikasiModel::class.java)
 
                     item?.let {
@@ -150,11 +162,8 @@ class JadwalPentingActivity : AppCompatActivity() {
     // =========================
     private fun markAsRead(notif: NotifikasiModel) {
 
-        val updates = mapOf(
-            "is_read" to true
-        )
-
-        dbRef.child(notif.id).updateChildren(updates)
+        dbRef.child(notif.id)
+            .updateChildren(mapOf("is_read" to true))
     }
 
     override fun onDestroy() {

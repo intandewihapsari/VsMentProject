@@ -15,8 +15,6 @@ data class NotifikasiModel(
     val pesan: String = "",
     val tipe: String = "info", // "urgent", "info", "warning"
 
-    // STATUS
-    val status_baca: Boolean = false,
 
     @get:PropertyName("is_read")
     @set:PropertyName("is_read")
