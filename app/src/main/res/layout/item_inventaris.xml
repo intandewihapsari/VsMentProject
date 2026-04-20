@@ -44,7 +44,7 @@
                 android:layout_marginEnd="6dp">
 
                 <TextView
-                    android:id="@+id/tvPerluGantiValue"
+                    android:id="@+id/tvRusak"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="12"
@@ -55,7 +55,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ganti"
+                    android:text="Rusak"
                     android:textSize="11sp"
                     android:textColor="#C2185B"/>
             </LinearLayout>
@@ -71,7 +71,7 @@
                 android:layout_marginHorizontal="3dp">
 
                 <TextView
-                    android:id="@+id/tvPerluPeriksaValue"
+                    android:id="@+id/tvHilang"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="8"
@@ -82,7 +82,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Periksa"
+                    android:text="Hilang"
                     android:textSize="11sp"
                     android:textColor="#F57C00"/>
             </LinearLayout>
@@ -98,7 +98,7 @@
                 android:layout_marginStart="6dp">
 
                 <TextView
-                    android:id="@+id/tvLayakPakaiValue"
+                    android:id="@+id/tvHabis"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="104"
@@ -109,7 +109,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Layak"
+                    android:text="Habis"
                     android:textSize="11sp"
                     android:textColor="#2E7D32"/>
             </LinearLayout>

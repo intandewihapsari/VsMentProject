@@ -6,6 +6,6 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class AnalisisCepatModel(
     val progressTugas: String = "0%", // Sesuai JSON: operational/task_management/summary/progress
-    val jumlahLaporan: Int = 0,      // Hasil hitung dari operational/laporan_kerusakan
-    val barangRusak: Int = 0         // Hasil hitung kondisi 'Rusak' di master_data/villas
+//    val jumlahLaporan: Int = 0,      // Hasil hitung dari operational/laporan_kerusakan
+//    val barangRusak: Int = 0         // Hasil hitung kondisi 'Rusak' di master_data/villas
 ) : Parcelable

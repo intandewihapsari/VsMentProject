@@ -23,9 +23,9 @@ class DashboardAdapter(
 
     // 🎯 Tentukan tipe item
     override fun getItemViewType(position: Int): Int = when (items[position]) {
-        is DashboardItem.NotifikasiUrgent -> 0
-        is DashboardItem.AnalisisCepat -> 1
-        is DashboardItem.AksiCepat -> 2
+        is DashboardItem.AksiCepat -> 0
+        is DashboardItem.NotifikasiUrgent -> 1
+        is DashboardItem.AnalisisCepat -> 2
         is DashboardItem.Inventaris -> 3
         is DashboardItem.TugasPending -> 4
     }
@@ -35,17 +35,17 @@ class DashboardAdapter(
         val inflater = LayoutInflater.from(parent.context)
 
         return when (viewType) {
-            0 -> NotifikasiUrgentViewHolder(
+
+            0 -> AksiCepatViewHolder(
+                ItemAksiCepatBinding.inflate(inflater, parent, false)
+            )
+            1 -> NotifikasiUrgentViewHolder(
                 ItemNotifikasiUrgentBinding.inflate(inflater, parent, false)
             )
 
-            1 -> AnalisisCepatViewHolder(
+            2 -> AnalisisCepatViewHolder(
                 ItemAnalisisCepatBinding.inflate(inflater, parent, false),
                 onReloadAnalisisClick
-            )
-
-            2 -> AksiCepatViewHolder(
-                ItemAksiCepatBinding.inflate(inflater, parent, false)
             )
 
             3 -> InventarisViewHolder(
@@ -64,6 +64,11 @@ class DashboardAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = items[position]) {
 
+            is DashboardItem.AksiCepat -> {
+                (holder as AksiCepatViewHolder)
+                    .bind(onTambahTugasClick, onKirimNotifClick)
+            }
+
             is DashboardItem.NotifikasiUrgent -> {
                 if (item.data.isNotEmpty()) {
                     (holder as NotifikasiUrgentViewHolder)
@@ -76,10 +81,7 @@ class DashboardAdapter(
                     .bind(item.data)
             }
 
-            is DashboardItem.AksiCepat -> {
-                (holder as AksiCepatViewHolder)
-                    .bind(onTambahTugasClick, onKirimNotifClick)
-            }
+
 
             is DashboardItem.Inventaris -> {
                 (holder as InventarisViewHolder)

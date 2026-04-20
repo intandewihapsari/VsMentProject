@@ -42,8 +42,8 @@ class StaffRepository {
                 // Kirim SEBAGAI OBJEK TUNGGAL (Bukan List)
                 liveData.postValue(AnalisisCepatModel(
                     progressTugas = if (progress == "null") "0%" else progress,
-                    jumlahLaporan = laporanCount,
-                    barangRusak = rusakCount
+//                    jumlahLaporan = laporanCount,
+//                    barangRusak = rusakCount
                 ))
             }
             override fun onCancelled(error: DatabaseError) {}

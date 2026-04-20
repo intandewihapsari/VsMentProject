@@ -12,8 +12,8 @@ class AnalisisCepatViewHolder(
     fun bind(item: AnalisisCepatModel) {
         // Tampilkan Data ke UI
         binding.tvPersentase.text = "${item.progressTugas} Tugas"
-        binding.jmlLaporan.text = item.jumlahLaporan.toString()
-        binding.jmlBarangRusak.text = item.barangRusak.toString()
+//        binding.jmlLaporan.text = item.jumlahLaporan.toString()
+//        binding.jmlBarangRusak.text = item.barangRusak.toString()
 
         // Logika Circular Progress
         val progressInt = item.progressTugas.replace("%", "").toIntOrNull() ?: 0

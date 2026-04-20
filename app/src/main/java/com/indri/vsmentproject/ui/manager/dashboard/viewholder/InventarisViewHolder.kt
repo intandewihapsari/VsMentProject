@@ -8,8 +8,9 @@ class InventarisViewHolder(private val binding: ItemInventarisBinding) : Recycle
 
     fun bind(data: InventarisModel) {
         // Pastikan ID ini sesuai dengan android:id di XML terbaru kita
-        binding.tvPerluGantiValue.text = data.total_rusak.toString()
-        binding.tvPerluPeriksaValue.text = data.total_perlu_cek.toString()
-        binding.tvLayakPakaiValue.text = data.total_aman.toString()
+        binding.tvRusak.text = data.total_rusak.toString()
+        binding.tvHilang.text = data.total_hilang.toString()
+        binding.tvHabis.text = data.total_habis.toString()
+
     }
 }

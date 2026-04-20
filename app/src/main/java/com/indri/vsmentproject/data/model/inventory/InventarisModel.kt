@@ -12,6 +12,6 @@ data class InventarisModel(
 
     // Untuk Ringkasan Dashboard (Summary)
     val total_rusak: Int = 0,
-    val total_perlu_cek: Int = 0,
-    val total_aman: Int = 0
+    val total_hilang: Int = 0,
+    val total_habis: Int = 0
 ) : Parcelable
