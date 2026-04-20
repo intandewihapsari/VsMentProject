@@ -11,7 +11,8 @@ class AnalisisCepatViewHolder(
 
     fun bind(item: AnalisisCepatModel) {
         // Tampilkan Data ke UI
-        binding.tvPersentase.text = "${item.progressTugas} Tugas"
+        binding.tvPersentase.text = "${item.progressTugas}"
+        binding.tvPersentasePanjang.text = "${item.progressTugas} tugas telah diselesaikan"
 //        binding.jmlLaporan.text = item.jumlahLaporan.toString()
 //        binding.jmlBarangRusak.text = item.barangRusak.toString()
 

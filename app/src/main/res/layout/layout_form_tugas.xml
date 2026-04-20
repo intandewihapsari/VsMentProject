@@ -97,19 +97,13 @@
                     android:orientation="horizontal">
 
                     <RadioButton
-                        android:id="@+id/rbInventaris"
+                        android:id="@+id/rbPemeriksaan"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Inventaris" />
+                        android:text="Pemeriksaan" />
 
-                    <RadioButton
-                        android:id="@+id/rbPembelian"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Pembelian" />
-                </LinearLayout>
+                    </LinearLayout>
             </RadioGroup>
 
             <TextView

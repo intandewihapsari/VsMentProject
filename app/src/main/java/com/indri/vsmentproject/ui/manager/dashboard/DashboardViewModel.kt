@@ -9,6 +9,8 @@ import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.data.model.villa.VillaModel
+import com.indri.vsmentproject.data.model.task.TugasModel
+import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.data.repository.*
 import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.data.utils.FirebaseConfig
@@ -147,8 +149,6 @@ class DashboardViewModel : ViewModel() {
                         }
                     }
 
-                    // 🔥 GUNAKAN NAMED ARGUMENTS AGAR TIDAK ERROR
-                    // Kita cuma isi bagian totalnya saja, sisanya pakai default value ("")
                     result.postValue(InventarisModel(
                         total_rusak = countRusak,
                         total_hilang = countHilang,
@@ -182,10 +182,10 @@ class DashboardViewModel : ViewModel() {
             if (notifRes !is Resource.Loading) {
                 val items = mutableListOf<DashboardItem>()
 
-                // 1. Aksi Cepat (SESUAI REQUEST: PALING ATAS)
+                // 1. Aksi Cepat
                 items.add(DashboardItem.AksiCepat)
 
-                // 2. Notifikasi Urgent (Laporan Rusak/Hilang terbaru)
+                // 2. Notifikasi Urgent
                 laporanData?.let {
                     val notif = NotifikasiModel(
                         id = it.id,
@@ -197,12 +197,11 @@ class DashboardViewModel : ViewModel() {
                         sender_id = it.staff_id,
                         villa_id = it.villa_id,
                         villa_nama = it.villa_nama
-                        // target_uid dan target_role akan pakai default value-nya
                     )
                     items.add(DashboardItem.NotifikasiUrgent(listOf(notif)))
                 }
 
-                // 3. Ringkasan Inventaris (YANG BARU DITAMBAHKAN)
+                // 3. Ringkasan Inventaris
                 inventarisData?.let {
                     items.add(DashboardItem.Inventaris(it))
                 }
@@ -212,11 +211,22 @@ class DashboardViewModel : ViewModel() {
                     items.add(DashboardItem.AnalisisCepat(it))
                 }
 
-                // 5. Daftar Tugas Pending
+                // 5. Daftar Tugas Pending (FIXED LOGIC)
                 taskRes?.data?.let { list ->
                     if (list.isNotEmpty()) {
-                        val top5 = list.sortedByDescending { it.id }.take(5)
-                        items.add(DashboardItem.TugasPending(top5))
+                        // 🔥 Konversi List<TugasModel> ke List<VillaTugasGroup>
+                        val rawGroups = list
+                            .sortedByDescending { it.id } // Urutkan terbaru
+                            .groupBy { it.villa_id }      // Kelompokkan per Villa
+                            .map { (villaId, tasks) ->
+                                VillaTugasGroup(
+                                    villa_id = villaId,
+                                    namaVilla = tasks.firstOrNull()?.villa_nama ?: "Villa",
+                                    listTugas = tasks // Di ViewHolder nanti kita ambil .first() saja
+                                )
+                            }
+
+                        items.add(DashboardItem.TugasPending(rawGroups))
                     }
                 }
 
@@ -224,7 +234,6 @@ class DashboardViewModel : ViewModel() {
             }
         }
 
-        // Membersihkan source lama sebelum menambah yang baru untuk mencegah crash "different observer"
         mediator.apply {
             removeSource(notifSource)
             removeSource(laporanSource)

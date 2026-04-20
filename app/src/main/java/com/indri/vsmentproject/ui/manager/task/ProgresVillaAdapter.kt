@@ -7,15 +7,21 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.indri.vsmentproject.R
+import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemProgresVillaBinding
 class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>() {
 
     private var items = listOf<VillaTugasGroup>()
 
+
     fun setList(newList: List<VillaTugasGroup>) {
         items = newList
         notifyDataSetChanged()
+    }
+    fun getTaskAt(position: Int): TugasModel {
+        val flatList = items.flatMap { it.listTugas }
+        return flatList[position]
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

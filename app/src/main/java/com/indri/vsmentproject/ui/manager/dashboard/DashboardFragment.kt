@@ -44,22 +44,22 @@ class DashboardFragment : Fragment() {
 
 
     private fun setupRecyclerView() {
+        // URUTAN HARUS: 1. Tambah, 2. Kirim Notif, 3. Edit Tugas, 4. Reload Analisis
         dashboardAdapter = DashboardAdapter(
-            items = emptyList(),
             onTambahTugasClick = {
-                // Navigasi ke TugasFragment dengan flag auto-input
                 val fragment = TugasFragment().apply {
-                    arguments = Bundle().apply { putBoolean("BUKA_INPUT_OTOMATIS", true) }
+                    arguments = Bundle().apply { putBoolean("OPEN_ADD_TASK", true) }
                 }
-                navigasiKe(fragment)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, fragment)
+                    .addToBackStack(null).commit()
             },
             onKirimNotifClick = {
-                // Munculkan overlay form notifikasi
                 binding.layoutFormKirimNotifikasi.root.visibility = View.VISIBLE
                 loadVillaToSpinner()
             },
-            onTugasClick = { tugas ->
-                // Jika klik tugas urgent/pending, langsung ke Laporan
+            onEditTugas = { tugas ->
+                // Handle klik tugas pindah ke detail atau form edit
                 navigasiKe(LaporanFragment())
             },
             onReloadAnalisisClick = {
@@ -72,7 +72,6 @@ class DashboardFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
         }
     }
-
     private fun setupNotifikasiLogic() {
         val form = binding.layoutFormKirimNotifikasi
 
