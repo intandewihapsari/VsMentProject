@@ -6,45 +6,58 @@
     android:padding="12dp"
     android:background="?attr/selectableItemBackground">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tvVillaName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:text="Bohemian Luxury Private"
+        android:textStyle="bold"
+        android:textSize="12sp"
+        android:textColor="@color/myBlueDark"
+        android:layout_marginBottom="8dp"/>
 
-        <TextView
-            android:id="@+id/tvVillaName"
-            android:layout_width="0dp"
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Villa"
-            android:textStyle="bold"
-            android:textColor="@color/myBlueDark"/>
+            android:layout_toStartOf="@id/tvStatus"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvNamaTugas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lap Meja Dapur - Dapur"
+                android:textStyle="bold"
+                android:textColor="@color/myBlack"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/tvPIC"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Budi Santoso"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pending"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="pending"
             android:textSize="11sp"
-            android:padding="6dp"
-            android:background="@drawable/bg_status"
-            android:textColor="#FFF"/>
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvNamaTugas"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Nama Tugas"
-        android:textStyle="bold"
-        android:layout_marginTop="4dp"/>
-
-    <TextView
-        android:id="@+id/tvPIC"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="PIC"
-        android:textSize="12sp"
-        android:layout_marginTop="2dp"/>
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:textAllCaps="false"
+            android:gravity="center"
+            android:minWidth="60dp"/>
+    </RelativeLayout>
 
 </LinearLayout>

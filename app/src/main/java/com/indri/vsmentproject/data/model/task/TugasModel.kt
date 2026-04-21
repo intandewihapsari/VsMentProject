@@ -26,3 +26,12 @@ data class TugasModel(
 
     val staff_photo: String = ""
 ) : Parcelable
+data class VillaGroup(
+    val namaVilla: String,
+    val listTugas: List<TugasModel>
+)
+
+data class WaktuContainer(
+    val kategoriWaktu: String,
+    val listVilla: List<VillaTugasGroup> // Pastikan namanya persis begini
+)

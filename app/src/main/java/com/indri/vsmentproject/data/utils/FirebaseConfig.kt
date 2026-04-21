@@ -24,8 +24,6 @@ object FirebaseConfig {
     const val FIELD_ROLE = "role"
     const val FIELD_STATUS = "status"
     const val FIELD_MANAGER_ID = "manager_id"
-    const val FIELD_VILLA_ID = "villa_id"
-    const val FIELD_WORKER_ID = "worker_id"
 
     // Notifikasi
     const val FIELD_TARGET_UID = "target_uid"
@@ -35,4 +33,6 @@ object FirebaseConfig {
     const val STATUS_PENDING = "pending"
     const val STATUS_DONE = "selesai"
     const val STATUS_REJECTED = "ditolak"
+
+    const val PATH_TASK_TEMPLATES = "task_templates"
 }

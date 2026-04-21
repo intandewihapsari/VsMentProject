@@ -7,11 +7,18 @@ import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemGroupTugasBinding
 import com.indri.vsmentproject.ui.manager.task.TugasItemAdapter
+import android.view.ViewGroup
+import android.widget.LinearLayout
 
 class TugasPendingViewHolder(
     private val binding: ItemGroupTugasBinding
+
 ) : RecyclerView.ViewHolder(binding.root) {
 
+    private fun dpToPx(dp: Int): Int {
+        val density = itemView.context.resources.displayMetrics.density
+        return (dp * density).toInt()
+    }
     fun bind(
         groups: List<VillaTugasGroup>, // Ambil data group villa
         onTugasClick: (TugasModel) -> Unit
@@ -25,7 +32,8 @@ class TugasPendingViewHolder(
         // 3. Setup RecyclerView Inner dengan Adapter (Bukan addView)
         val adapter = TugasItemAdapter(
             onEdit = { onTugasClick(it) },
-            onDelete = {} // Dashboard biasanya tidak ada swipe delete
+            onDelete = {},
+            showStatus = false
         )
 
         binding.rvInner.apply {
@@ -35,5 +43,9 @@ class TugasPendingViewHolder(
         }
 
         adapter.updateList(topTasks)
+
+        val params = binding.root.layoutParams as ViewGroup.MarginLayoutParams
+        params.setMargins(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12))
+        binding.root.layoutParams = params
     }
 }

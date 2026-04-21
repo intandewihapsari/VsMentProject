@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
 
-
     <application
         android:name=".VsMentApp"
         android:allowBackup="true"
@@ -22,6 +21,9 @@
         android:theme="@style/Theme.VsmentProject"
         android:usesCleartextTraffic="true"
         tools:replace="android:allowBackup">
+        <activity
+            android:name=".ui.manager.template.TemplateManager"
+            android:exported="false" />
         <activity
             android:name=".ui.staff.dashboard.JadwalPentingActivity"
             android:exported="false" />
@@ -42,9 +44,8 @@
         </activity>
         <activity
             android:name=".ui.main.ManagerActivity"
-            android:exported="true">
+            android:exported="true"></activity>
 
-        </activity>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.indri.vsmentproject.fileprovider"

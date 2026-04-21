@@ -1,7 +1,9 @@
 package com.indri.vsmentproject.ui.manager.task
 
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.indri.vsmentproject.R
@@ -10,7 +12,9 @@ import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
 
 class TugasItemAdapter(
     private val onEdit: (TugasModel) -> Unit,
-    private val onDelete: (TugasModel) -> Unit
+    private val onDelete: (TugasModel) -> Unit,
+    private val showStatus: Boolean = true
+
 ) : RecyclerView.Adapter<TugasItemAdapter.ViewHolder>() {
 
     private var items = listOf<TugasModel>()
@@ -36,24 +40,34 @@ class TugasItemAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val tugas = items[position]
+//        holder.binding.tvVillaName.visibility = View.GONE
 
         holder.binding.tvVillaName.text = tugas.villa_nama
         holder.binding.tvNamaTugas.text = "${tugas.tugas} - ${tugas.ruangan}"
         holder.binding.tvPIC.text = tugas.staff_name
 
-        holder.binding.tvStatus.apply {
-            text = tugas.status
+        // 👇 INI BAGIAN PENTING
+        if (showStatus) {
+            holder.binding.tvStatus.visibility = View.VISIBLE
+            holder.binding.tvStatus.apply {
+                text = tugas.status
 
-            when (tugas.status) {
-                "pending" -> {
-                    setBackgroundColor(context.getColor(R.color.myRedDark))
-                    setTextColor(Color.WHITE)
-                }
-                "selesai" -> {
-                    setBackgroundColor(context.getColor(R.color.myGreenLight))
-                    setTextColor(Color.BLACK)
+                when (tugas.status) {
+                    "pending" -> {
+                        holder.binding.tvStatus.backgroundTintList =
+                            ColorStateList.valueOf(context.getColor(R.color.myRedDark))
+                        holder.binding.tvStatus.setTextColor(Color.WHITE)
+                    }
+
+                    "selesai" -> {
+                        holder.binding.tvStatus.backgroundTintList =
+                            ColorStateList.valueOf(context.getColor(R.color.myGreenLight))
+                        holder.binding.tvStatus.setTextColor(Color.BLACK)
+                    }
                 }
             }
+        } else {
+            holder.binding.tvStatus.visibility = View.GONE
         }
 
         holder.binding.root.setOnClickListener {
