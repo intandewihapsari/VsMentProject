@@ -1,118 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#FFFFFF">
-
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="24dp"
+        android:gravity="center_vertical">
 
+        <!-- LOGO / TITLE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Buat Akun Baru"
-            android:textSize="28sp"
+            android:text="VsMent"
+            android:textSize="32sp"
             android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginTop="32dp"/>
+            android:layout_gravity="center"
+            android:textColor="@color/myBlack"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Daftar sebagai staff VsMent"
-            android:textSize="16sp"
+            android:text="Buat akun untuk mulai mengelola"
+            android:layout_gravity="center"
             android:layout_marginBottom="32dp"/>
 
+        <!-- NAMA -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Nama Lengkap"
-            android:layout_marginBottom="16dp"
-            app:startIconDrawable="@drawable/ic_profile"> <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etNama"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textPersonName"/>
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNama"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- EMAIL -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Email"
-            android:layout_marginBottom="16dp"
-            app:startIconDrawable="@drawable/ic_email"> <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etEmail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"/>
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- PASSWORD -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Password"
-            android:layout_marginBottom="16dp"
             app:passwordToggleEnabled="true"
-            app:startIconDrawable="@drawable/ic_home"> <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textPassword"/>
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- POSISI -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Posisi (Contoh: Housekeeping)"
-            android:layout_marginBottom="24dp"
-            app:startIconDrawable="@drawable/ic_home"> <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPosisi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"/>
+            android:hint="Posisi (Manager, dll)"
+            android:layout_marginBottom="24dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPosisi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- BUTTON -->
         <Button
             android:id="@+id/btnRegister"
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:text="DAFTAR"
             android:textSize="16sp"
-            android:backgroundTint="#6200EE"
-            app:cornerRadius="8dp"/>
+            android:backgroundTint="@color/myBlueDark"/>
 
+        <!-- LOGIN LINK -->
         <TextView
             android:id="@+id/tvToLogin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sudah punya akun? Login di sini"
             android:layout_gravity="center"
-            android:layout_marginTop="24dp"
-            android:textColor="#6200EE"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/myRedDark"
             android:textStyle="bold"/>
+
+        <!-- LOADING -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"/>
 
     </LinearLayout>
 
 </ScrollView>
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:visibility="gone" />
-
-</RelativeLayout>

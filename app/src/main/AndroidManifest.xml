@@ -22,6 +22,9 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:allowBackup">
         <activity
+            android:name=".ui.manager.report.DetailLaporanActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.manager.template.TemplateManager"
             android:exported="false" />
         <activity
@@ -44,7 +47,7 @@
         </activity>
         <activity
             android:name=".ui.main.ManagerActivity"
-            android:exported="true"></activity>
+            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

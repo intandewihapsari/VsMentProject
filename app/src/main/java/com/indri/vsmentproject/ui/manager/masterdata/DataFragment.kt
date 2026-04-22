@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentDataBinding
+import com.indri.vsmentproject.ui.manager.template.FragmentTemplateForm
 
 class DataFragment : Fragment() {
 
@@ -51,6 +52,13 @@ class DataFragment : Fragment() {
             adapter = adapterRiwayat
             layoutManager = LinearLayoutManager(requireContext())
             isNestedScrollingEnabled = false
+        }
+        binding.btnInstructionTemplate.setOnClickListener {
+            // Pindah ke Fragment Template yang kamu buat tadi
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, FragmentTemplateForm())
+                //.addToAddBackStack(null)
+                .commit()
         }
     }
 

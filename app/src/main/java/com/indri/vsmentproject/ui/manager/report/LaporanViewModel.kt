@@ -12,7 +12,11 @@ class LaporanViewModel : ViewModel() {
     // Observasi langsung dari Repository menggunakan wrapper Resource
     val laporanResource: LiveData<Resource<List<LaporanModel>>> = repo.getAllLaporan()
 
-    fun updateStatusLaporan(laporanId: String, statusBaru: String, onComplete: (Boolean) -> Unit) {
-        repo.updateStatus(laporanId, statusBaru, onComplete)
+    fun updateCatatanManager(id: String, catatan: String, onComplete: (Boolean) -> Unit) {
+        // Repo panggil db.child("laporan").child(id).child("catatan_manager").setValue(catatan)
+        repo.updateCatatan(id, catatan, onComplete)
+    }
+    fun updateStatusLaporan(id: String, status: String, onComplete: (Boolean) -> Unit) {
+        repo.updateStatus(id, status, onComplete)
     }
 }

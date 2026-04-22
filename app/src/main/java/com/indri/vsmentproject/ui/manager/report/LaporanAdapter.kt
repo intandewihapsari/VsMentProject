@@ -1,5 +1,6 @@
 package com.indri.vsmentproject.ui.manager.report
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -58,23 +59,18 @@ class LaporanAdapter(
 
         holder.binding.apply {
 
-            // 🔴 Label + warna
             tvLabel.text = label
             tvLabel.setTextColor(color)
 
-            // 🔴 Garis kiri
             viewIndicator.setBackgroundColor(color)
 
-            // 📦 Judul
             tvDesc.text = item.nama_barang
-
-            // 📝 Detail
             tvLocation.text = "${item.villa_nama} • ${item.staff_nama}"
-
-            // ⏰ Waktu
             tvDateTime.text = item.waktu_lapor
 
+            // ✅ INI YANG BENAR
             root.setOnClickListener {
+                Log.d("CLICK_TEST", "Item diklik: ${item.nama_barang}")
                 onClick(item)
             }
         }

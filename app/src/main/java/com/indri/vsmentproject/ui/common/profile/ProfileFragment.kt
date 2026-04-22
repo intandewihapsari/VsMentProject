@@ -50,15 +50,15 @@ class ProfileFragment : Fragment() {
                 }
 
                 // --- PERBAIKAN: Ubah Nama Label Sesuai Role ---
-                if (user.role == "staff") {
-                    tvLabelVilla.text = "Tugas Beres"      // Menggantikan Total Villa
-                    tvLabelStaff.text = "Inisiatif Lapor"  // Menggantikan Total Staff
-                    tvLabelLaporan.text = "Sisa Tugas"    // Menggantikan Total Laporan
-                } else {
-                    tvLabelVilla.text = "Total Villa"
-                    tvLabelStaff.text = "Total Staff"
-                    tvLabelLaporan.text = "Laporan Pending"
-                }
+//                if (user.role == "staff") {
+//                    tvLabelVilla.text = "Tugas Beres"      // Menggantikan Total Villa
+//                    tvLabelStaff.text = "Inisiatif Lapor"  // Menggantikan Total Staff
+//                    tvLabelLaporan.text = "Sisa Tugas"    // Menggantikan Total Laporan
+//                } else {
+//                    tvLabelVilla.text = "Total Villa"
+//                    tvLabelStaff.text = "Total Staff"
+//                    tvLabelLaporan.text = "Laporan Pending"
+//                }
             }
         }
 
@@ -67,13 +67,13 @@ class ProfileFragment : Fragment() {
             with(binding) {
                 // Di sini kita tampilkan angkanya secara berurutan
                 // stat.totalVilla sekarang berisi "Tugas Beres" untuk Staff
-                tvCountVilla.text = stat.first.toString()
-
-                // stat.totalStaff sekarang berisi "Inisiatif Lapor" untuk Staff
-                tvCountStaff.text = stat.second.toString()
-
-                // stat.totalLaporanPending sekarang berisi "Sisa Tugas" untuk Staff
-                tvCountLaporan.text = stat.third.toString()
+//                tvCountVilla.text = stat.first.toString()
+//
+//                // stat.totalStaff sekarang berisi "Inisiatif Lapor" untuk Staff
+//                tvCountStaff.text = stat.second.toString()
+//
+//                // stat.totalLaporanPending sekarang berisi "Sisa Tugas" untuk Staff
+//                tvCountLaporan.text = stat.third.toString()
             }
         }
 

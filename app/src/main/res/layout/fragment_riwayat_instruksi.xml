@@ -28,30 +28,86 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvRiwayatInstruksi"
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleGroupStatus"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:padding="16dp" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:padding="4dp"
+        app:checkedButton="@+id/btnSemua"
+        app:selectionRequired="true"
+        app:singleSelection="true">
 
-    <LinearLayout
-        android:id="@+id/layoutEmpty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:visibility="gone">
-        <ImageView
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:src="@android:drawable/ic_menu_recent_history"
-            app:tint="#CBD5E0" />
-        <TextView
-            android:layout_width="wrap_content"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSemua"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Belum ada riwayat pengiriman"
-            android:textColor="#A0AEC0" />
-    </LinearLayout>
+            android:layout_weight="1"
+            android:text="Semua"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:backgroundTint="@color/selector_filter_tab"
+            android:textColor="@color/selector_filter_text"
+            app:cornerRadius="12dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBelum"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Pending"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:backgroundTint="@color/selector_filter_tab"
+            android:textColor="@color/selector_filter_text"
+            app:cornerRadius="12dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSelesai"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Selesai"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:backgroundTint="@color/selector_filter_tab"
+            android:textColor="@color/selector_filter_text"
+            app:cornerRadius="12dp" />
+
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvRiwayatInstruksi"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="16dp" />
+
+        <LinearLayout
+            android:id="@+id/layoutEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <ImageView
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@android:drawable/ic_menu_recent_history"
+                app:tint="#CBD5E0" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Belum ada riwayat pengiriman"
+                android:textColor="#A0AEC0" />
+        </LinearLayout>
+    </FrameLayout>
 </LinearLayout>

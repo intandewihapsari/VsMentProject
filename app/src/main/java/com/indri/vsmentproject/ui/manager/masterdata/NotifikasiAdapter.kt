@@ -9,7 +9,7 @@ import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.databinding.ItemNotifikasiBinding
 
 class NotifikasiAdapter(
-    private val isManager: Boolean = false,
+    private val isManager: Boolean = true, // Default true karena ini di folder manager
     private val onClick: (NotifikasiModel) -> Unit
 ) : RecyclerView.Adapter<NotifikasiAdapter.ViewHolder>() {
 
@@ -30,56 +30,57 @@ class NotifikasiAdapter(
     override fun getItemCount() = list.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-
         val data = list[position]
 
-        // =========================
-        // JUDUL
-        // =========================
-        holder.binding.tvNamaTugas.text = data.judul
+        holder.binding.apply {
+            // =========================
+            // DATA UTAMA
+            // =========================
+            tvNamaTugas.text = data.judul
+            tvNamaVilla.text = data.pesan // Tambahin ini biar pesannya muncul
+            tvWaktu.text = data.waktu // Munculin waktu kirim
 
-        // =========================
-        // NAMA VILLA
-        // =========================
-        holder.binding.tvNamaVilla.text =
-            if (data.villa_nama.isNotEmpty()) data.villa_nama else "Umum"
+            // =========================
+            // NAMA VILLA
+            // =========================
+            tvNamaVilla.text = if (data.villa_nama.isNotEmpty()) data.villa_nama else "Umum"
 
-        // =========================
-        // MODE MANAGER vs STAFF
-        // =========================
-        if (isManager) {
-            // ❌ Manager: ga perlu checkbox
-            holder.binding.cbRead.visibility = View.GONE
-        } else {
-            // ✅ Staff: pakai checkbox
-            holder.binding.cbRead.visibility = View.VISIBLE
+            // =========================
+            // MODE MANAGER vs STAFF
+            // =========================
+            if (isManager) {
+                // ❌ Manager: Cukup lihat riwayat, hide checkbox
+                cbRead.visibility = View.GONE
 
-            if (data.is_read) {
-                holder.binding.cbRead.setImageResource(R.drawable.ic_circle_checked)
+                // Status buat manager: kalau sudah dibaca staff, bikin agak transparan
+                holder.itemView.alpha = if (data.is_read) 0.6f else 1f
             } else {
-                holder.binding.cbRead.setImageResource(R.drawable.ic_circle_outline)
+                // ✅ Staff: Mode operasional, munculkan checkbox
+                cbRead.visibility = View.VISIBLE
+
+                if (data.is_read) {
+                    cbRead.setImageResource(R.drawable.ic_circle_checked)
+                    holder.itemView.alpha = 0.5f
+                } else {
+                    cbRead.setImageResource(R.drawable.ic_circle_outline)
+                    holder.itemView.alpha = 1.0f
+                }
+
+                // Klik icon checkbox saja
+                cbRead.setOnClickListener {
+                    onClick(data)
+                }
             }
 
-            // klik checkbox → mark as read (optional)
-            holder.binding.cbRead.setOnClickListener {
+            // =========================
+            // CLICK ITEM (ROOT)
+            // =========================
+            root.setOnClickListener {
                 onClick(data)
             }
         }
-
-        // =========================
-        // EFFECT (BIAR KEREN)
-        // =========================
-        holder.itemView.alpha = if (data.is_read && !isManager) 0.5f else 1f
-
-        // =========================
-        // CLICK ITEM
-        // =========================
-        holder.itemView.setOnClickListener {
-            onClick(data)
-        }
     }
 
-    // =========================
     fun updateList(newList: List<NotifikasiModel>) {
         list = newList
         notifyDataSetChanged()

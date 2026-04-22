@@ -76,54 +76,54 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Edit Profil &amp; Email"
+                    android:text="Edit Profil"
                     android:textAllCaps="false" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:orientation="horizontal">
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="20dp"-->
+<!--            android:orientation="horizontal">-->
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                app:cardCornerRadius="12dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">
-                    <TextView android:id="@+id/tvCountVilla" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#2196F3" android:textSize="20sp" android:textStyle="bold" android:text="0" />
-                    <TextView android:id="@+id/tvLabelVilla" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Villa" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+<!--            <com.google.android.material.card.MaterialCardView-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_marginEnd="4dp"-->
+<!--                app:cardCornerRadius="12dp">-->
+<!--                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">-->
+<!--                    <TextView android:id="@+id/tvCountVilla" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#2196F3" android:textSize="20sp" android:textStyle="bold" android:text="0" />-->
+<!--                    <TextView android:id="@+id/tvLabelVilla" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Villa" />-->
+<!--                </LinearLayout>-->
+<!--            </com.google.android.material.card.MaterialCardView>-->
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                app:cardCornerRadius="12dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">
-                    <TextView android:id="@+id/tvCountStaff" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#4CAF50" android:textSize="20sp" android:textStyle="bold" android:text="0" />
-                    <TextView android:id="@+id/tvLabelStaff" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Staff" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+<!--            <com.google.android.material.card.MaterialCardView-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_marginHorizontal="4dp"-->
+<!--                app:cardCornerRadius="12dp">-->
+<!--                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">-->
+<!--                    <TextView android:id="@+id/tvCountStaff" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#4CAF50" android:textSize="20sp" android:textStyle="bold" android:text="0" />-->
+<!--                    <TextView android:id="@+id/tvLabelStaff" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Staff" />-->
+<!--                </LinearLayout>-->
+<!--            </com.google.android.material.card.MaterialCardView>-->
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardLaporan"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                app:cardCornerRadius="12dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">
-                    <TextView android:id="@+id/tvCountLaporan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F44336" android:textSize="20sp" android:textStyle="bold" android:text="0" />
-                    <TextView android:id="@+id/tvLabelLaporan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Laporan" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
+<!--            <com.google.android.material.card.MaterialCardView-->
+<!--                android:id="@+id/cardLaporan"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:layout_marginStart="4dp"-->
+<!--                app:cardCornerRadius="12dp">-->
+<!--                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">-->
+<!--                    <TextView android:id="@+id/tvCountLaporan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F44336" android:textSize="20sp" android:textStyle="bold" android:text="0" />-->
+<!--                    <TextView android:id="@+id/tvLabelLaporan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Laporan" />-->
+<!--                </LinearLayout>-->
+<!--            </com.google.android.material.card.MaterialCardView>-->
+<!--        </LinearLayout>-->
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"

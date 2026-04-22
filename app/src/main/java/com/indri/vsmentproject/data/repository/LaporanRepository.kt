@@ -34,4 +34,18 @@ class LaporanRepository {
         db.child(laporanId).child(FirebaseConfig.FIELD_STATUS).setValue(status)
             .addOnCompleteListener { onComplete(it.isSuccessful) }
     }
+
+    fun updateCatatan(laporanId: String, catatan: String, onComplete: (Boolean) -> Unit) {
+        val db = FirebaseDatabase.getInstance().getReference("laporan") // Sesuaikan path folder laporanmu
+
+        val updates = mapOf(
+            "catatan_manager" to catatan
+        )
+
+        db.child(laporanId).updateChildren(updates)
+            .addOnSuccessListener { onComplete(true) }
+            .addOnFailureListener { onComplete(false) }
+    }
+
+
 }
