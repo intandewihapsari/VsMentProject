@@ -1,31 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="20dp"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="12dp">
+    android:layout_margin="16dp"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="@color/myWhite">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- HEADER -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/myRedDark"
             android:padding="20dp">
 
             <TextView
+                android:id="@+id/tvTitleNotif"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="Notifikasi Operasional"
-                android:textColor="@color/myWhite"
+                android:text="Instruksi Operasional"
+                android:textColor="@color/myBlack"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:layout_below="@id/tvTitleNotif"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kirim informasi ke staff secara cepat"
+                android:textSize="12sp"
+                android:textColor="#777"
+                android:layout_marginTop="4dp"/>
 
             <ImageButton
                 android:id="@+id/btn_close_notif"
@@ -34,107 +45,121 @@
                 android:layout_alignParentEnd="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
-                app:tint="@color/myWhite" />
+                app:tint="#999" />
         </RelativeLayout>
 
+        <!-- DIVIDER -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE"/>
+
+        <!-- CONTENT -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="20dp">
 
+            <!-- VILLA -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Target Villa"
+                android:textStyle="bold"
+                android:textSize="13sp"
                 android:textColor="@color/myBlack"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"/>
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_input_field">
+
                 <Spinner
                     android:id="@+id/spinner_villa_notif"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:paddingStart="8dp" />
+                    android:layout_height="match_parent"/>
             </FrameLayout>
 
+            <!-- STAFF -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Target Staff"
+                android:textStyle="bold"
+                android:textSize="13sp"
                 android:textColor="@color/myBlack"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"/>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btn_pilih_staff"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/myWhite"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#CBD5E0"
+                app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:cardElevation="0dp">
+                app:strokeColor="#E0E0E0"
+                app:cardBackgroundColor="@color/myWhite">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
 
                     <TextView
                         android:id="@+id/tv_staff_terpilih"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Pilih Staff (Bisa pilih semua)"
-                        android:textColor="#718096"
-                        android:textSize="14sp" />
+                        android:text="Pilih Staff"
+                        android:textColor="#888"
+                        android:textSize="14sp"/>
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="#718096" />
+                        app:tint="#888"/>
                 </LinearLayout>
+
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- JUDUL -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Judul Notifikasi"
+                android:textStyle="bold"
+                android:textSize="13sp"
                 android:textColor="@color/myBlack"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"/>
 
             <EditText
                 android:id="@+id/et_judul_notif"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_input_field"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
                 android:hint="Contoh: Perbaikan AC"
-                android:inputType="textCapSentences"
-                android:paddingHorizontal="16dp"
-                android:textSize="15sp" />
+                android:textSize="14sp"/>
 
+            <!-- PESAN -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Detail Pesan"
+                android:textStyle="bold"
+                android:textSize="13sp"
                 android:textColor="@color/myBlack"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"/>
 
             <EditText
                 android:id="@+id/et_pesan_notif"
@@ -142,33 +167,36 @@
                 android:layout_height="120dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
-                android:gravity="top"
-                android:hint="Tulis detail instruksi di sini..."
                 android:padding="16dp"
-                android:textSize="15sp" />
+                android:gravity="top"
+                android:hint="Tulis instruksi di sini..."
+                android:textSize="14sp"/>
 
+            <!-- SWITCH -->
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switch_urgent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="16dp"
-                android:text="Tandai Urgent (Prioritas Tinggi)"
+                android:text="Tandai sebagai urgent"
                 android:textColor="@color/myRedDark"
-                android:textStyle="bold"
+                android:layout_marginTop="16dp"
                 app:thumbTint="@color/myRedDark"
-                app:trackTint="@color/myRedLight" />
+                app:trackTint="@color/myRedLight"/>
 
+            <!-- BUTTON -->
             <Button
                 android:id="@+id/btn_kirim_notif_firebase"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:backgroundTint="@color/myRedDark"
-                android:text="KIRIM NOTIFIKASI"
+                android:layout_marginTop="24dp"
+                android:text="Kirim Instruksi"
+                android:textAllCaps="false"
+                android:textSize="15sp"
                 android:textColor="@color/myWhite"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:cornerRadius="16dp" />
+                android:backgroundTint="@color/myRedDark"
+                app:cornerRadius="20dp"/>
 
         </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>
