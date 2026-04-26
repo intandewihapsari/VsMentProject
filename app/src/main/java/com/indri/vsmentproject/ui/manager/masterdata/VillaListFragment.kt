@@ -55,10 +55,7 @@ class VillaListFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
     }
-    override fun onResume() {
-        super.onResume()
-        (activity as? ManagerActivity)?.setHeaderVisible(false)
-    }
+
 
     private fun showMenuOpsi(villa: VillaModel) {
 

@@ -87,10 +87,7 @@ class ManagerActivity : AppCompatActivity() {
             }
         }
     }
-    fun setHeaderVisible(isVisible: Boolean) {
-        val header = findViewById<View>(R.id.layoutHeader)
-        header.visibility = if (isVisible) View.VISIBLE else View.GONE
-    }
+
 
     // Fungsi bantu untuk ganti fragment (ID fragmentContainer TETAP SAMA)
     private fun replaceFragment(fragment: Fragment) {

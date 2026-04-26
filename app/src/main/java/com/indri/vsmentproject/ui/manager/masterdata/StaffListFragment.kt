@@ -97,10 +97,7 @@ class StaffListFragment : Fragment() {
             }
             .show()
     }
-    override fun onResume() {
-        super.onResume()
-        (activity as? ManagerActivity)?.setHeaderVisible(false)
-    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

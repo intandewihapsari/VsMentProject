@@ -16,6 +16,9 @@ class DataViewModel : ViewModel() {
 
     private val db = FirebaseDatabase.getInstance().reference
 
+    // =============================
+    // LIVE DATA
+    // =============================
     private val _villaList = MutableLiveData<List<VillaModel>>()
     val villaList: LiveData<List<VillaModel>> = _villaList
 
@@ -29,11 +32,10 @@ class DataViewModel : ViewModel() {
 
     private val notifRepo = NotificationRepository()
 
-    // Ambil data dari folder "notifikasi" (Sesuaikan jika di Firebase namanya berbeda)
-    // Di dalam DataViewModel.kt
-
+    // =============================
+    // NOTIFIKASI
+    // =============================
     fun getRiwayatInstruksi(uid: String) {
-        // Gunakan fungsi dari repo yang sudah kita benerin tadi
         notifRepo.getMyNotifications(uid).observeForever { resource ->
             when (resource) {
                 is Resource.Success -> {
@@ -48,6 +50,7 @@ class DataViewModel : ViewModel() {
             }
         }
     }
+
     fun filterNotif(filterType: String) {
         if (originalNotifList.isEmpty()) return
 
@@ -59,32 +62,69 @@ class DataViewModel : ViewModel() {
         _riwayatNotif.postValue(filteredList)
     }
 
-    // --- Master Data Villa & Staff ---
+    // =============================
+    // GET DATA (VILLA & STAFF)
+    // =============================
     fun getData() {
-        db.child(FirebaseConfig.PATH_VILLAS).addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val list = snapshot.children.mapNotNull {
-                    it.getValue(VillaModel::class.java)?.apply { id = it.key ?: "" }
-                }
-                _villaList.postValue(list)
-            }
-            override fun onCancelled(error: DatabaseError) {}
-        })
 
-        db.child(FirebaseConfig.PATH_STAFFS).addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val list = snapshot.children.mapNotNull {
-                    it.getValue(UserModel::class.java)?.apply { uid = it.key ?: "" }
+        // VILLA
+        db.child(FirebaseConfig.PATH_VILLAS)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val list = snapshot.children.mapNotNull {
+                        it.getValue(VillaModel::class.java)?.apply {
+                            id = it.key ?: ""
+                        }
+                    }
+                    _villaList.postValue(list)
                 }
-                _staffList.postValue(list)
-            }
-            override fun onCancelled(error: DatabaseError) {}
-        })
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+
+        // STAFF
+        db.child(FirebaseConfig.PATH_STAFFS)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val list = snapshot.children.mapNotNull {
+                        it.getValue(UserModel::class.java)?.apply {
+                            uid = it.key ?: ""
+                        }
+                    }
+                    _staffList.postValue(list)
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 
-    // CRUD Ops
-    fun hapusStaff(uid: String) = db.child(FirebaseConfig.PATH_STAFFS).child(uid).removeValue()
-    fun simpanStaff(uid: String, data: Map<String, Any>) = db.child(FirebaseConfig.PATH_STAFFS).child(uid).updateChildren(data)
-    fun simpanVilla(id: String, data: Map<String, Any>) = db.child(FirebaseConfig.PATH_VILLAS).child(id).updateChildren(data)
-    fun hapusVilla(id: String) = db.child(FirebaseConfig.PATH_VILLAS).child(id).removeValue()
+    // =============================
+    // STAFF CRUD (pakai Map)
+    // =============================
+    fun simpanStaff(uid: String, data: Map<String, Any>) {
+        db.child(FirebaseConfig.PATH_STAFFS)
+            .child(uid)
+            .updateChildren(data)
+    }
+
+    fun hapusStaff(uid: String) {
+        db.child(FirebaseConfig.PATH_STAFFS)
+            .child(uid)
+            .removeValue()
+    }
+
+    // =============================
+    // VILLA CRUD (pakai MODEL)
+    // =============================
+    fun simpanVilla(id: String, villa: VillaModel) {
+        db.child(FirebaseConfig.PATH_VILLAS)
+            .child(id)
+            .setValue(villa)
+    }
+
+    fun hapusVilla(id: String) {
+        db.child(FirebaseConfig.PATH_VILLAS)
+            .child(id)
+            .removeValue()
+    }
 }

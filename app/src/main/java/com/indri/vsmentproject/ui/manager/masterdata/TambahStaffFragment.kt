@@ -15,6 +15,7 @@ import com.indri.vsmentproject.data.utils.CloudinaryHelper
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.databinding.FragmentTambahStaffBinding
+import com.indri.vsmentproject.ui.main.ManagerActivity
 
 class TambahStaffFragment : Fragment() {
 
@@ -41,6 +42,7 @@ class TambahStaffFragment : Fragment() {
     // =============================
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
 
         val staff = arguments?.getParcelable<UserModel>(ARG_STAFF)
 
@@ -291,6 +293,8 @@ class TambahStaffFragment : Fragment() {
             }
         }
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

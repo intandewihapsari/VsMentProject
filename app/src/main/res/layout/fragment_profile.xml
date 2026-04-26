@@ -2,7 +2,8 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient_home">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -10,130 +11,105 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- PROFILE CARD -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="4dp">
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@color/myWhite">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="vertical"
+                android:gravity="center"
                 android:padding="24dp">
 
+                <!-- FOTO -->
                 <FrameLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content">
+
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/ivProfile"
-                        android:layout_width="110dp"
-                        android:layout_height="110dp"
-                        android:padding="2dp"
-                        android:scaleType="centerCrop"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_profile"
                         app:shapeAppearanceOverlay="@style/CircleImage"
-                        app:strokeColor="#6200EE"
-                        app:strokeWidth="2dp"
-                        android:src="@android:color/darker_gray" />
+                        app:strokeWidth="3dp"
 
+                        app:strokeColor="@color/myBlueDark"/>
+                    <!-- BUTTON EDIT FOTO -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnEditFoto"
-                        android:layout_width="34dp"
-                        android:layout_height="34dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
                         android:layout_gravity="bottom|end"
-                        app:cardBackgroundColor="#6200EE"
-                        app:cardCornerRadius="17dp">
+                        app:cardCornerRadius="18dp"
+                        app:cardBackgroundColor="@color/myBlueDark"
+                        app:cardElevation="4dp">
+
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:layout_gravity="center"
                             android:src="@android:drawable/ic_menu_camera"
-                            app:tint="@color/myWhite" />
+                            app:tint="@color/myWhite"/>
                     </com.google.android.material.card.MaterialCardView>
+
                 </FrameLayout>
 
+                <!-- NAMA -->
                 <TextView
                     android:id="@+id/tvNamaUser"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    android:text="Nama User"
                     android:textColor="@color/myBlack"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:text="Memuat Nama..." />
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
+                <!-- JABATAN -->
                 <TextView
                     android:id="@+id/tvJabatanUser"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:alpha="0.7"
-                    android:text="Jabatan" />
+                    android:text="Manager"
+                    android:textColor="#888888"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"/>
 
+                <!-- EDIT BUTTON -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnEditProfile"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
                     android:text="Edit Profil"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    android:textColor="@color/myBlueDark"
+                    app:backgroundTint="@android:color/transparent"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="@color/myBlueDark"
+                    app:cornerRadius="20dp"/>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-<!--        <LinearLayout-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="20dp"-->
-<!--            android:orientation="horizontal">-->
-
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_weight="1"-->
-<!--                android:layout_marginEnd="4dp"-->
-<!--                app:cardCornerRadius="12dp">-->
-<!--                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">-->
-<!--                    <TextView android:id="@+id/tvCountVilla" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#2196F3" android:textSize="20sp" android:textStyle="bold" android:text="0" />-->
-<!--                    <TextView android:id="@+id/tvLabelVilla" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Villa" />-->
-<!--                </LinearLayout>-->
-<!--            </com.google.android.material.card.MaterialCardView>-->
-
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_weight="1"-->
-<!--                android:layout_marginHorizontal="4dp"-->
-<!--                app:cardCornerRadius="12dp">-->
-<!--                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">-->
-<!--                    <TextView android:id="@+id/tvCountStaff" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#4CAF50" android:textSize="20sp" android:textStyle="bold" android:text="0" />-->
-<!--                    <TextView android:id="@+id/tvLabelStaff" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Staff" />-->
-<!--                </LinearLayout>-->
-<!--            </com.google.android.material.card.MaterialCardView>-->
-
-<!--            <com.google.android.material.card.MaterialCardView-->
-<!--                android:id="@+id/cardLaporan"-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_weight="1"-->
-<!--                android:layout_marginStart="4dp"-->
-<!--                app:cardCornerRadius="12dp">-->
-<!--                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical" android:padding="16dp">-->
-<!--                    <TextView android:id="@+id/tvCountLaporan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F44336" android:textSize="20sp" android:textStyle="bold" android:text="0" />-->
-<!--                    <TextView android:id="@+id/tvLabelLaporan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Laporan" />-->
-<!--                </LinearLayout>-->
-<!--            </com.google.android.material.card.MaterialCardView>-->
-<!--        </LinearLayout>-->
-
+        <!-- LOGOUT -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="32dp"
-            android:backgroundTint="#D32F2F"
+            android:layout_marginTop="24dp"
             android:text="Log Out"
             android:textAllCaps="false"
-            app:cornerRadius="12dp" />
+            android:textColor="@android:color/white"
+            app:backgroundTint="#E53935"
+            app:cornerRadius="14dp"/>
 
     </LinearLayout>
 </ScrollView>
