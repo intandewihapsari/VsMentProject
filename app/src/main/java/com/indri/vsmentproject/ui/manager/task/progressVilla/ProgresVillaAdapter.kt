@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -98,9 +99,20 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
                     foto = tugasList.firstOrNull { it.bukti_foto.isNotEmpty() }?.bukti_foto ?: emptyList()
                 )
             }
+            val btnClose = view.findViewById<ImageView>(R.id.btnClose)
+
+            btnClose.setOnClickListener {
+                dialog.dismiss()
+            }
 
             rvDeadline.layoutManager = LinearLayoutManager(context)
             rvDeadline.adapter = DeadlineAdapter(result)
+
+            dialog.window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
             dialog.show()
         }
