@@ -49,7 +49,14 @@ class VillaTugasAdapter(
             }
 
             // Setup Child Adapter (List Tugas)
-            val childAdapter = TugasChildAdapter(data.listTugas, onDoneClick, onReportClick)
+            val isLastTask = data.tugasSelesai == data.totalTugas - 1
+
+            val childAdapter = TugasChildAdapter(
+                data.listTugas,
+                onDoneClick,
+                onReportClick,
+                isLastTask
+            )
             binding.rvTugasChild.apply {
                 layoutManager = LinearLayoutManager(itemView.context)
                 adapter = childAdapter

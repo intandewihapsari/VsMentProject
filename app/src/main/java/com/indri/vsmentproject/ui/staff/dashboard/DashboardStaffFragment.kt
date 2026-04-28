@@ -120,7 +120,8 @@ class DashboardStaffFragment : Fragment() {
                     binding?.rvTugasHome?.adapter = TugasChildAdapter(
                         sortedPending,
                         onDone = { t -> updateStatusTugas(t) },
-                        onReport = { t -> bukaLaporanDariTugas(t) }
+                        onReport = { t -> bukaLaporanDariTugas(t) },
+                        isLastTask = sortedPending.size == 1
                     )
                 }
 
