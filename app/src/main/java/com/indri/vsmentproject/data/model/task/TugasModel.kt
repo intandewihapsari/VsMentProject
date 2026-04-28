@@ -37,3 +37,8 @@ data class WaktuContainer(
     val kategoriWaktu: String,
     val listVilla: List<VillaTugasGroup> // Pastikan namanya persis begini
 )
+data class DeadlineGroup(
+    val deadline: String,
+    val listTugas: List<TugasModel>,
+    val foto: List<String>
+)

@@ -1,20 +1,20 @@
 package com.indri.vsmentproject.ui.manager.task.progressVilla
 
+import android.app.Dialog
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.google.firebase.database.FirebaseDatabase
 import com.indri.vsmentproject.R
-import com.indri.vsmentproject.data.model.task.TugasModel
+import com.indri.vsmentproject.data.model.task.DeadlineGroup
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemProgresVillaBinding
 
 class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>() {
 
-    private var items = mutableListOf<VillaTugasGroup>()
+    private val items = mutableListOf<VillaTugasGroup>()
 
     fun setList(newList: List<VillaTugasGroup>) {
         items.clear()
@@ -42,35 +42,67 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
 
         fun bind(group: VillaTugasGroup) {
 
-            binding.tvNamaVilla.text = group.namaVilla
-
             val total = group.listTugas.size
             val selesai = group.listTugas.count { it.status == "selesai" }
-            val pending = total - selesai
 
+            binding.tvNamaVilla.text = group.namaVilla
             binding.tvSelesaiCount.text = "Selesai : $selesai"
-            binding.tvPendingCount.text = "Pending : $pending"
+            binding.tvPendingCount.text = "Pending : ${total - selesai}"
 
             val progress = if (total > 0) (selesai * 100) / total else 0
             binding.tvPersen.text = "$progress%"
             binding.pbProgres.progress = progress
 
-            // 🔥 PENTING: pakai state dari data
-            binding.layoutDetail.visibility =
-                if (group.isExpanded) View.VISIBLE else View.GONE
+            // 🔥 STATUS
+            val semuaSelesai = group.listTugas.all { it.status == "selesai" }
+            val adaFoto = group.listTugas.any { it.bukti_foto.isNotEmpty() }
 
+            binding.tvStatusValidasi.text = when {
+                !semuaSelesai -> "⏳ Masih Proses"
+                semuaSelesai && !adaFoto -> "📷 Belum Ada Bukti"
+                else -> "✅ Sudah Upload"
+            }
+
+            // 🔥 CLICK → POPUP
             binding.root.setOnClickListener {
-                group.isExpanded = !group.isExpanded
-                notifyItemChanged(adapterPosition)
+                showDialog(bindingAdapterPosition)
+            }
+        }
+
+        private fun showDialog(position: Int) {
+            val context = binding.root.context
+            val group = items[position]
+
+            val dialog = Dialog(context)
+            val view = LayoutInflater.from(context)
+                .inflate(R.layout.dialog_detail_villa, null)
+
+            dialog.setContentView(view)
+            dialog.window?.setLayout(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
+            )
+
+            val tvNama = view.findViewById<TextView>(R.id.tvNamaVilla)
+            val rvDeadline = view.findViewById<RecyclerView>(R.id.rvDeadline)
+
+            tvNama.text = group.namaVilla
+
+            // 🔥 GROUP BY DEADLINE
+            val grouped = group.listTugas.groupBy { it.deadline }
+
+            val result = grouped.map { (tanggal, tugasList) ->
+                DeadlineGroup(
+                    deadline = tanggal,
+                    listTugas = tugasList,
+                    foto = tugasList.firstOrNull { it.bukti_foto.isNotEmpty() }?.bukti_foto ?: emptyList()
+                )
             }
 
-            // 🔥 set adapter tugas
-            val tugasAdapter = TugasExpandableAdapter(group.listTugas)
+            rvDeadline.layoutManager = LinearLayoutManager(context)
+            rvDeadline.adapter = DeadlineAdapter(result)
 
-            binding.rvTugas.apply {
-                layoutManager = LinearLayoutManager(itemView.context)
-                adapter = tugasAdapter
-            }
+            dialog.show()
         }
     }
 }
