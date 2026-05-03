@@ -1,6 +1,7 @@
 package com.indri.vsmentproject.ui.manager.task.progressVilla
 
 import android.app.Dialog
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
@@ -12,6 +13,7 @@ import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.DeadlineGroup
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemProgresVillaBinding
+
 
 class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>() {
 
@@ -57,12 +59,36 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
             // 🔥 STATUS
             val semuaSelesai = group.listTugas.all { it.status == "selesai" }
             val adaFoto = group.listTugas.any { it.bukti_foto.isNotEmpty() }
-
+            val mContext = binding.root.context
             binding.tvStatusValidasi.text = when {
                 !semuaSelesai -> "⏳ Masih Proses"
                 semuaSelesai && !adaFoto -> "📷 Belum Ada Bukti"
                 else -> "✅ Sudah Upload"
             }
+
+            // 🔥 STATUS (Hardcoded Colors)
+
+            when {
+                !semuaSelesai -> {
+                    binding.tvStatusValidasi.text = "⏳ Masih Proses"
+                    binding.tvStatusValidasi.setBackgroundColor(
+                        androidx.core.content.ContextCompat.getColor(mContext, R.color.myRedDark)
+                    )                }
+                semuaSelesai && !adaFoto -> {
+                    binding.tvStatusValidasi.text = "📷 Belum Ada Bukti"
+                    binding.tvStatusValidasi.setBackgroundColor(
+                        androidx.core.content.ContextCompat.getColor(mContext, R.color.myOrangeDark)
+                    )                }
+                else -> {
+                    binding.tvStatusValidasi.text = "✅ Sudah Upload"
+                    // Menggunakan warna dari colors.xml
+                    binding.tvStatusValidasi.setBackgroundColor(
+                        androidx.core.content.ContextCompat.getColor(mContext, R.color.myGreen)
+                    )
+                }
+            }
+// Pastikan warna teks tetap putih agar kontras
+            binding.tvStatusValidasi.setTextColor(android.graphics.Color.WHITE)
 
             // 🔥 CLICK → POPUP
             binding.root.setOnClickListener {
