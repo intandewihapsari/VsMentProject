@@ -76,12 +76,24 @@ class TugasFragment : Fragment() {
             currentVillaName = villa.nama
 
             if (!villa.area.isNullOrEmpty()) {
-                MaterialAlertDialogBuilder(requireContext())
+
+                val dialogView = layoutInflater.inflate(R.layout.dialog_area, null)
+                val rvArea = dialogView.findViewById<RecyclerView>(R.id.rvArea)
+
+                val dialog = MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Pilih Lokasi di ${villa.nama}")
-                    .setItems(villa.area.toTypedArray()) { _, i ->
-                        bukaFormInput(villa.id, villa.area[i])
-                    }
-                    .show()
+                    .setView(dialogView)
+                    .create()
+
+                rvArea.layoutManager = LinearLayoutManager(requireContext())
+                rvArea.adapter = AreaAdapter(villa.area) { selectedArea ->
+                    dialog.dismiss()
+                    bukaFormInput(villa.id, selectedArea)
+                }
+
+                dialog.show()
+                dialog.window?.setBackgroundDrawableResource(android.R.color.white)
+
             } else {
                 bukaFormInput(villa.id, "Umum")
             }

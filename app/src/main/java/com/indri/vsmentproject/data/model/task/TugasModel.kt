@@ -24,7 +24,7 @@ data class TugasModel(
     val status: String = "pending",
     val completed_at: Long = 0L,
 
-    val staff_photo: String = "",
+    val staff_foto: String = "",
     val bukti_foto: List<String> = emptyList(),
     val is_validated: Boolean = false
 ) : Parcelable

@@ -31,6 +31,7 @@ class FotoAdapter : RecyclerView.Adapter<FotoAdapter.ViewHolder>() {
         Glide.with(holder.itemView.context)
             .load(items[position])
             .into(holder.binding.ivFoto)
+
     }
 
     override fun getItemCount() = items.size

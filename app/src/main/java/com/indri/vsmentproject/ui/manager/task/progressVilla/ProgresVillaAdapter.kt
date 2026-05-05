@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.DeadlineGroup
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
@@ -51,6 +52,7 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
             binding.tvNamaVilla.text = group.namaVilla
             binding.tvSelesaiCount.text = "Selesai : $selesai"
             binding.tvPendingCount.text = "Pending : ${total - selesai}"
+            val foto = group.listTugas.firstOrNull()?.staff_foto // sesuaikan field kamu
 
             val progress = if (total > 0) (selesai * 100) / total else 0
             binding.tvPersen.text = "$progress%"
@@ -64,6 +66,16 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
                 !semuaSelesai -> "⏳ Masih Proses"
                 semuaSelesai && !adaFoto -> "📷 Belum Ada Bukti"
                 else -> "✅ Sudah Upload"
+            }
+
+            if (!foto.isNullOrEmpty()) {
+                Glide.with(binding.root.context)
+                    .load(foto)
+                    .placeholder(R.drawable.ic_profile)
+                    .error(R.drawable.ic_profile)
+                    .into(binding.ivStaffProfile)
+            } else {
+                binding.ivStaffProfile.setImageResource(R.drawable.ic_profile)
             }
 
             // 🔥 STATUS (Hardcoded Colors)
