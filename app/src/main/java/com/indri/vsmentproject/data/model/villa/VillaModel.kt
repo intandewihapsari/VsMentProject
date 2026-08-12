@@ -2,6 +2,7 @@ package com.indri.vsmentproject.data.model.villa
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+
 @Parcelize
 data class VillaModel(
     var id: String = "",

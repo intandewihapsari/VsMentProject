@@ -11,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.databinding.ActivityDetailLaporanBinding
@@ -26,35 +27,39 @@ class DetailLaporanActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val data = intent.getParcelableExtra<LaporanModel>("DATA_LAPORAN")
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        // 1. TOMBOL BACK
         binding.btnBack.setOnClickListener { finish() }
 
         data?.let { laporan ->
             setupUI(laporan)
 
-            // 2. TOMBOL SIMPAN CATATAN SAJA
+            // TOMBOL SIMPAN CATATAN
             binding.btnSimpanCatatan.setOnClickListener {
-                val catatan = binding.etCatatanManager.text.toString()
-                viewModel.updateCatatanManager(laporan.id, catatan) { sukses ->
-                    if (sukses) {
-                        Toast.makeText(this, "Catatan disimpan!", Toast.LENGTH_SHORT).show()
-                        hideKeyboard()
+                val catatan = binding.etCatatanManager.text.toString().trim()
+                if (managerUid.isNotEmpty()) {
+                    viewModel.updateCatatanManager(managerUid, laporan.id, catatan) { sukses ->
+                        if (sukses) {
+                            Toast.makeText(this, "Catatan disimpan!", Toast.LENGTH_SHORT).show()
+                            hideKeyboard()
+                        }
                     }
                 }
             }
 
-            // 3. TOMBOL TANDAI SELESAI
-            if (laporan.status.lowercase() == "pending") {
+            // TOMBOL TANDAI SELESAI
+            if (laporan.status.lowercase() == "pending" || laporan.status.lowercase() == "proses") {
                 binding.btnSelesaikanLaporan.visibility = View.VISIBLE
                 binding.btnSelesaikanLaporan.setOnClickListener {
-                    val catatan = binding.etCatatanManager.text.toString()
-                    // Update status dan catatan sekaligus
-                    viewModel.updateStatusLaporan(laporan.id, "selesai") { sukses ->
-                        if (sukses) {
-                            viewModel.updateCatatanManager(laporan.id, catatan) {
-                                Toast.makeText(this, "Laporan Selesai!", Toast.LENGTH_SHORT).show()
-                                finish()
+                    val catatan = binding.etCatatanManager.text.toString().trim()
+
+                    if (managerUid.isNotEmpty()) {
+                        viewModel.updateStatusLaporan(managerUid, laporan.id, "selesai") { sukses ->
+                            if (sukses) {
+                                viewModel.updateCatatanManager(managerUid, laporan.id, catatan) {
+                                    Toast.makeText(this, "Laporan Selesai!", Toast.LENGTH_SHORT).show()
+                                    finish()
+                                }
                             }
                         }
                     }
@@ -66,18 +71,17 @@ class DetailLaporanActivity : AppCompatActivity() {
     }
 
     private fun setupUI(it: LaporanModel) {
-        // TIPE LAPORAN DI ATAS (WARNA-WARNI)
         val (color, label) = when (it.tipe_laporan.lowercase()) {
             "rusak" -> Pair(ContextCompat.getColor(this, R.color.myRedDark), "KERUSAKAN")
             "hilang" -> Pair(ContextCompat.getColor(this, R.color.myOrangeDark), "HILANG")
-            "habis" -> Pair(ContextCompat.getColor(this, R.color.myBlueDark), "STOK HABIS")
+            "habis" -> Pair(ContextCompat.getColor(this, R.color.myGreen), "STOK HABIS")
             else -> Pair(Color.GRAY, "LAINNYA")
         }
         binding.tvTipeBesar.text = label
         binding.tvTipeBesar.setTextColor(color)
         binding.cardTipe.setStrokeColor(ColorStateList.valueOf(color))
 
-        // DETAIL INFO
+        // DETAIL INFO (SUDAH DISINKRONKAN DENGAN NAMA BARU MODEL DATA)
         binding.tvBarang.text = it.nama_barang
         binding.tvStatusDetail.text = it.status.uppercase()
         binding.tvVilla.text = "Villa: ${it.villa_nama}"
@@ -87,7 +91,6 @@ class DetailLaporanActivity : AppCompatActivity() {
         binding.tvDeskripsi.text = it.deskripsi
         binding.etCatatanManager.setText(it.catatan_manager)
 
-        // FOTO BUKTI (Pake resize biar gak Failed to receive transaction ready)
         if (!it.foto_url.isNullOrEmpty()) {
             Glide.with(this)
                 .load(it.foto_url)

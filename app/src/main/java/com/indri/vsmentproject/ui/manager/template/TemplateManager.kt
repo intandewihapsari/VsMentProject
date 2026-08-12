@@ -19,5 +19,9 @@ class TemplateManager : AppCompatActivity() {
                 .replace(binding.templateContainer.id, TemplateListFragment())
                 .commit()
         }
+
+        binding.btnBack?.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
 }

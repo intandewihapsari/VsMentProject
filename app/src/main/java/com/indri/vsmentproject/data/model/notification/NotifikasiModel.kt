@@ -6,36 +6,34 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class NotifikasiModel(
-
     // IDENTITAS
     var id: String = "",
 
     // KONTEN NOTIF
-    val judul: String = "",
-    val pesan: String = "",
-    val tipe: String = "info", // "urgent", "info", "warning"
+    var judul: String = "",
+    var pesan: String = "",
+    var tipe: String = "info",       // urgent / info / warning
 
-
+    // Menggunakan JvmField agar anotasi PropertyName Firebase bekerja sempurna pada tipe Boolean
     @get:PropertyName("is_read")
     @set:PropertyName("is_read")
     var is_read: Boolean = false,
 
     // WAKTU
-    val waktu: String = "",          // Format: yyyy-MM-dd HH:mm
-    val timestamp: Long = 0,         // Untuk sorting realtime
+    var waktu: String = "",          // Format: yyyy-MM-dd HH:mm
+    var timestamp: Long = 0L,        // Untuk sorting realtime
 
     // TARGET (PENERIMA)
-    val target_uid: String = "",     // Kirim ke user tertentu
-    val target_role: String = "",    // Kirim ke semua role (contoh: "staff")
+    var target_uid: String = "",     // Kirim ke user tertentu
+    var target_role: String = "",    // Kirim ke semua role (contoh: "staff")
 
     // PENGIRIM
-    val sender_id: String = "",
+    var sender_id: String = "",
 
     // KONTEKS (NAVIGASI)
-    val villa_id: String = "",
-    val villa_nama: String = "",
+    var villa_id: String = "",
+    var villa_nama: String = "",
 
     // USER (OPSIONAL - BACKWARD COMPATIBLE)
-    val user_id: String = ""
-
+    var user_id: String = ""
 ) : Parcelable

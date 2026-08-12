@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemVillaParentBinding
@@ -39,7 +38,6 @@ class VillaTugasAdapter(
             binding.tvNamaVilla.text = data.namaVilla
             binding.tvProgress.text = "${data.tugasSelesai} / ${data.totalTugas} Tugas Selesai"
 
-            // Toggle Expand/Collapse
             binding.rvTugasChild.visibility = if (data.isExpanded) View.VISIBLE else View.GONE
             binding.ivChevron.rotation = if (data.isExpanded) 180f else 0f
 
@@ -48,7 +46,7 @@ class VillaTugasAdapter(
                 notifyItemChanged(adapterPosition)
             }
 
-            // Setup Child Adapter (List Tugas)
+            // Hitung jika sisa 1 tugas belum selesai, maka tugas tersebut adalah tugas terakhir
             val isLastTask = data.tugasSelesai == data.totalTugas - 1
 
             val childAdapter = TugasChildAdapter(

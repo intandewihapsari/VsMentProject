@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.user.UserModel
@@ -44,8 +45,8 @@ class StaffListFragment : Fragment() {
             adapter = this@StaffListFragment.adapter
         }
 
-        // 🔥 LOAD DATA
-        viewModel.getData()
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        viewModel.getData(managerUid)
 
         viewModel.staffList.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
@@ -66,6 +67,7 @@ class StaffListFragment : Fragment() {
     // 🔥 MENU EDIT + DELETE
     private fun showMenuOpsiStaff(staff: UserModel) {
 
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         val opsi = arrayOf("Edit Staff", "Hapus Staff")
 
         MaterialAlertDialogBuilder(requireContext())
@@ -88,7 +90,7 @@ class StaffListFragment : Fragment() {
                             .setTitle("Hapus Staff")
                             .setMessage("Hapus ${staff.nama}?")
                             .setPositiveButton("Hapus") { _, _ ->
-                                viewModel.hapusStaff(staff.uid)
+                                viewModel.hapusStaff(managerUid, staff.uid) // Ditambahkan managerUid
                             }
                             .setNegativeButton("Batal", null)
                             .show()

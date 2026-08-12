@@ -1,4 +1,5 @@
 package com.indri.vsmentproject.data.model.task
+
 data class VillaTugasGroup(
     val villa_id: String = "",
     val namaVilla: String = "",
@@ -7,4 +8,15 @@ data class VillaTugasGroup(
     val tugasSelesai: Int = 0,
     val persentase_selesai: String = "0%",
     var isExpanded: Boolean = false
+)
+
+data class WaktuContainer(
+    val kategoriWaktu: String,
+    val listVilla: List<VillaTugasGroup>
+)
+
+data class DeadlineGroup(
+    val deadline: String,
+    val listTugas: List<TugasModel>,
+    val foto: List<String>
 )

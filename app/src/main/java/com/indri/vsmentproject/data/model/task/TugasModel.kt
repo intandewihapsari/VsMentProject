@@ -2,43 +2,33 @@ package com.indri.vsmentproject.data.model.task
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import com.google.firebase.database.PropertyName
 
 @Parcelize
 data class TugasModel(
     var id: String = "",
-    val manager_id: String = "",
-    val villa_id: String = "",
-    val villa_nama: String = "",
-    val ruangan: String = "Umum",
+    var manager_id: String = "",
+    var villa_id: String = "",
+    var villa_nama: String = "",
+    var ruangan: String = "",
+    var staff_id: String = "",
+    var staff_nama: String = "",
+    var tugas: String = "",
+    var deskripsi: String = "",
+    var prioritas: String = "",
+    var kategori: String = "",
+    var deadline: String = "",
+    var created_at: Long = System.currentTimeMillis(),
+    var completed_at: Long = 0L,
+    var status: String = "pending",
+    var progress: Int = 0,
+    var foto_tugas: String = "",
+    var foto_staff: String = "",
+    var bukti_foto: List<String> = emptyList(),
 
-    val staff_id: String = "",
-    val staff_name: String = "",
+    // TAMBAHKAN INI BIAR SINKRON SAMA JSON DATABASE
+    @get:PropertyName("is_validated")
+    @set:PropertyName("is_validated")
+    var is_validated: Boolean = false
 
-    val tugas: String = "",
-    val deskripsi: String = "",
-    val prioritas: String = "Medium",
-    val kategori: String = "Umum",
-    val deadline: String = "",
-
-    val created_at: Long = System.currentTimeMillis(),
-    val status: String = "pending",
-    val completed_at: Long = 0L,
-
-    val staff_foto: String = "",
-    val bukti_foto: List<String> = emptyList(),
-    val is_validated: Boolean = false
 ) : Parcelable
-data class VillaGroup(
-    val namaVilla: String,
-    val listTugas: List<TugasModel>
-)
-
-data class WaktuContainer(
-    val kategoriWaktu: String,
-    val listVilla: List<VillaTugasGroup> // Pastikan namanya persis begini
-)
-data class DeadlineGroup(
-    val deadline: String,
-    val listTugas: List<TugasModel>,
-    val foto: List<String>
-)

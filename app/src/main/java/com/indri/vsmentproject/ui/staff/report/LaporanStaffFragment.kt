@@ -53,10 +53,15 @@ class LaporanStaffFragment : Fragment() {
         setupStatusDropdown()
         checkIncomingArguments()
 
-        binding.ivPreviewForm.setOnClickListener { checkCameraPermission() }
+        //binding.ivPreviewForm.setOnClickListener { checkCameraPermission() }
+        binding.ivPreviewForm.setOnClickListener {
+            openGallery()
+        }
         binding.btnLaporkan.setOnClickListener { validateAndUpload() }
 
-        checkCameraPermission()
+        openGallery()
+
+        //checkCameraPermission()
     }
 
     private fun checkIncomingArguments() {
@@ -84,14 +89,25 @@ class LaporanStaffFragment : Fragment() {
         cameraLauncher.launch(currentPhotoUri)
     }
 
+//    private fun showForm(uri: Uri) {
+//        binding.layoutCamera.visibility = View.GONE
+//        binding.layoutForm.visibility = View.VISIBLE
+//        binding.ivPreviewForm.setImageURI(uri)
+//    }
     private fun showForm(uri: Uri) {
+        currentPhotoUri = uri // 🔥 WAJIB
         binding.layoutCamera.visibility = View.GONE
         binding.layoutForm.visibility = View.VISIBLE
         binding.ivPreviewForm.setImageURI(uri)
     }
+    private fun openGallery() {
+        binding.layoutForm.visibility = View.GONE
+        binding.layoutCamera.visibility = View.VISIBLE
+        galleryLauncher.launch("image/*")
+    }
 
     private fun setupVillaDropdown() {
-        val dbVillas = FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_VILLAS)
+        val dbVillas = FirebaseDatabase.getInstance().getReference(FirebaseConfig.CHILD_VILLAS)
         dbVillas.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 villaNames.clear()
@@ -112,7 +128,7 @@ class LaporanStaffFragment : Fragment() {
 
     private fun fetchAreas(villaId: String) {
         binding.actvLokasi.setText("")
-        FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_VILLAS).child(villaId).child("area")
+        FirebaseDatabase.getInstance().getReference(FirebaseConfig.CHILD_VILLAS).child(villaId).child("area")
             .get().addOnSuccessListener { snapshot ->
                 val areas = snapshot.children.map { it.value.toString() }
                 binding.actvLokasi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, areas))
@@ -146,7 +162,7 @@ class LaporanStaffFragment : Fragment() {
     }
     private fun generateReportId(callback: (String) -> Unit) {
         val db = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+            .getReference(FirebaseConfig.CHILD_LAPORAN_KERUSAKAN)
 
         db.get().addOnSuccessListener { snapshot ->
             val count = snapshot.childrenCount.toInt() + 1
@@ -156,51 +172,91 @@ class LaporanStaffFragment : Fragment() {
     }
 
     private fun saveToFirebase(url: String) {
+
         val db = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
+            .getReference(FirebaseConfig.CHILD_LAPORAN_KERUSAKAN)
 
-        val pref = requireActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+        val pref = requireActivity()
+            .getSharedPreferences("UserSession", Context.MODE_PRIVATE)
 
-        val newRef = db.push() // ✅ ini key asli firebase
+        val newRef = db.push()
         val firebaseKey = newRef.key ?: return
 
-        // 🔥 ambil index villa
-        val selectedVillaIndex = villaNames.indexOf(binding.actvVilla.text.toString())
-        val selectedVillaId = if (selectedVillaIndex != -1) villaIds[selectedVillaIndex] else ""
+        val selectedVillaIndex =
+            villaNames.indexOf(binding.actvVilla.text.toString())
 
-        val laporan = LaporanModel(
-            id = firebaseKey, // tetap pakai ini biar aman
+        val selectedVillaId =
+            if (selectedVillaIndex != -1)
+                villaIds[selectedVillaIndex]
+            else ""
 
-            villa_id = selectedVillaId,
-            villa_nama = binding.actvVilla.text.toString(),
-            area = binding.actvLokasi.text.toString(),
+        generateReportId { newId ->
 
-            staff_id = pref.getString("staff_id", "") ?: "",
-            staff_nama = pref.getString("nama", "Staff") ?: "",
+            val laporan = LaporanModel(
 
-            tipe_laporan = binding.actvKondisi.text.toString(),
-            nama_barang = binding.etNamaBarang.text.toString(),
-            deskripsi = binding.etDeskripsi.text.toString(),
+                id = newId, // 🔥 pakai REP_001
 
-            foto_url = url,
-            status = "pending",
-            catatan_manager = "",
+                villa_id = selectedVillaId,
+                villa_nama = binding.actvVilla.text.toString(),
+                area = binding.actvLokasi.text.toString(),
 
-            waktu_lapor = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
-            waktu_selesai = ""
-        )
+                staff_id = pref.getString("staff_id", "") ?: "",
+                staff_nama = pref.getString("nama", "Staff") ?: "",
 
-        newRef.setValue(laporan).addOnCompleteListener {
-            binding.btnLaporkan.isEnabled = true
-            binding.progressBar.visibility = View.GONE
+                tipe_laporan = binding.actvKondisi.text.toString(),
+                nama_barang = binding.etNamaBarang.text.toString(),
+                deskripsi = binding.etDeskripsi.text.toString(),
 
-            if (it.isSuccessful) {
-                Toast.makeText(context, "Laporan Berhasil!", Toast.LENGTH_SHORT).show()
-                parentFragmentManager.popBackStack()
-            } else {
-                Toast.makeText(context, "Gagal kirim laporan", Toast.LENGTH_SHORT).show()
+                foto_url = url,
+                status = "pending",
+                catatan_manager = "",
+
+                created_at = System.currentTimeMillis(),
+
+                waktu_lapor = SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm",
+                    Locale.getDefault()
+                ).format(Date()),
+
+                waktu_selesai = ""
+            )
+
+            // 🔥 INI TETAP DISINI
+            newRef.setValue(laporan).addOnCompleteListener {
+
+                binding.btnLaporkan.isEnabled = true
+                binding.progressBar.visibility = View.GONE
+
+                if (it.isSuccessful) {
+                    Toast.makeText(
+                        context,
+                        "Laporan Berhasil!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    parentFragmentManager.popBackStack()
+
+                } else {
+
+                    Toast.makeText(
+                        context,
+                        "Gagal kirim laporan",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { showForm(it) }
+    }
+
+    // private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+//     if (isGranted) startCameraFlow() else Toast.makeText(context, "Izin Kamera Ditolak", Toast.LENGTH_SHORT).show()
+// }
+
+    // private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+//     if (success) currentPhotoUri?.let { showForm(it) }
+// }
     override fun onDestroyView() { super.onDestroyView(); _binding = null }
 }

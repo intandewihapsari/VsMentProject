@@ -1,7 +1,7 @@
 package com.indri.vsmentproject.ui.manager.dashboard
 
+import android.util.Log
 import androidx.lifecycle.*
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.indri.vsmentproject.data.model.inventory.InventarisModel
 import com.indri.vsmentproject.data.model.notification.AnalisisCepatModel
@@ -15,13 +15,11 @@ import com.indri.vsmentproject.data.repository.*
 import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class DashboardViewModel : ViewModel() {
     private val taskRepo = TaskRepository()
     private val notifRepo = NotificationRepository()
-    private val db = FirebaseDatabase.getInstance().reference
 
     private val _managerUid = MutableLiveData<String>()
 
@@ -32,6 +30,46 @@ class DashboardViewModel : ViewModel() {
     val staffList: LiveData<List<UserModel>> = _staffList
 
     private val _analisisNyata = MutableLiveData<AnalisisCepatModel>()
+
+    private val _kirimNotifStatus = MutableLiveData<Resource<Boolean>>()
+    val kirimNotifStatus: LiveData<Resource<Boolean>> get() = _kirimNotifStatus
+
+    fun kirimNotifikasi(
+        managerUid: String,
+        villaNama: String,
+        judul: String,
+        pesan: String,
+        isUrgent: Boolean
+    ) {
+        _kirimNotifStatus.value = Resource.Loading()
+
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val currentTime = System.currentTimeMillis()
+        val waktuStr = sdf.format(java.util.Date(currentTime))
+
+        val notif = NotifikasiModel(
+            judul = judul,
+            pesan = pesan,
+            tipe = if (isUrgent) "urgent" else "info",
+            is_read = false,
+            waktu = waktuStr,
+            timestamp = currentTime,
+            target_role = "staff", // Ditujukan untuk Staff
+            sender_id = managerUid, // Pengirimnya Manager
+            villa_nama = villaNama
+        )
+
+        // 🔥 Menggunakan notifRepo dengan Logging untuk debugging
+        notifRepo.createNotification(managerUid, notif) { success, errorMessage ->
+            if (success) {
+                Log.d("NOTIF_CHECK", "Berhasil dikirim! ID Notif: ${notif.id}, Target Role: ${notif.target_role}")
+                _kirimNotifStatus.postValue(Resource.Success(true))
+            } else {
+                Log.e("NOTIF_CHECK", "Gagal kirim: $errorMessage")
+                _kirimNotifStatus.postValue(Resource.Error(errorMessage ?: "Gagal mengirim notifikasi"))
+            }
+        }
+    }
 
     fun setManagerUid(uid: String) {
         _managerUid.value = uid
@@ -44,65 +82,48 @@ class DashboardViewModel : ViewModel() {
 
     fun getVillaList() {
         val uid = _managerUid.value ?: return
-        db.child(FirebaseConfig.PATH_VILLAS)
-            .orderByChild(FirebaseConfig.FIELD_MANAGER_ID)
-            .equalTo(uid)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val list = mutableListOf<VillaModel>()
-                    snapshot.children.forEach { child ->
-                        child.getValue(VillaModel::class.java)?.let {
-                            it.id = child.key ?: ""
-                            list.add(it)
-                        }
-                    }
-                    _villaList.postValue(list)
+        // PATH: villa_management/{uid}/master_data/villas
+        FirebaseConfig.getVillasRef(uid).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { child ->
+                    child.getValue(VillaModel::class.java)?.apply { id = child.key ?: "" }
                 }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                _villaList.postValue(list)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 
-    private fun getStaffList() {
-        db.child(FirebaseConfig.PATH_STAFFS)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val list = snapshot.children.mapNotNull { it.getValue(UserModel::class.java) }
-                    _staffList.postValue(list)
-                }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+    fun getStaffList() {
+        val uid = _managerUid.value ?: return
+        // PATH: villa_management/{uid}/master_data/staffs
+        FirebaseConfig.getStaffsRef(uid).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { it.getValue(UserModel::class.java) }
+                _staffList.postValue(list)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
     }
 
-    private fun getLatestLaporan(): LiveData<LaporanModel?> {
+    private fun getLatestLaporan(uid: String): LiveData<LaporanModel?> {
         val result = MutableLiveData<LaporanModel?>()
-        db.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val latest = snapshot.children
-                        .mapNotNull { child ->
-                            child.getValue(LaporanModel::class.java)?.apply {
-                                id = child.key ?: ""
-                            }
-                        }
-                        .filter {
-                            val tipe = it.tipe_laporan?.lowercase()
-                            tipe == "rusak" || tipe == "hilang"
-                        }
-                        .maxByOrNull { it.id ?: "" }
-                    result.postValue(latest)
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    result.postValue(null)
-                }
-            })
+        // PATH: villa_management/{uid}/operational/laporan_kerusakan
+        FirebaseConfig.getLaporanKerusakanRef(uid).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val latest = snapshot.children
+                    .mapNotNull { child -> child.getValue(LaporanModel::class.java)?.apply { id = child.key ?: "" } }
+                    .maxByOrNull { parseDate(it.waktu_lapor) }
+                result.postValue(latest)
+            }
+            override fun onCancelled(error: DatabaseError) { result.postValue(null) }
+        })
         return result
     }
 
-    private fun hitungAnalisisRealtime() {
-        val pathTugas = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-        val pathLaporan = db.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
-
-        pathTugas.addValueEventListener(object : ValueEventListener {
+    private fun hitungAnalisisRealtime(uid: String) {
+        // PATH: villa_management/{uid}/operational/task_management
+        FirebaseConfig.getTaskManagementRef(uid).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshotTugas: DataSnapshot) {
                 var totalSeluruhTugas = 0
                 var totalSelesai = 0
@@ -111,143 +132,81 @@ class DashboardViewModel : ViewModel() {
                     val listTugas = villaSnap.child("list_tugas")
                     totalSeluruhTugas += listTugas.childrenCount.toInt()
                     listTugas.children.forEach { tugas ->
-                        val status = tugas.child("status").value.toString()
-                        if (status.equals("selesai", ignoreCase = true)) {
-                            totalSelesai++
-                        }
+                        val status = tugas.child(FirebaseConfig.FIELD_STATUS).value.toString()
+                        if (status.equals(FirebaseConfig.STATUS_DONE, ignoreCase = true)) totalSelesai++
                     }
                 }
-
                 val progressPercent = if (totalSeluruhTugas > 0) (totalSelesai * 100 / totalSeluruhTugas) else 0
-
-                pathLaporan.addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshotLaporan: DataSnapshot) {
-                        _analisisNyata.postValue(AnalisisCepatModel(progressTugas = "$progressPercent%"))
-                    }
-                    override fun onCancelled(error: DatabaseError) {}
-                })
+                _analisisNyata.postValue(AnalisisCepatModel(progressTugas = "$progressPercent%"))
             }
             override fun onCancelled(error: DatabaseError) {}
         })
     }
 
-    private fun getInventarisRealtime(): LiveData<InventarisModel> {
+    private fun getInventarisRealtime(uid: String): LiveData<InventarisModel> {
         val result = MutableLiveData<InventarisModel>()
-        db.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    var countRusak = 0
-                    var countHilang = 0
-                    var countHabis = 0
-
-                    snapshot.children.forEach { child ->
-                        val tipe = child.child("tipe_laporan").value?.toString()?.lowercase() ?: ""
-                        when (tipe) {
-                            "rusak" -> countRusak++
-                            "hilang" -> countHilang++
-                            "habis" -> countHabis++
-                        }
+        FirebaseConfig.getLaporanKerusakanRef(uid).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                var countRusak = 0
+                var countHilang = 0
+                var countHabis = 0
+                snapshot.children.forEach { child ->
+                    val tipe = child.child("tipe_laporan").value?.toString()?.lowercase() ?: ""
+                    when (tipe) {
+                        "rusak" -> countRusak++
+                        "hilang" -> countHilang++
+                        "habis" -> countHabis++
                     }
-
-                    result.postValue(InventarisModel(
-                        total_rusak = countRusak,
-                        total_hilang = countHilang,
-                        total_habis = countHabis
-                    ))
                 }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                result.postValue(InventarisModel(total_rusak = countRusak, total_hilang = countHilang, total_habis = countHabis))
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
         return result
     }
 
     val dashboardData: LiveData<Resource<List<DashboardItem>>> = _managerUid.switchMap { uid ->
-        hitungAnalisisRealtime()
+        hitungAnalisisRealtime(uid)
         getData()
 
         val mediator = MediatorLiveData<Resource<List<DashboardItem>>>()
         mediator.value = Resource.Loading()
 
-        val notifSource = notifRepo.getMyNotifications(uid)
-        val laporanSource = getLatestLaporan()
-        val pendingTaskSource = taskRepo.getAllPendingTasks()
-        val inventarisSource = getInventarisRealtime()
+        val notifSource = notifRepo.getMyNotifications(uid, uid, isManager = true)
+        val laporanSource = getLatestLaporan(uid)
+        val pendingTaskSource = taskRepo.getAllPendingTasks(uid)
+        val inventarisSource = getInventarisRealtime(uid)
 
         fun updateCombinedResult() {
-            val notifRes = notifSource.value
-            val analisisData = _analisisNyata.value
-            val taskRes = pendingTaskSource.value
-            val inventarisData = inventarisSource.value
-            val laporanData = laporanSource.value
+            val items = mutableListOf<DashboardItem>()
+            items.add(DashboardItem.AksiCepat)
 
-            if (notifRes !is Resource.Loading) {
-                val items = mutableListOf<DashboardItem>()
-
-                // 1. Aksi Cepat
-                items.add(DashboardItem.AksiCepat)
-
-                // 2. Notifikasi Urgent
-                laporanData?.let {
-                    val notif = NotifikasiModel(
-                        id = it.id,
-                        judul = "Laporan ${it.tipe_laporan}",
-                        pesan = "${it.nama_barang} - ${it.deskripsi}",
-                        tipe = it.tipe_laporan,
-                        is_read = false,
-                        waktu = it.waktu_lapor,
-                        sender_id = it.staff_id,
-                        villa_id = it.villa_id,
-                        villa_nama = it.villa_nama
-                    )
-                    items.add(DashboardItem.NotifikasiUrgent(listOf(notif)))
-                }
-
-                // 3. Ringkasan Inventaris
-                inventarisData?.let {
-                    items.add(DashboardItem.Inventaris(it))
-                }
-
-                // 4. Analisis Progres
-                analisisData?.let {
-                    items.add(DashboardItem.AnalisisCepat(it))
-                }
-
-                // 5. Daftar Tugas Pending (FIXED LOGIC)
-                taskRes?.data?.let { list ->
-                    if (list.isNotEmpty()) {
-                        // 🔥 Konversi List<TugasModel> ke List<VillaTugasGroup>
-                        val rawGroups = list
-                            .sortedByDescending { it.id } // Urutkan terbaru
-                            .groupBy { it.villa_id }      // Kelompokkan per Villa
-                            .map { (villaId, tasks) ->
-                                VillaTugasGroup(
-                                    villa_id = villaId,
-                                    namaVilla = tasks.firstOrNull()?.villa_nama ?: "Villa",
-                                    listTugas = tasks // Di ViewHolder nanti kita ambil .first() saja
-                                )
-                            }
-
-                        items.add(DashboardItem.TugasPending(rawGroups))
-                    }
-                }
-
-                mediator.value = Resource.Success(items)
+            laporanSource.value?.let {
+                val notif = NotifikasiModel(id = it.id, judul = "Laporan Baru", pesan = "${it.staff_nama}: ${it.nama_barang}", tipe = "urgent", waktu = it.waktu_lapor)
+                items.add(DashboardItem.NotifikasiUrgent(listOf(notif)))
             }
+
+            inventarisSource.value?.let { items.add(DashboardItem.Inventaris(it)) }
+            _analisisNyata.value?.let { items.add(DashboardItem.AnalisisCepat(it)) }
+
+            if (pendingTaskSource.value is Resource.Success) {
+                (pendingTaskSource.value as Resource.Success).data?.let { list ->
+                    val groups = list.groupBy { it.villa_id }.map { (vid, tasks) -> VillaTugasGroup(vid, tasks.first().villa_nama, tasks) }
+                    if (groups.isNotEmpty()) items.add(DashboardItem.TugasPending(groups))
+                }
+            }
+            mediator.value = Resource.Success(items)
         }
 
-        mediator.apply {
-            removeSource(notifSource)
-            removeSource(laporanSource)
-            removeSource(_analisisNyata)
-            removeSource(inventarisSource)
-            removeSource(pendingTaskSource)
-
-            addSource(notifSource) { updateCombinedResult() }
-            addSource(laporanSource) { updateCombinedResult() }
-            addSource(_analisisNyata) { updateCombinedResult() }
-            addSource(inventarisSource) { updateCombinedResult() }
-            addSource(pendingTaskSource) { updateCombinedResult() }
-        }
-
+        mediator.addSource(notifSource) { updateCombinedResult() }
+        mediator.addSource(laporanSource) { updateCombinedResult() }
+        mediator.addSource(_analisisNyata) { updateCombinedResult() }
+        mediator.addSource(inventarisSource) { updateCombinedResult() }
+        mediator.addSource(pendingTaskSource) { updateCombinedResult() }
         mediator
+    }
+
+    private fun parseDate(dateString: String?): Long {
+        return try { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse(dateString ?: "")?.time ?: 0L } catch (e: Exception) { 0L }
     }
 }

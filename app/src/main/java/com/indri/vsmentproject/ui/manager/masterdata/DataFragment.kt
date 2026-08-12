@@ -2,13 +2,16 @@ package com.indri.vsmentproject.ui.manager.masterdata
 
 import android.os.Bundle
 import android.view.*
+import androidx.activity.OnBackPressedCallback // ➕ IMPORT INI
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomnavigation.BottomNavigationView // ➕ IMPORT INI
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentDataBinding
-import com.indri.vsmentproject.ui.manager.template.FragmentTemplateForm
+import com.indri.vsmentproject.ui.main.ManagerActivity // ➕ IMPORT INI
+import com.indri.vsmentproject.ui.manager.template.TemplateListFragment
 
 class DataFragment : Fragment() {
 
@@ -33,11 +36,37 @@ class DataFragment : Fragment() {
         setupNavigation()
         observeRiwayat()
 
+        // ➕ 1. DIPANGGIL DI SINI
+        setupBackNavigation()
+
         val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         if (managerUid.isNotEmpty()) {
             viewModel.getRiwayatInstruksi(managerUid)
         }
+    }
+
+    // =========================
+    // BACK NAVIGATION (➕ TAMBAHKAN FUNGSI INI)
+    // =========================
+    private fun setupBackNavigation() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    // Jika ada sub-fragment di BackStack (seperti VillaList/StaffList/Template)
+                    if (parentFragmentManager.backStackEntryCount > 0) {
+                        parentFragmentManager.popBackStack() // Tutup sub-fragment
+                    } else {
+                        // Jika sudah di DataFragment utama, paksa pindah ke Tab Home
+                        (activity as? ManagerActivity)?.let { managerActivity ->
+                            managerActivity.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+                                ?.selectedItemId = R.id.navigation_home
+                        }
+                    }
+                }
+            }
+        )
     }
 
     // =========================
@@ -53,11 +82,12 @@ class DataFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             isNestedScrollingEnabled = false
         }
+
         binding.btnInstructionTemplate.setOnClickListener {
-            // Pindah ke Fragment Template yang kamu buat tadi
+            // Pindah ke Fragment Template
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, FragmentTemplateForm())
-                //.addToAddBackStack(null)
+                .replace(R.id.fragmentContainer, TemplateListFragment())
+                .addToBackStack(null) // 💡 Disarankan pakai addToBackStack agar bisa di-pop
                 .commit()
         }
     }

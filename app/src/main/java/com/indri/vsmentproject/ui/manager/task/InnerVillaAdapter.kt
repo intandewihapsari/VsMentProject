@@ -21,7 +21,6 @@ class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val flatItems = mutableListOf<Any>()
 
     fun setData(villaGroups: List<VillaTugasGroup>) {
-        // Secara default, pastikan semua isExpanded = false saat data pertama kali masuk
         this.originalGroups = villaGroups
         generateFlatItems()
     }
@@ -29,9 +28,9 @@ class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private fun generateFlatItems() {
         flatItems.clear()
         originalGroups.forEach { group ->
-            flatItems.add(group) // Tambah Header Villa
+            flatItems.add(group)
             if (group.isExpanded) {
-                flatItems.addAll(group.listTugas) // Tambah Tugas hanya jika expanded
+                flatItems.addAll(group.listTugas)
             }
         }
         notifyDataSetChanged()
@@ -44,11 +43,9 @@ class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == TYPE_HEADER) {
-            // Pastikan layout item_villa_parent punya ID tvNamaVilla, tvProgress, ivChevron
             HeaderVH(inflater.inflate(R.layout.item_villa_parent, parent, false))
         } else {
-            val binding = ItemTugasPendingListBinding.inflate(inflater, parent, false)
-            ItemVH(binding)
+            ItemVH(ItemTugasPendingListBinding.inflate(inflater, parent, false))
         }
     }
 
@@ -62,20 +59,17 @@ class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     inner class HeaderVH(view: View) : RecyclerView.ViewHolder(view) {
         fun bind(group: VillaTugasGroup) {
-            // Gunakan ?. (safe call) untuk menghindari NullPointerException
             val tvNama = itemView.findViewById<TextView>(R.id.tvNamaVilla)
             val tvProgress = itemView.findViewById<TextView>(R.id.tvProgress)
             val ivChevron = itemView.findViewById<ImageView>(R.id.ivChevron)
 
             tvNama?.text = group.namaVilla
             tvProgress?.text = "${group.tugasSelesai} / ${group.totalTugas} Tugas Selesai"
-
-            // Animasi rotasi chevron
             ivChevron?.rotation = if (group.isExpanded) 180f else 0f
 
             itemView.setOnClickListener {
                 group.isExpanded = !group.isExpanded
-                generateFlatItems() // Refresh list untuk munculkan/sembunyikan item
+                generateFlatItems()
             }
         }
     }
@@ -84,34 +78,31 @@ class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun bind(tugas: TugasModel) {
             binding.tvVillaName.visibility = View.GONE
             binding.tvNamaTugas.text = "${tugas.tugas} - ${tugas.ruangan}"
-            binding.tvPIC.text = tugas.staff_name
+
+            // PERBAIKAN: Gunakan properti staff_nama yang sinkron dengan model data Firebase terupdate
+            binding.tvPIC.text = tugas.staff_nama
 
             val statusData = tugas.status.trim().lowercase()
             binding.tvStatus.text = statusData
 
-            // 1. Tentukan warna berdasarkan status
             val shape = GradientDrawable().apply {
                 cornerRadius = 50f
-
                 when (statusData) {
                     "pending" -> {
                         setColor(ContextCompat.getColor(binding.root.context, R.color.myRedDark))
-                        binding.tvStatus.setTextColor(Color.WHITE) // Pending -> Teks Putih
+                        binding.tvStatus.setTextColor(Color.WHITE)
                     }
                     "selesai", "done" -> {
                         setColor(ContextCompat.getColor(binding.root.context, R.color.myGreenDark))
-                        binding.tvStatus.setTextColor(Color.BLACK) // Selesai -> Teks Hitam
+                        binding.tvStatus.setTextColor(Color.BLACK)
                     }
                     else -> {
                         setColor(Color.GRAY)
-                        binding.tvStatus.setTextColor(Color.WHITE) // Lainnya -> Teks Putih
+                        binding.tvStatus.setTextColor(Color.WHITE)
                     }
                 }
             }
-
             binding.tvStatus.background = shape
-
-            // HAPUS baris setTextColor yang di paling bawah tadi!
         }
     }
 }

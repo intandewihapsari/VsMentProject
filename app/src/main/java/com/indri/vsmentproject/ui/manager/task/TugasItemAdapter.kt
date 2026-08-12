@@ -44,7 +44,7 @@ class TugasItemAdapter(
 
         holder.binding.tvVillaName.text = tugas.villa_nama
         holder.binding.tvNamaTugas.text = "${tugas.tugas} - ${tugas.ruangan}"
-        holder.binding.tvPIC.text = tugas.staff_name
+        holder.binding.tvPIC.text = tugas.staff_nama
 
         // 👇 INI BAGIAN PENTING
         if (showStatus) {

@@ -7,6 +7,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.utils.Resource
@@ -34,6 +35,12 @@ class LaporanFragment : Fragment() {
         setupRecyclerView()
         setupFilterStatus()
         observeData()
+
+        // Kirim ID Manager yang aktif saat ini
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        if (managerUid.isNotEmpty()) {
+            viewModel.setManagerId(managerUid)
+        }
     }
 
     private fun setupRecyclerView() {

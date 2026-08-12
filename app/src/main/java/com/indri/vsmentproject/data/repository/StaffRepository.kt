@@ -9,52 +9,50 @@ import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.data.utils.Resource
 
 class StaffRepository {
-    private val db = FirebaseDatabase.getInstance().reference
 
-    // Fungsi untuk Dashboard: Analisis Cepat
-    // StaffRepository.kt
-
-
-    // Di dalam StaffRepository.kt
-    fun getAnalisisCepat(villaId: String): LiveData<AnalisisCepatModel> {
+    // --- READ: Dashboard Analisis Cepat (Dinamis per Manager & Villa) ---
+    fun getAnalisisCepat(managerId: String, villaId: String): LiveData<AnalisisCepatModel> {
         val liveData = MutableLiveData<AnalisisCepatModel>()
 
-        db.addValueEventListener(object : ValueEventListener {
+        // PERBAIKAN: Gunakan Manager Root Ref langsung
+        val managerRef = FirebaseConfig.getManagerRef(managerId)
+
+        managerRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                // Ambil data sesuai path JSON yang kamu kirim
-                val progress = snapshot.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-                    .child(villaId).child("summary/progress").value.toString()
+                // 1. Ambil summary progress tugas villa dari: task_management/{villaId}/summary/progress
+                val progress = snapshot.child(FirebaseConfig.CHILD_TASK_MANAGEMENT)
+                    .child(villaId)
+                    .child("summary")
+                    .child("progress").value.toString()
 
-                val laporanCount = snapshot.child(FirebaseConfig.PATH_LAPORAN_KERUSAKAN).children.count {
-                    it.child("villa_id").value == villaId
+                // 2. Hitung jumlah TOTAL laporan kerusakan di villa ini
+                val laporanCount = snapshot.child(FirebaseConfig.CHILD_LAPORAN_KERUSAKAN).children.count {
+                    it.child("villa_id").value?.toString() == villaId
                 }
 
-                var rusakCount = 0
-                val areas = snapshot.child(FirebaseConfig.PATH_VILLAS).child(villaId).child("areas")
-                areas.children.forEach { area ->
-                    area.child("items").children.forEach { item ->
-                        if (item.child("kondisi").value.toString().equals("Rusak", ignoreCase = true)) {
-                            rusakCount++
-                        }
-                    }
+                // 3. Hitung barang yang statusnya masih "pending" di villa ini
+                val rusakCount = snapshot.child(FirebaseConfig.CHILD_LAPORAN_KERUSAKAN).children.count {
+                    it.child("villa_id").value?.toString() == villaId &&
+                            it.child(FirebaseConfig.FIELD_STATUS).value?.toString()?.equals(FirebaseConfig.STATUS_PENDING, ignoreCase = true) == true
                 }
 
-                // Kirim SEBAGAI OBJEK TUNGGAL (Bukan List)
                 liveData.postValue(AnalisisCepatModel(
                     progressTugas = if (progress == "null") "0%" else progress,
-//                    jumlahLaporan = laporanCount,
-//                    barangRusak = rusakCount
+
                 ))
             }
             override fun onCancelled(error: DatabaseError) {}
         })
         return liveData
     }
-    // Fungsi untuk Dashboard: Notifikasi Urgent
-    fun getUrgentNotifications(): LiveData<List<NotifikasiModel>> {
+
+    // --- READ: Notifikasi Urgent ---
+    fun getUrgentNotifications(managerId: String): LiveData<List<NotifikasiModel>> {
         val liveData = MutableLiveData<List<NotifikasiModel>>()
-        db.child(FirebaseConfig.PATH_NOTIFIKASI)
-            .orderByChild("priority").equalTo("high") // Filter yang urgent saja
+
+        FirebaseConfig.getNotifikasiRef(managerId)
+            .orderByChild("tipe")
+            .equalTo("urgent")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val list = snapshot.children.mapNotNull { it.getValue(NotifikasiModel::class.java) }

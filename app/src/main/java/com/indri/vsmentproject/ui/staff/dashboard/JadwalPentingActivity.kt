@@ -48,7 +48,7 @@ class JadwalPentingActivity : AppCompatActivity() {
             .getString("staff_id", "") ?: ""
 
         dbRef = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_NOTIFIKASI)
+            .getReference(FirebaseConfig.CHILD_NOTIFIKASI)
 
         setupRecycler()
         loadData()

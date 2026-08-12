@@ -15,10 +15,8 @@ import com.indri.vsmentproject.data.utils.Resource
 class DataViewModel : ViewModel() {
 
     private val db = FirebaseDatabase.getInstance().reference
+    private val notifRepo = NotificationRepository()
 
-    // =============================
-    // LIVE DATA
-    // =============================
     private val _villaList = MutableLiveData<List<VillaModel>>()
     val villaList: LiveData<List<VillaModel>> = _villaList
 
@@ -30,13 +28,11 @@ class DataViewModel : ViewModel() {
 
     private var originalNotifList: List<NotifikasiModel> = listOf()
 
-    private val notifRepo = NotificationRepository()
-
     // =============================
     // NOTIFIKASI
     // =============================
-    fun getRiwayatInstruksi(uid: String) {
-        notifRepo.getMyNotifications(uid).observeForever { resource ->
+    fun getRiwayatInstruksi(managerId: String) {
+        notifRepo.getMyNotifications(managerId, managerId, isManager = true).observeForever { resource ->
             when (resource) {
                 is Resource.Success -> {
                     val list = resource.data ?: emptyList()
@@ -63,68 +59,53 @@ class DataViewModel : ViewModel() {
     }
 
     // =============================
-    // GET DATA (VILLA & STAFF)
+    // GET DATA VILLA & STAFF (SINKRON JSON BARU: master_data)
     // =============================
-    fun getData() {
-
-        // VILLA
-        db.child(FirebaseConfig.PATH_VILLAS)
+    fun getData(managerId: String) {
+        // Ambil Data Villa (villa_management/{managerId}/master_data/villas)
+        FirebaseConfig.getVillasRef(managerId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val list = snapshot.children.mapNotNull {
-                        it.getValue(VillaModel::class.java)?.apply {
-                            id = it.key ?: ""
-                        }
+                        it.getValue(VillaModel::class.java)?.apply { id = it.key ?: "" }
                     }
                     _villaList.postValue(list)
                 }
-
                 override fun onCancelled(error: DatabaseError) {}
             })
 
-        // STAFF
-        db.child(FirebaseConfig.PATH_STAFFS)
+        // Ambil Data Staff (villa_management/{managerId}/master_data/staffs)
+        FirebaseConfig.getStaffsRef(managerId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val list = snapshot.children.mapNotNull {
-                        it.getValue(UserModel::class.java)?.apply {
-                            uid = it.key ?: ""
-                        }
+                        it.getValue(UserModel::class.java)?.apply { uid = it.key ?: "" }
                     }
                     _staffList.postValue(list)
                 }
-
                 override fun onCancelled(error: DatabaseError) {}
             })
     }
 
     // =============================
-    // STAFF CRUD (pakai Map)
+    // STAFF CRUD
     // =============================
-    fun simpanStaff(uid: String, data: Map<String, Any>) {
-        db.child(FirebaseConfig.PATH_STAFFS)
-            .child(uid)
-            .updateChildren(data)
+    fun simpanStaff(managerId: String, staffUid: String, data: Map<String, Any>) {
+        FirebaseConfig.getStaffsRef(managerId).child(staffUid).updateChildren(data)
     }
 
-    fun hapusStaff(uid: String) {
-        db.child(FirebaseConfig.PATH_STAFFS)
-            .child(uid)
-            .removeValue()
+    fun hapusStaff(managerId: String, staffUid: String) {
+        FirebaseConfig.getStaffsRef(managerId).child(staffUid).removeValue()
     }
 
     // =============================
-    // VILLA CRUD (pakai MODEL)
+    // VILLA CRUD
     // =============================
-    fun simpanVilla(id: String, villa: VillaModel) {
-        db.child(FirebaseConfig.PATH_VILLAS)
-            .child(id)
-            .setValue(villa)
+    fun simpanVilla(managerId: String, villaId: String, villa: VillaModel) {
+        FirebaseConfig.getVillasRef(managerId).child(villaId).setValue(villa)
     }
 
-    fun hapusVilla(id: String) {
-        db.child(FirebaseConfig.PATH_VILLAS)
-            .child(id)
-            .removeValue()
+    fun hapusVilla(managerId: String, villaId: String) {
+        FirebaseConfig.getVillasRef(managerId).child(villaId).removeValue()
     }
 }

@@ -7,14 +7,17 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.messaging.FirebaseMessaging
+import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.notification.NotifikasiModel
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.FragmentDashboardStaffBinding
-import com.indri.vsmentproject.ui.staff.dashboard.JadwalPentingActivity
 import com.indri.vsmentproject.ui.staff.report.LaporanStaffFragment
 import com.indri.vsmentproject.ui.staff.task.TugasChildAdapter
 import java.text.SimpleDateFormat
@@ -23,11 +26,13 @@ import java.util.*
 class DashboardStaffFragment : Fragment() {
 
     private var _binding: FragmentDashboardStaffBinding? = null
-    private val binding get() = _binding
+    private val binding get() = _binding!!
 
-    private lateinit var rootRef: DatabaseReference
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseDatabase.getInstance().reference
+
     private val listTugasHome = mutableListOf<TugasModel>()
-    private var staffId: String = ""
+    private var managerId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,89 +40,80 @@ class DashboardStaffFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentDashboardStaffBinding.inflate(inflater, container, false)
-        return binding!!.root
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        rootRef = FirebaseDatabase.getInstance().reference
-
-        val sharedPref = requireActivity()
-            .getSharedPreferences("UserSession", Context.MODE_PRIVATE)
-
-        staffId = sharedPref.getString("staff_id", "") ?: ""
-
         setupRecyclerView()
+        fetchManagerIdAndLoadData()
 
-        view.postDelayed({
-            if (isAdded) {
-                loadDashboardData()     // 🔹 TASK (bawah)
-                loadJadwalPenting()     // 🔹 NOTIF (card atas)
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                Log.d("FCM_TOKEN_TEST", "Token HP Kamu: $token")
             }
-        }, 300)
+        }
     }
 
     private fun setupRecyclerView() {
-        binding?.rvTugasHome?.apply {
+        binding.rvTugasHome.apply {
             layoutManager = LinearLayoutManager(context)
             setHasFixedSize(true)
             isNestedScrollingEnabled = false
         }
     }
 
-    // =========================
-    // 🔹 TASK LIST (BAWAH)
-    // =========================
-    private fun loadDashboardData() {
-        if (staffId.isEmpty()) {
-            Log.e("ERROR", "Staff ID kosong!")
-            return
-        }
+    private fun fetchManagerIdAndLoadData() {
+        val uid = auth.currentUser?.uid ?: return
 
-        Log.d("STAFF_ID", "Current Staff: $staffId")
-
-        rootRef.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-            .addValueEventListener(object : ValueEventListener {
-
+        // Step 1: Dapatkan Manager ID dari user_mapping
+        db.child(FirebaseConfig.PATH_USER_MAPPING).child(uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    managerId =
+                        snapshot.child(FirebaseConfig.FIELD_BELONGS_TO_MANAGER).value.toString()
+                    if (managerId != "null") {
+                        loadDashboardTasks(managerId!!, uid)
+                        loadJadwalPenting(managerId!!, uid)
+                    }
+                }
 
-                    if (_binding == null || !isAdded) return
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
 
+    private fun loadDashboardTasks(mId: String, staffUid: String) {
+        // Path: operational/task_management
+        FirebaseConfig.getTaskManagementRef(mId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (_binding == null) return
                     listTugasHome.clear()
 
                     var total = 0
                     var selesai = 0
                     var pending = 0
 
-                    for (data in snapshot.children) {
-                        val tugas = data.getValue(TugasModel::class.java)
-
-                        tugas?.let {
-                            it.id = data.key ?: ""
-
-                            Log.d("TASK_DEBUG", "Task staff_id: ${it.staff_id}")
-
-                            if (it.staff_id == staffId) {
-
+                    snapshot.children.forEach { villaSnap ->
+                        villaSnap.child("list_tugas").children.forEach { tugasSnap ->
+                            val tugas = tugasSnap.getValue(TugasModel::class.java)
+                            if (tugas?.staff_id == staffUid) {
                                 total++
-
-                                if (it.status == "selesai") {
+                                if (tugas.status == FirebaseConfig.STATUS_DONE) {
                                     selesai++
                                 } else {
                                     pending++
-                                    listTugasHome.add(it)
+                                    listTugasHome.add(tugas.apply { id = tugasSnap.key ?: "" })
                                 }
                             }
                         }
                     }
 
-                    updateStatUI(total, selesai, pending)
+                    updateStatUI(total, pending, selesai)
 
-                    val sortedPending =
-                        listTugasHome.sortedByDescending { it.created_at }
-
-                    binding?.rvTugasHome?.adapter = TugasChildAdapter(
+                    val sortedPending = listTugasHome.sortedByDescending { it.created_at }
+                    binding.rvTugasHome.adapter = TugasChildAdapter(
                         sortedPending,
                         onDone = { t -> updateStatusTugas(t) },
                         onReport = { t -> bukaLaporanDariTugas(t) },
@@ -128,62 +124,30 @@ class DashboardStaffFragment : Fragment() {
                 override fun onCancelled(error: DatabaseError) {}
             })
     }
-    // =========================
-    // 🔥 NOTIFIKASI (CARD ATAS)
-    // =========================
-    private fun loadJadwalPenting() {
-        if (staffId.isEmpty()) return
 
-        // klik card → buka semua notif
-        binding?.cardJadwalPenting?.setOnClickListener {
-            startActivity(
-                Intent(requireContext(), JadwalPentingActivity::class.java)
-            )
-        }
-
-        rootRef.child(FirebaseConfig.PATH_NOTIFIKASI)
+    private fun loadJadwalPenting(mId: String, staffUid: String) {
+        // Path: operational/notifikasi
+        FirebaseConfig.getNotifikasiRef(mId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    if (_binding == null || !isAdded) return
-
-                    val listNotif = mutableListOf<NotifikasiModel>()
-
-                    for (data in snapshot.children) {
-                        val notif = data.getValue(NotifikasiModel::class.java)
-
-                        notif?.let {
-                            // 🔥 filter khusus staff ini
-                            if (it.target_uid == staffId || it.target_role == "staff") {
-                                listNotif.add(it)
-                            }
-                        }
-                    }
+                    if (_binding == null) return
+                    val listNotif =
+                        snapshot.children.mapNotNull { it.getValue(NotifikasiModel::class.java) }
+                            .filter { it.target_uid == staffUid || it.target_role == "staff" }
 
                     if (listNotif.isNotEmpty()) {
-
-                        // 🔥 ambil notif terbaru
                         val latest = listNotif.maxByOrNull { it.timestamp }
-
                         val date = Date(latest?.timestamp ?: 0)
-
-                        val sdfTime = SimpleDateFormat("HH:mm", Locale.getDefault())
-                        val sdfDate =
-                            SimpleDateFormat("dd MMM", Locale("id", "ID"))
-
-                        binding?.apply {
+                        binding.apply {
                             tvJudulJadwal.text = latest?.judul ?: "-"
                             tvPesan.text = latest?.pesan ?: "-"
-                            tvTime.text = sdfTime.format(date)
-                            tvDate.text = sdfDate.format(date)
+                            tvTime.text =
+                                SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+                            tvDate.text =
+                                SimpleDateFormat("dd MMM", Locale("id", "ID")).format(date)
                         }
-
                     } else {
-                        binding?.apply {
-                            tvJudulJadwal.text = "Tidak ada notifikasi"
-                            tvPesan.text = ""
-                            tvTime.text = "--:--"
-                            tvDate.text = "-"
-                        }
+                        binding.tvJudulJadwal.text = "Tidak ada notifikasi"
                     }
                 }
 
@@ -191,39 +155,42 @@ class DashboardStaffFragment : Fragment() {
             })
     }
 
-    private fun bukaLaporanDariTugas(tugas: TugasModel) {
-
-        val bundle = Bundle().apply {
-            putString("VILLA_NAMA", tugas.villa_nama)
-            putString("RUANGAN_NAMA", tugas.ruangan)
-            putString("BARANG_NAMA", tugas.tugas)
-        }
-
-        val fragment = LaporanStaffFragment()
-        fragment.arguments = bundle
-
-        parentFragmentManager.beginTransaction()
-            .replace(id, fragment) // 🔥 penting
-            .addToBackStack(null)
-            .commit()
-    }
-    private fun updateStatUI(total: Int, selesai: Int, pending: Int) {
-        binding?.let { b ->
-            b.itemTotal.tvCount.text = total.toString()
-            b.itemDone.tvCount.text = selesai.toString()
-            b.itemPending.tvCount.text = pending.toString()
-        }
-    }
-
     private fun updateStatusTugas(tugas: TugasModel) {
+        val mId = managerId ?: return
         val updates = mapOf(
-            "status" to "selesai",
+            "status" to FirebaseConfig.STATUS_DONE,
             "completed_at" to System.currentTimeMillis()
         )
 
-        rootRef.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
+        // Path: operational/task_management/[villaId]/list_tugas/[taskId]
+        FirebaseConfig.getTaskManagementRef(mId)
+            .child(tugas.villa_id)
+            .child("list_tugas")
             .child(tugas.id)
             .updateChildren(updates)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Tugas selesai!", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun bukaLaporanDariTugas(tugas: TugasModel) {
+        val fragment = LaporanStaffFragment().apply {
+            arguments = Bundle().apply {
+                putString("VILLA_NAMA", tugas.villa_nama)
+                putString("RUANGAN_NAMA", tugas.ruangan)
+                putString("BARANG_NAMA", tugas.tugas)
+            }
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun updateStatUI(total: Int, pending: Int, selesai: Int) {
+        binding.itemTotal.tvCount.text = total.toString()
+        binding.itemPending.tvCount.text = pending.toString()
+        binding.itemDone.tvCount.text = selesai.toString()
     }
 
     override fun onDestroyView() {

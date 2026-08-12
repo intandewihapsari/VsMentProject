@@ -15,7 +15,6 @@ import com.indri.vsmentproject.data.utils.CloudinaryHelper
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.databinding.FragmentTambahStaffBinding
-import com.indri.vsmentproject.ui.main.ManagerActivity
 
 class TambahStaffFragment : Fragment() {
 
@@ -23,13 +22,10 @@ class TambahStaffFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: DataViewModel by viewModels()
-
     private var selectedImageUri: Uri? = null
-
     private var isEditMode = false
     private var staffId: String? = null
 
-    // =============================
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,10 +35,8 @@ class TambahStaffFragment : Fragment() {
         return binding.root
     }
 
-    // =============================
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         val staff = arguments?.getParcelable<UserModel>(ARG_STAFF)
 
@@ -69,7 +63,6 @@ class TambahStaffFragment : Fragment() {
         }
     }
 
-    // =============================
     private fun setupAddMode() {
         isEditMode = false
         binding.tvTitle.text = "Tambah Staff"
@@ -77,7 +70,6 @@ class TambahStaffFragment : Fragment() {
         binding.etPasswordStaff.visibility = View.VISIBLE
     }
 
-    // =============================
     private fun setupEditMode(staff: UserModel) {
         isEditMode = true
         staffId = staff.uid
@@ -91,7 +83,6 @@ class TambahStaffFragment : Fragment() {
         binding.etTeleponStaff.setText(staff.telepon)
 
         binding.swStatusStaff.isChecked = staff.status == "aktif"
-
         binding.etPasswordStaff.visibility = View.GONE
 
         if (staff.foto_profil.isNotEmpty()) {
@@ -101,7 +92,6 @@ class TambahStaffFragment : Fragment() {
         }
     }
 
-    // =============================
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
@@ -110,11 +100,7 @@ class TambahStaffFragment : Fragment() {
             }
         }
 
-    // =============================
-    // 🔥 CREATE STAFF
-    // =============================
     private fun createStaff() {
-
         val nama = binding.etNamaStaff.text.toString().trim()
         val email = binding.etEmailStaff.text.toString().trim()
         val posisi = binding.etPosisiStaff.text.toString().trim()
@@ -132,38 +118,27 @@ class TambahStaffFragment : Fragment() {
         FirebaseAuth.getInstance()
             .createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { auth ->
-
                 val uid = auth.user?.uid ?: ""
-
                 val imageUri = selectedImageUri
 
                 if (imageUri != null) {
-
                     Toast.makeText(requireContext(), "Uploading foto...", Toast.LENGTH_SHORT).show()
-
                     CloudinaryHelper.uploadImage(imageUri, "staff") { result ->
-
                         when (result) {
-
                             is Resource.Success -> {
                                 val url = result.data?.secure_url
-
                                 if (url.isNullOrEmpty()) {
                                     Toast.makeText(requireContext(), "Upload gagal (URL kosong)", Toast.LENGTH_SHORT).show()
                                     return@uploadImage
                                 }
-
                                 simpanKeFirebase(uid, nama, email, posisi, telepon, status, url, managerId)
                             }
-
                             is Resource.Error -> {
                                 Toast.makeText(requireContext(), "Upload gagal: ${result.message}", Toast.LENGTH_LONG).show()
                             }
-
                             else -> {}
                         }
                     }
-
                 } else {
                     simpanKeFirebase(uid, nama, email, posisi, telepon, status, "", managerId)
                 }
@@ -173,11 +148,7 @@ class TambahStaffFragment : Fragment() {
             }
     }
 
-    // =============================
-    // 🔥 UPDATE STAFF (FIX TOTAL)
-    // =============================
     private fun updateStaff() {
-
         val nama = binding.etNamaStaff.text.toString().trim()
         val email = binding.etEmailStaff.text.toString().trim()
         val posisi = binding.etPosisiStaff.text.toString().trim()
@@ -185,26 +156,15 @@ class TambahStaffFragment : Fragment() {
         val status = if (binding.swStatusStaff.isChecked) "aktif" else "nonaktif"
 
         val id = staffId ?: return
-
+        val managerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         val imageUri = selectedImageUri
 
         if (imageUri != null) {
-
             Toast.makeText(requireContext(), "Uploading foto...", Toast.LENGTH_SHORT).show()
-
             CloudinaryHelper.uploadImage(imageUri, "staff") { result ->
-
                 when (result) {
-
                     is Resource.Success -> {
-
-                        val url = result.data?.secure_url
-
-                        if (url.isNullOrEmpty()) {
-                            Toast.makeText(requireContext(), "URL kosong!", Toast.LENGTH_SHORT).show()
-                            return@uploadImage
-                        }
-
+                        val url = result.data?.secure_url ?: return@uploadImage
                         val data = mapOf(
                             "nama" to nama,
                             "email" to email,
@@ -213,23 +173,17 @@ class TambahStaffFragment : Fragment() {
                             "status" to status,
                             "foto_profil" to url
                         )
-
-                        viewModel.simpanStaff(id, data)
-
-                        Toast.makeText(requireContext(), "Foto berhasil diupdate", Toast.LENGTH_SHORT).show()
+                        viewModel.simpanStaff(managerId, id, data)
+                        Toast.makeText(requireContext(), "Data & Foto berhasil diupdate", Toast.LENGTH_SHORT).show()
                         parentFragmentManager.popBackStack()
                     }
-
                     is Resource.Error -> {
                         Toast.makeText(requireContext(), "Upload gagal: ${result.message}", Toast.LENGTH_LONG).show()
                     }
-
-                    is Resource.Loading -> {}
+                    else -> {}
                 }
             }
-
         } else {
-
             val data = mapOf(
                 "nama" to nama,
                 "email" to email,
@@ -237,27 +191,17 @@ class TambahStaffFragment : Fragment() {
                 "telepon" to telepon,
                 "status" to status
             )
-
-            viewModel.simpanStaff(id, data)
-
+            viewModel.simpanStaff(managerId, id, data)
             Toast.makeText(requireContext(), "Data berhasil diupdate", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
         }
     }
 
-    // =============================
     private fun simpanKeFirebase(
-        uid: String,
-        nama: String,
-        email: String,
-        posisi: String,
-        telepon: String,
-        status: String,
-        fotoUrl: String,
-        managerId: String
+        uid: String, nama: String, email: String, posisi: String,
+        telepon: String, status: String, fotoUrl: String, managerId: String
     ) {
-
-        val data = mapOf(
+        val staffProfile = mapOf(
             "uid" to uid,
             "nama" to nama,
             "email" to email,
@@ -269,11 +213,19 @@ class TambahStaffFragment : Fragment() {
             "manager_id" to managerId
         )
 
-        FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_STAFFS)
-            .child(uid)
-            .setValue(data)
-            .addOnSuccessListener {
+        val userMapping = mapOf(
+            FirebaseConfig.FIELD_ROLE to "staff",
+            FirebaseConfig.FIELD_BELONGS_TO_MANAGER to managerId
+        )
+
+        // Menggunakan Atomic Multi-Path Update
+        val childUpdates = hashMapOf<String, Any>(
+            "${FirebaseConfig.PATH_USER_MAPPING}/$uid" to userMapping,
+            "${FirebaseConfig.getManagerRootPath(managerId)}/${FirebaseConfig.CHILD_STAFFS}/$uid" to staffProfile
+        )
+
+        FirebaseDatabase.getInstance().reference.updateChildren(childUpdates)
+            .addOnSuccessListener { // <-- Sudah diperbaiki menjadi addOnSuccessListener
                 Toast.makeText(requireContext(), "Staff berhasil ditambahkan", Toast.LENGTH_SHORT).show()
                 parentFragmentManager.popBackStack()
             }
@@ -293,8 +245,6 @@ class TambahStaffFragment : Fragment() {
             }
         }
     }
-
-
 
     override fun onDestroyView() {
         super.onDestroyView()

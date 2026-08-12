@@ -14,37 +14,23 @@ class NotifikasiUrgentViewHolder(
     fun bind(notif: NotifikasiModel) {
         val context: Context = binding.root.context
 
-        // 📝 Judul
         binding.tvJudulJadwal.text = notif.judul
-
-        // 📝 Pesan
         binding.tvTime.text = notif.pesan
+        binding.tvVilla.text = notif.villa_nama.ifEmpty { "-" }
 
-        // 🏠 Nama Villa
-        binding.tvVilla.text = notif.villa_nama ?: "-"
-
-        // ⏰ Waktu (kalau mau dipisah nanti bisa)
-        // binding.tvWaktu.text = notif.waktu
-
-        // 🎨 Warna berdasarkan tipe
+        // PERBAIKAN: Tambah penanganan tipe "habis" agar warnanya serasi dengan dashboard (Orange/Kuning)
         when (notif.tipe?.lowercase()) {
-
             "rusak" -> {
-                binding.cardIsi.setCardBackgroundColor(
-                    ContextCompat.getColor(context, R.color.myRedDark)
-                )
+                binding.cardIsi.setCardBackgroundColor(ContextCompat.getColor(context, R.color.myRedDark))
             }
-
             "hilang" -> {
-                binding.cardIsi.setCardBackgroundColor(
-                    ContextCompat.getColor(context, R.color.myOrangeDark)
-                )
+                binding.cardIsi.setCardBackgroundColor(ContextCompat.getColor(context, R.color.myOrangeDark))
             }
-
+            "habis" -> {
+                binding.cardIsi.setCardBackgroundColor(ContextCompat.getColor(context, R.color.myOrangeDark)) // Atau warna kuning custommu
+            }
             else -> {
-                binding.cardIsi.setCardBackgroundColor(
-                    ContextCompat.getColor(context, android.R.color.darker_gray)
-                )
+                binding.cardIsi.setCardBackgroundColor(ContextCompat.getColor(context, android.R.color.darker_gray))
             }
         }
     }

@@ -33,42 +33,22 @@ class LaporanAdapter(
         val item = items[position]
         val context = holder.itemView.context
 
-        // 🎨 WARNA BERDASARKAN TIPE
         val (color, label) = when (item.tipe_laporan.lowercase()) {
-
-            "rusak" -> Pair(
-                ContextCompat.getColor(context, R.color.myRedDark),
-                "Kerusakan"
-            )
-
-            "hilang" -> Pair(
-                ContextCompat.getColor(context, R.color.myOrangeDark),
-                "Hilang"
-            )
-
-            "habis" -> Pair(
-                ContextCompat.getColor(context, R.color.myBlueDark),
-                "Stok Habis"
-            )
-
-            else -> Pair(
-                ContextCompat.getColor(context, android.R.color.darker_gray),
-                "Lainnya"
-            )
+            "rusak" -> Pair(ContextCompat.getColor(context, R.color.myRedDark), "Kerusakan")
+            "hilang" -> Pair(ContextCompat.getColor(context, R.color.myOrangeDark), "Hilang")
+            "habis" -> Pair(ContextCompat.getColor(context, R.color.myGreen), "Stok Habis")
+            else -> Pair(ContextCompat.getColor(context, android.R.color.darker_gray), "Lainnya")
         }
 
         holder.binding.apply {
-
             tvLabel.text = label
             tvLabel.setTextColor(color)
-
             viewIndicator.setBackgroundColor(color)
 
-            tvDesc.text = item.nama_barang
+            tvDesc.text = item.deskripsi
             tvLocation.text = "${item.villa_nama} • ${item.staff_nama}"
             tvDateTime.text = item.waktu_lapor
 
-            // ✅ INI YANG BENAR
             root.setOnClickListener {
                 Log.d("CLICK_TEST", "Item diklik: ${item.nama_barang}")
                 onClick(item)
@@ -78,6 +58,5 @@ class LaporanAdapter(
 
     override fun getItemCount() = items.size
 
-    class ViewHolder(val binding: ItemAktivitasBinding) :
-        RecyclerView.ViewHolder(binding.root)
+    class ViewHolder(val binding: ItemAktivitasBinding) : RecyclerView.ViewHolder(binding.root)
 }

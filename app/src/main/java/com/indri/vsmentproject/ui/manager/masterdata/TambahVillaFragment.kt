@@ -13,7 +13,6 @@ import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.data.utils.CloudinaryHelper
 import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.databinding.FragmentTambahVillaBinding
-import com.indri.vsmentproject.ui.main.ManagerActivity
 
 class TambahVillaFragment : Fragment() {
 
@@ -21,12 +20,10 @@ class TambahVillaFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: DataViewModel by viewModels()
-
     private var selectedImageUri: Uri? = null
     private var villaEdit: VillaModel? = null
     private var isEditMode = false
 
-    // =============================
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -35,10 +32,8 @@ class TambahVillaFragment : Fragment() {
         return binding.root
     }
 
-    // =============================
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+        super.onCreate(savedInstanceState)
 
         val villa = arguments?.getParcelable<VillaModel>(ARG_VILLA)
 
@@ -48,30 +43,25 @@ class TambahVillaFragment : Fragment() {
             setupAddMode()
         }
 
-        // PICK IMAGE
         binding.ivFotoVilla.setOnClickListener {
             pickImageLauncher.launch("image/*")
         }
 
-        // BACK
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
-        // SIMPAN
         binding.btnSimpan.setOnClickListener {
             simpanDataVilla()
         }
     }
 
-    // =============================
     private fun setupAddMode() {
         isEditMode = false
         binding.tvTitle.text = "Tambah Villa"
         binding.btnSimpan.text = "Simpan Data"
     }
 
-    // =============================
     private fun setupEditMode(villa: VillaModel) {
         isEditMode = true
         villaEdit = villa
@@ -91,7 +81,6 @@ class TambahVillaFragment : Fragment() {
         }
     }
 
-    // =============================
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
@@ -100,9 +89,7 @@ class TambahVillaFragment : Fragment() {
             }
         }
 
-    // =============================
     private fun simpanDataVilla() {
-
         val nama = binding.etNamaVilla.text.toString().trim()
         val alamat = binding.etAlamat.text.toString().trim()
         val ruanganRaw = binding.etRuangan.text.toString().trim()
@@ -129,7 +116,6 @@ class TambahVillaFragment : Fragment() {
         // EDIT TANPA GANTI FOTO
         // =============================
         if (isEditMode && imageUri == null) {
-
             val villa = VillaModel(
                 id = idFinal,
                 manager_id = managerUid,
@@ -142,8 +128,7 @@ class TambahVillaFragment : Fragment() {
                 status_tersedia = true
             )
 
-            viewModel.simpanVilla(idFinal, villa)
-
+            viewModel.simpanVilla(managerUid, idFinal, villa)
             Toast.makeText(requireContext(), "Villa berhasil diupdate!", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
             return
@@ -161,17 +146,12 @@ class TambahVillaFragment : Fragment() {
         // UPLOAD FOTO (CREATE / EDIT)
         // =============================
         if (imageUri != null) {
-
             Toast.makeText(requireContext(), "Uploading foto...", Toast.LENGTH_SHORT).show()
 
             CloudinaryHelper.uploadImage(imageUri, "villa") { result ->
-
                 when (result) {
-
                     is Resource.Success -> {
-
                         val url = result.data?.secure_url
-
                         if (url.isNullOrEmpty()) {
                             Toast.makeText(requireContext(), "Upload gagal (URL kosong)", Toast.LENGTH_SHORT).show()
                             return@uploadImage
@@ -189,25 +169,20 @@ class TambahVillaFragment : Fragment() {
                             status_tersedia = true
                         )
 
-                        viewModel.simpanVilla(idFinal, villa)
-
+                        viewModel.simpanVilla(managerUid, idFinal, villa)
                         Toast.makeText(requireContext(), "Villa berhasil disimpan!", Toast.LENGTH_SHORT).show()
                         parentFragmentManager.popBackStack()
                     }
-
                     is Resource.Error -> {
                         Toast.makeText(requireContext(), result.message ?: "Upload gagal", Toast.LENGTH_SHORT).show()
                     }
-
                     else -> {}
                 }
             }
         }
     }
 
-    // =============================
     companion object {
-
         private const val ARG_VILLA = "arg_villa"
 
         fun newInstance(villa: VillaModel): TambahVillaFragment {
@@ -219,7 +194,6 @@ class TambahVillaFragment : Fragment() {
         }
     }
 
-    // =============================
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

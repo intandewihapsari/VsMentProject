@@ -1,5 +1,6 @@
 package com.indri.vsmentproject.ui.common.profile
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -11,11 +12,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import coil.load
 import coil.transform.CircleCropTransformation
-import com.cloudinary.android.MediaManager
-import com.cloudinary.android.callback.ErrorInfo
-import com.cloudinary.android.callback.UploadCallback
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
+import com.indri.vsmentproject.data.utils.CloudinaryHelper
+import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.databinding.FragmentProfileBinding
 import com.indri.vsmentproject.databinding.DialogEditProfileBinding
 import com.indri.vsmentproject.ui.auth.LoginActivity
@@ -36,9 +36,12 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Inisialisasi konfigurasi Cloudinary sebelum proses upload dipakai
+        CloudinaryHelper.init(requireContext())
         viewModel.getData()
 
-        // 1. Sinkronisasi Data User & Label
+        // 1. Sinkronisasi Data User & Label (AKTIF DAN SINKRON)
         viewModel.userData.observe(viewLifecycleOwner) { user ->
             with(binding) {
                 tvNamaUser.text = user.nama
@@ -46,38 +49,31 @@ class ProfileFragment : Fragment() {
                 ivProfile.load(user.foto_profil) {
                     crossfade(true)
                     placeholder(R.drawable.ic_profile)
+                    error(R.drawable.ic_profile)
                     transformations(CircleCropTransformation())
                 }
+            }
+        }
 
-                // --- PERBAIKAN: Ubah Nama Label Sesuai Role ---
-//                if (user.role == "staff") {
-//                    tvLabelVilla.text = "Tugas Beres"      // Menggantikan Total Villa
-//                    tvLabelStaff.text = "Inisiatif Lapor"  // Menggantikan Total Staff
-//                    tvLabelLaporan.text = "Sisa Tugas"    // Menggantikan Total Laporan
+        // 2. Sinkronisasi Statistik Angka
+        viewModel.summary.observe(viewLifecycleOwner) { stat ->
+            with(binding) {
+                // Silakan sesuaikan ID komponen TextView (seperti tvStat1, dll)
+                // dengan nama ID yang ada pada file fragment_profile.xml Anda.
+//                if (viewModel.userData.value?.role == "manager") {
+//                    tvStat1.text = "${stat.totalVilla} Villa"
+//                    tvStat2.text = "${stat.totalStaff} Staff"
+//                    tvStat3.text = "${stat.totalLaporanPending} Pending"
 //                } else {
-//                    tvLabelVilla.text = "Total Villa"
-//                    tvLabelStaff.text = "Total Staff"
-//                    tvLabelLaporan.text = "Laporan Pending"
+//                    // Mapping untuk role staff (menyesuaikan isi kalkulasi di ViewModel)
+//                    tvStat1.text = "${stat.totalVilla} Selesai"      // totalBeres
+//                    tvStat2.text = "${stat.totalStaff} Laporan"      // totalLaporan
+//                    tvStat3.text = "${stat.totalLaporanPending} Sisa" // sisaTugas
 //                }
             }
         }
 
-        // 2. Sinkronisasi Statistik (Angka)
-        viewModel.summary.observe(viewLifecycleOwner) { stat ->
-            with(binding) {
-                // Di sini kita tampilkan angkanya secara berurutan
-                // stat.totalVilla sekarang berisi "Tugas Beres" untuk Staff
-//                tvCountVilla.text = stat.first.toString()
-//
-//                // stat.totalStaff sekarang berisi "Inisiatif Lapor" untuk Staff
-//                tvCountStaff.text = stat.second.toString()
-//
-//                // stat.totalLaporanPending sekarang berisi "Sisa Tugas" untuk Staff
-//                tvCountLaporan.text = stat.third.toString()
-            }
-        }
-
-        // 3. Click Listeners
+        // 3. Click Listeners utama fragment
         binding.btnEditFoto.setOnClickListener { galleryLauncher.launch("image/*") }
         binding.btnEditProfile.setOnClickListener { showEditDialog() }
         binding.btnLogout.setOnClickListener {
@@ -85,6 +81,10 @@ class ProfileFragment : Fragment() {
                 .setTitle("Logout")
                 .setMessage("Apakah Anda yakin ingin keluar?")
                 .setPositiveButton("Ya") { _, _ ->
+                    // Hapus session local sebelum logout
+                    val sharedPref = requireContext().getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+                    sharedPref.edit().clear().apply()
+
                     FirebaseAuth.getInstance().signOut()
                     val intent = Intent(requireContext(), LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -98,45 +98,65 @@ class ProfileFragment : Fragment() {
         val user = viewModel.userData.value ?: return
         val dialogBinding = DialogEditProfileBinding.inflate(layoutInflater)
 
+        // Tampilkan data profil saat ini ke dalam EditText
         dialogBinding.etEditNama.setText(user.nama)
         dialogBinding.etEditTelp.setText(user.telepon)
         dialogBinding.etEditEmail.setText(user.email)
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Perbarui Profil")
+        // Buat Dialog tanpa menggunakan Positive/Negative Button bawaan builder
+        // agar tombol custom di XML (btnSave dan btnCancel) yang memegang kendali penuh
+        val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogBinding.root)
-            .setPositiveButton("Simpan") { _, _ ->
-                val newNama = dialogBinding.etEditNama.text.toString()
-                val newTelp = dialogBinding.etEditTelp.text.toString()
-                val newEmail = dialogBinding.etEditEmail.text.toString()
+            .create()
 
-                if (newNama.isNotEmpty() && newEmail.isNotEmpty()) {
-                    viewModel.updateFullProfile(newNama, newTelp, newEmail) { msg ->
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(context, "Nama dan Email tidak boleh kosong", Toast.LENGTH_SHORT).show()
+        // Listener Aksi Tombol Batal Custom XML
+        dialogBinding.btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // Listener Aksi Tombol Simpan Custom XML
+        dialogBinding.btnSave.setOnClickListener {
+            val newNama = dialogBinding.etEditNama.text.toString().trim()
+            val newTelp = dialogBinding.etEditTelp.text.toString().trim()
+            val newEmail = dialogBinding.etEditEmail.text.toString().trim()
+
+            if (newNama.isNotEmpty() && newEmail.isNotEmpty()) {
+                viewModel.updateFullProfile(newNama, newTelp, newEmail) { msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    dialog.dismiss() // Dialog ditutup hanya jika berhasil menyimpan data
                 }
-            }.setNegativeButton("Batal", null).show()
+            } else {
+                Toast.makeText(context, "Nama dan Email tidak boleh kosong", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.show()
+
+        // Membuat latar belakang bawaan dialog transparan agar sudut melengkung CardView terlihat rapi
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
     }
 
     private fun uploadImage(uri: Uri) {
-        Toast.makeText(context, "Mengunggah foto...", Toast.LENGTH_SHORT).show()
-        MediaManager.get().upload(uri).callback(object : UploadCallback {
-            override fun onSuccess(requestId: String?, resultData: Map<*, *>?) {
-                val url = resultData?.get("secure_url").toString()
-                val user = viewModel.userData.value ?: return
-                viewModel.updateFullProfile(user.nama, user.telepon, user.email, url) {
-                    Toast.makeText(context, "Foto profil diperbarui!", Toast.LENGTH_SHORT).show()
+        val targetFolder = if (viewModel.userData.value?.role == "manager") "manager" else "staff"
+
+        CloudinaryHelper.uploadImage(uri, targetFolder) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    Toast.makeText(context, "Mengunggah foto...", Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Success -> {
+                    val secureUrl = resource.data?.secure_url ?: ""
+                    val user = viewModel.userData.value ?: return@uploadImage
+
+                    viewModel.updateFullProfile(user.nama, user.telepon, user.email, secureUrl) {
+                        Toast.makeText(context, "Foto profil berhasil diperbarui!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                is Resource.Error -> {
+                    Toast.makeText(context, "Upload gagal: ${resource.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-            override fun onError(requestId: String?, error: ErrorInfo?) {
-                Toast.makeText(context, "Upload gagal: ${error?.description}", Toast.LENGTH_SHORT).show()
-            }
-            override fun onStart(requestId: String?) {}
-            override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
-            override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
-        }).dispatch()
+        }
     }
 
     override fun onDestroyView() {

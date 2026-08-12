@@ -3,7 +3,9 @@ package com.indri.vsmentproject.ui.staff.activity
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.databinding.ItemAktivitasBinding
@@ -21,32 +23,60 @@ class AktivitasAdapter(private var list: List<Any>) : RecyclerView.Adapter<Aktiv
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = list[position]
+        val context = holder.itemView.context
+
         with(holder.binding) {
+
             when (item) {
+
+                // 🔵 TUGAS
                 is TugasModel -> {
-                    val color = "#42A5F5" // Biru untuk Tugas
-                    viewIndicator.setBackgroundColor(Color.parseColor(color))
+                    val color = ContextCompat.getColor(context, R.color.myBlueDark)
+
+                    viewIndicator.setBackgroundColor(color)
                     tvLabel.text = "Tugas Selesai"
-                    tvLabel.setTextColor(Color.parseColor(color))
+                    tvLabel.setTextColor(color)
+
                     tvDesc.text = item.tugas
                     tvLocation.text = "Ruangan: ${item.ruangan}, ${item.villa_nama}"
-
-                    // Mengonversi Long timestamp ke format tanggal
                     tvDateTime.text = formatTimestamp(item.completed_at)
-
-                    tvDateTime.setTextColor(Color.parseColor(color))
+                    tvDateTime.setTextColor(color)
                 }
-                is LaporanModel -> {
-                    val color = "#C64756" // Merah untuk Laporan
-                    viewIndicator.setBackgroundColor(Color.parseColor(color))
-                    tvLabel.text = "Laporan ${item.tipe_laporan.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}"
-                    tvLabel.setTextColor(Color.parseColor(color))
-                    tvDesc.text = "${item.nama_barang} ${item.deskripsi}"
-                    tvLocation.text = "Area: ${item.area}, ${item.villa_nama}"
 
-                    // Laporan biasanya sudah String (yyyy-MM-dd HH:mm), tampilkan langsung
+                // 🔴 LAPORAN
+                is LaporanModel -> {
+
+                    val (color, label) = when (item.tipe_laporan?.lowercase()) {
+
+                        "rusak" -> Pair(
+                            ContextCompat.getColor(context, R.color.myRedDark),
+                            "Kerusakan"
+                        )
+
+                        "hilang" -> Pair(
+                            ContextCompat.getColor(context, R.color.myOrangeDark),
+                            "Hilang"
+                        )
+
+                        "habis" -> Pair(
+                            ContextCompat.getColor(context, R.color.myGreen),
+                            "Stok Habis"
+                        )
+
+                        else -> Pair(
+                            ContextCompat.getColor(context, android.R.color.darker_gray),
+                            "Lainnya"
+                        )
+                    }
+
+                    viewIndicator.setBackgroundColor(color)
+                    tvLabel.text = "Laporan $label"
+                    tvLabel.setTextColor(color)
+
+                    tvDesc.text = item.deskripsi
+                    tvLocation.text = "${item.area}, ${item.villa_nama}"
                     tvDateTime.text = formatWaktuLapor(item.waktu_lapor)
-                    tvDateTime.setTextColor(Color.parseColor(color))
+                    tvDateTime.setTextColor(color)
                 }
             }
         }

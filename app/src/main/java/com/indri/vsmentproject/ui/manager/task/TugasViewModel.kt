@@ -12,41 +12,38 @@ import java.util.*
 class TugasViewModel : ViewModel() {
     private val db = FirebaseDatabase.getInstance().reference
 
-    // Simpan data murni dari Firebase untuk keperluan filter & statistik
     private var allRawTasks = listOf<TugasModel>()
 
-    // LiveData utama untuk UI Card (Waktu > Villa > Tugas)
     private val _waktuListLive = MutableLiveData<List<WaktuContainer>>()
     val waktuListLive: LiveData<List<WaktuContainer>> = _waktuListLive
 
-    // LiveData untuk Master Data
     private val _villaList = MutableLiveData<List<VillaModel>>()
     val villaList: LiveData<List<VillaModel>> = _villaList
 
     private val _staffList = MutableLiveData<List<UserModel>>()
     val staffList: LiveData<List<UserModel>> = _staffList
 
-    // LiveData lama tetap dipertahankan untuk statistik persentase di Fragment
     private val _rawGroupsLive = MutableLiveData<List<VillaTugasGroup>>()
     val rawGroupsLive: LiveData<List<VillaTugasGroup>> = _rawGroupsLive
 
-    // --- DATA FETCHING ---
+    // --- DATA FETCHING (Operational Path) ---
 
-    fun getTugasGroupedByVilla() {
-        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
+    fun getTugasGroupedByVilla(managerId: String) {
+        FirebaseConfig.getTaskManagementRef(managerId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val tasks = snapshot.children.flatMap { villaSnap ->
-                        villaSnap.child("list_tugas").children.mapNotNull {
-                            it.getValue(TugasModel::class.java)?.apply { id = it.key ?: "" }
+                    val tasks = mutableListOf<TugasModel>()
+                    // Structure: task_management -> [villaId] -> list_tugas -> [taskId]
+                    snapshot.children.forEach { villaSnap ->
+                        villaSnap.child("list_tugas").children.forEach { tugasSnap ->
+                            tugasSnap.getValue(TugasModel::class.java)?.let {
+                                it.id = tugasSnap.key ?: ""
+                                tasks.add(it)
+                            }
                         }
                     }
-                    allRawTasks = tasks // Simpan data asli
-
-                    // Update statistik (untuk rawGroupsLive di fragment)
+                    allRawTasks = tasks
                     updateStats(tasks)
-
-                    // Proses data ke UI Card
                     processTasksToWaktuContainer(tasks)
                 }
                 override fun onCancelled(error: DatabaseError) {}
@@ -56,23 +53,18 @@ class TugasViewModel : ViewModel() {
     private fun processTasksToWaktuContainer(tasks: List<TugasModel>) {
         val byWaktu = tasks.groupBy { getKategoriWaktu(it.deadline) }
         val result = mutableListOf<WaktuContainer>()
-        val urutan = listOf("Terlambat", "Hari Ini", "Besok", "Mendatang")
+        val urutan = listOf("Terlambat", "Hari Ini", "Mendatang")
 
         urutan.forEach { kategori ->
             byWaktu[kategori]?.let { tasksInWaktu ->
-                // Perbaikan di sini: Mapping ke VillaTugasGroup bukan VillaGroup
                 val villaGroups = tasksInWaktu.groupBy { it.villa_id }.map { entry ->
                     val listTugasVilla = entry.value
-                    val total = listTugasVilla.size
-                    val selesai = listTugasVilla.count { it.status.equals("selesai", true) }
-
                     VillaTugasGroup(
                         villa_id = entry.key,
                         namaVilla = listTugasVilla.firstOrNull()?.villa_nama ?: "Villa",
                         listTugas = listTugasVilla,
-                        totalTugas = total,
-                        tugasSelesai = selesai,
-                        isExpanded = false // Default tertutup sesuai mau kamu
+                        totalTugas = listTugasVilla.size,
+                        tugasSelesai = listTugasVilla.count { it.status.equals(FirebaseConfig.STATUS_DONE, true) }
                     )
                 }
                 result.add(WaktuContainer(kategori, villaGroups))
@@ -82,35 +74,23 @@ class TugasViewModel : ViewModel() {
     }
 
     private fun updateStats(tasks: List<TugasModel>) {
-        // Kelompokkan semua tugas berdasarkan villa_id untuk statistik
         val groups = tasks.groupBy { it.villa_id }.map { entry ->
             val list = entry.value
-            val total = list.size
-            val selesai = list.count { it.status.equals("selesai", true) || it.status.equals("done", true) }
-
             VillaTugasGroup(
                 villa_id = entry.key,
                 namaVilla = list.firstOrNull()?.villa_nama ?: "Unknown Villa",
-                listTugas = list, // List tugas tetap dibawa untuk hitung count di adapter
-                totalTugas = total,
-                tugasSelesai = selesai
+                listTugas = list,
+                totalTugas = list.size,
+                tugasSelesai = list.count { it.status.equals(FirebaseConfig.STATUS_DONE, true) }
             )
         }
-        // Kirim ke LiveData yang akan di-observe oleh ProgresDetailFragment
         _rawGroupsLive.postValue(groups)
     }
-    // --- FILTER ---
 
     fun filterTugas(status: String) {
-        val filtered = if (status == "All") {
-            allRawTasks
-        } else {
-            allRawTasks.filter { it.status.equals(status, true) }
-        }
+        val filtered = if (status == "All") allRawTasks else allRawTasks.filter { it.status.equals(status, true) }
         processTasksToWaktuContainer(filtered)
     }
-
-    // --- HELPER ---
 
     private fun getKategoriWaktu(deadline: String): String {
         return try {
@@ -119,7 +99,6 @@ class TugasViewModel : ViewModel() {
                 set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
             }
             val taskDate = Calendar.getInstance().apply { time = sdf.parse(deadline)!! }
-
             when {
                 taskDate.before(today) -> "Terlambat"
                 sdf.format(taskDate.time) == sdf.format(today.time) -> "Hari Ini"
@@ -128,12 +107,10 @@ class TugasViewModel : ViewModel() {
         } catch (e: Exception) { "Mendatang" }
     }
 
+    // --- MASTER DATA (Master Data Path) ---
 
-
-    // --- MASTER DATA & CRUD ---
-
-    fun getStaffList() {
-        db.child(FirebaseConfig.PATH_STAFFS).addValueEventListener(object : ValueEventListener {
+    fun getStaffList(managerId: String) {
+        FirebaseConfig.getStaffsRef(managerId).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 _staffList.postValue(snapshot.children.mapNotNull { it.getValue(UserModel::class.java) })
             }
@@ -141,8 +118,8 @@ class TugasViewModel : ViewModel() {
         })
     }
 
-    fun getVillaList() {
-        db.child(FirebaseConfig.PATH_VILLAS).addValueEventListener(object : ValueEventListener {
+    fun getVillaList(managerId: String) {
+        FirebaseConfig.getVillasRef(managerId).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 _villaList.postValue(snapshot.children.mapNotNull {
                     it.getValue(VillaModel::class.java)?.apply { id = it.key ?: "" }
@@ -152,20 +129,16 @@ class TugasViewModel : ViewModel() {
         })
     }
 
-    fun simpanTugasLengkap(villaId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
-        val ref = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas").push()
+    // --- CRUD (Operational Path) ---
+
+    fun simpanTugasLengkap(managerId: String, villaId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
+        val ref = FirebaseConfig.getTaskManagementRef(managerId).child(villaId).child("list_tugas").push()
         val finalData = data.toMutableMap().apply { put("id", ref.key ?: "") }
         ref.setValue(finalData).addOnCompleteListener { onComplete(it.isSuccessful) }
     }
 
-
-    fun updateTugas(villaId: String, taskId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
-        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas").child(taskId)
+    fun updateTugas(managerId: String, villaId: String, taskId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
+        FirebaseConfig.getTaskManagementRef(managerId).child(villaId).child("list_tugas").child(taskId)
             .updateChildren(data).addOnCompleteListener { onComplete(it.isSuccessful) }
-    }
-
-    fun hapusTugas(villaId: String, taskId: String, onComplete: (Boolean) -> Unit) {
-        db.child(FirebaseConfig.PATH_TASK_MANAGEMENT).child(villaId).child("list_tugas").child(taskId)
-            .removeValue().addOnCompleteListener { onComplete(it.isSuccessful) }
     }
 }

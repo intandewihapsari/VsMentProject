@@ -5,8 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.databinding.FragmentProgresDetailBinding
 import com.indri.vsmentproject.ui.manager.task.TugasViewModel
 
@@ -15,7 +16,8 @@ class ProgresDetailFragment : Fragment() {
     private var _binding: FragmentProgresDetailBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: TugasViewModel
+    // Menggunakan delegate by viewModels() standar Android KTX agar seirama dengan TugasFragment
+    private val viewModel: TugasViewModel by viewModels()
     private lateinit var adapter: ProgresVillaAdapter
 
     override fun onCreateView(
@@ -28,18 +30,22 @@ class ProgresDetailFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        viewModel = ViewModelProvider(this)[TugasViewModel::class.java]
         adapter = ProgresVillaAdapter()
 
         binding.rvProgresDetail.layoutManager = LinearLayoutManager(requireContext())
         binding.rvProgresDetail.adapter = adapter
 
-        viewModel.rawGroupsLive.observe(viewLifecycleOwner) {
-            adapter.setList(it ?: emptyList())
+        viewModel.rawGroupsLive.observe(viewLifecycleOwner) { groups ->
+            adapter.setList(groups ?: emptyList())
         }
 
-        viewModel.getTugasGroupedByVilla()
+        // PERBAIKAN: Ambil UID manager aktif saat ini dan kirim sebagai parameter query root
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        if (managerUid.isNotEmpty()) {
+            viewModel.getTugasGroupedByVilla(managerUid)
+        }
 
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()

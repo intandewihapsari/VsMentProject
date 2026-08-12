@@ -9,12 +9,12 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.utils.CloudinaryHelper
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.FragmentUploadBuktiBinding
 import com.indri.vsmentproject.data.utils.Resource
+import java.util.HashMap
 
 class UploadBuktiTugasFragment : Fragment() {
 
@@ -23,47 +23,38 @@ class UploadBuktiTugasFragment : Fragment() {
 
     private lateinit var dbRef: DatabaseReference
     private lateinit var tugas: TugasModel
+    private lateinit var managerId: String
 
     private val selectedPhotos = mutableListOf<Uri>()
 
-    // 🔥 PICK MULTIPLE IMAGE
     private val pickImagesLauncher =
         registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-
             if (uris.isNullOrEmpty()) return@registerForActivityResult
-
             if (uris.size > 5) {
                 Toast.makeText(requireContext(), "Maksimal 5 foto!", Toast.LENGTH_SHORT).show()
                 return@registerForActivityResult
             }
-
             selectedPhotos.clear()
             selectedPhotos.addAll(uris)
-
-            Toast.makeText(
-                requireContext(),
-                "${selectedPhotos.size} foto dipilih",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), "${selectedPhotos.size} foto dipilih", Toast.LENGTH_SHORT).show()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        dbRef = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_TASK_MANAGEMENT)
-
         tugas = arguments?.getParcelable("TUGAS_DATA")!!
+        managerId = arguments?.getString("MANAGER_ID") ?: ""
 
-        // 🔥 INIT CLOUDINARY
+        // Perbaikan Runtut: Mengarah ke operational -> task_management -> villa_id -> list_tugas -> id_tugas
+        dbRef = FirebaseConfig.getTaskManagementRef(managerId)
+            .child(tugas.villa_id)
+            .child("list_tugas")
+            .child(tugas.id)
+
         CloudinaryHelper.init(requireContext())
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentUploadBuktiBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -80,9 +71,7 @@ class UploadBuktiTugasFragment : Fragment() {
         }
     }
 
-    // 🔥 SUBMIT BUKTI
     private fun submitBukti() {
-
         if (selectedPhotos.size !in 3..5) {
             Toast.makeText(requireContext(), "Harus 3–5 foto!", Toast.LENGTH_SHORT).show()
             return
@@ -91,36 +80,30 @@ class UploadBuktiTugasFragment : Fragment() {
         Toast.makeText(requireContext(), "Uploading...", Toast.LENGTH_SHORT).show()
 
         uploadToCloudinary { listUrlFoto ->
-
             val updates = HashMap<String, Any>()
-            updates["status"] = "selesai"
+            updates["status"] = FirebaseConfig.STATUS_DONE
             updates["completed_at"] = System.currentTimeMillis()
             updates["bukti_foto"] = listUrlFoto
             updates["is_validated"] = true
 
-            dbRef.child(tugas.id).updateChildren(updates)
-
-            Toast.makeText(requireContext(), "Berhasil upload & tugas selesai!", Toast.LENGTH_SHORT).show()
-
-            parentFragmentManager.popBackStack()
+            dbRef.updateChildren(updates).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(requireContext(), "Berhasil upload & tugas selesai!", Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
+                } else {
+                    Toast.makeText(requireContext(), "Gagal menyimpan data ke Firebase", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
-    // 🔥 UPLOAD KE CLOUDINARY
     private fun uploadToCloudinary(callback: (List<String>) -> Unit) {
-
         val uploadedUrls = mutableListOf<String>()
         var uploadCount = 0
 
         for (uri in selectedPhotos) {
-
-            CloudinaryHelper.uploadImage(
-                uri,
-                folder = "bukti_tugas/${tugas.id}"
-            ) { result ->
-
+            CloudinaryHelper.uploadImage(uri, folder = "bukti_tugas/${tugas.id}") { result ->
                 when (result) {
-
                     is Resource.Success -> {
                         val url = result.data?.secure_url ?: ""
                         uploadedUrls.add(url)
@@ -130,18 +113,10 @@ class UploadBuktiTugasFragment : Fragment() {
                             callback(uploadedUrls)
                         }
                     }
-
                     is Resource.Error -> {
-                        Toast.makeText(
-                            requireContext(),
-                            result.message ?: "Upload gagal",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(requireContext(), result.message ?: "Upload gagal", Toast.LENGTH_SHORT).show()
                     }
-
-                    is Resource.Loading -> {
-                        // optional: bisa tambahin progress indicator
-                    }
+                    is Resource.Loading -> {}
                 }
             }
         }

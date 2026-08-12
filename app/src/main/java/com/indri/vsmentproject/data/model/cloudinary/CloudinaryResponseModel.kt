@@ -9,9 +9,9 @@ import kotlinx.parcelize.Parcelize
  */
 @Parcelize
 data class CloudinaryResponseModel(
-    val public_id: String = "",    // ID unik file di Cloudinary (berguna untuk hapus foto)
-    val secure_url: String = "",   // URL gambar dengan protokol HTTPS
-    val format: String = "",       // Format file (jpg, png, dll)
-    val created_at: String = "",   // Waktu upload
-    val bytes: Int = 0             // Ukuran file dalam bytes
+    var public_id: String = "",    // ID unik file di Cloudinary (berguna untuk hapus foto)
+    var secure_url: String = "",   // URL gambar dengan protokol HTTPS
+    var format: String = "",       // Format file (jpg, png, dll)
+    var created_at: String = "",   // Waktu upload
+    var bytes: Int = 0             // Ukuran file dalam bytes
 ) : Parcelable

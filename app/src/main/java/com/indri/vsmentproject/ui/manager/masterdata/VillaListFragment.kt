@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.villa.VillaModel
 import com.indri.vsmentproject.databinding.FragmentVillaListBinding
@@ -38,8 +39,8 @@ class VillaListFragment : Fragment() {
             this.adapter = adapter
         }
 
-        viewModel.getData()
-
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        viewModel.getData(managerUid)
         viewModel.villaList.observe(viewLifecycleOwner) { list ->
             adapter.updateData(list)
         }
@@ -58,7 +59,7 @@ class VillaListFragment : Fragment() {
 
 
     private fun showMenuOpsi(villa: VillaModel) {
-
+        val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         val opsi = arrayOf("Edit Detail Villa", "Hapus Villa")
 
         MaterialAlertDialogBuilder(requireContext())
@@ -81,7 +82,7 @@ class VillaListFragment : Fragment() {
                             .setTitle("Hapus Villa")
                             .setMessage("Hapus ${villa.nama}?")
                             .setPositiveButton("Hapus") { _, _ ->
-                                viewModel.hapusVilla(villa.id)
+                                viewModel.hapusVilla(managerUid, villa.id) // Ditambahkan managerUid
                             }
                             .setNegativeButton("Batal", null)
                             .show()

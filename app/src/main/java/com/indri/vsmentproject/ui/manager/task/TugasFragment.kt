@@ -1,6 +1,5 @@
 package com.indri.vsmentproject.ui.manager.task
 
-
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.*
@@ -8,13 +7,13 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
-import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.databinding.FragmentTugasBinding
 import com.indri.vsmentproject.ui.manager.task.progressVilla.ProgresDetailFragment
-import com.indri.vsmentproject.ui.manager.task.progressVilla.ProgresVillaAdapter
 import com.indri.vsmentproject.ui.manager.template.FragmentTemplateForm
 import java.util.*
 
@@ -24,8 +23,6 @@ class TugasFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: TugasViewModel by viewModels()
-
-    // Menggunakan Container Adapter untuk struktur Waktu > Card > List Villa/Tugas
     private lateinit var containerAdapter: WaktuContainerAdapter
     private lateinit var villaAdapter: PilihVillaAdapter
 
@@ -34,13 +31,10 @@ class TugasFragment : Fragment() {
     private var currentVillaId: String? = null
     private var currentVillaName: String? = null
     private var currentRoom: String = "Umum"
-
-    private lateinit var progresVillaAdapter: ProgresVillaAdapter
+    private var managerUid = ""
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTugasBinding.inflate(inflater, container, false)
         return binding.root
@@ -48,6 +42,7 @@ class TugasFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         setupRecyclerView()
         setupPilihVillaAdapter()
@@ -55,16 +50,28 @@ class TugasFragment : Fragment() {
         setupAction()
         observeData()
 
-        // Memicu pengambilan data dengan grouping terbaru
-        viewModel.getTugasGroupedByVilla()
+        if (managerUid.isNotEmpty()) {
+            viewModel.getTugasGroupedByVilla(managerUid)
+        }
+
+        // 🔥 JIKA TERBACA ARGUMEN, LANGSUNG BUKA PILIH VILLA
+        if (arguments?.getBoolean("OPEN_ADD_TASK") == true) {
+            bukaPilihVillaOverlay()
+        }
+    }
+
+    private fun bukaPilihVillaOverlay() {
+        if (_binding != null && isAdded) {
+            binding.layoutPilihVillaContainer.visibility = View.VISIBLE
+            if (managerUid.isNotEmpty()) {
+                viewModel.getVillaList(managerUid)
+            }
+        }
     }
 
     private fun setupRecyclerView() {
-        // Setup adapter utama yang membungkus kategori waktu dalam Card
-        progresVillaAdapter = ProgresVillaAdapter()
-        // 2. Setup List Tugas (Yang Card Waktu > Villa > Tugas)
         containerAdapter = WaktuContainerAdapter()
-        binding.rvTugasVilla.apply { // PAKAI ID rvTugasVilla
+        binding.rvTugasVilla.apply {
             adapter = containerAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
@@ -76,7 +83,6 @@ class TugasFragment : Fragment() {
             currentVillaName = villa.nama
 
             if (!villa.area.isNullOrEmpty()) {
-
                 val dialogView = layoutInflater.inflate(R.layout.dialog_area, null)
                 val rvArea = dialogView.findViewById<RecyclerView>(R.id.rvArea)
 
@@ -90,10 +96,7 @@ class TugasFragment : Fragment() {
                     dialog.dismiss()
                     bukaFormInput(villa.id, selectedArea)
                 }
-
                 dialog.show()
-                dialog.window?.setBackgroundDrawableResource(android.R.color.white)
-
             } else {
                 bukaFormInput(villa.id, "Umum")
             }
@@ -106,7 +109,9 @@ class TugasFragment : Fragment() {
     }
 
     private fun setupStaffSpinner() {
-        viewModel.getStaffList()
+        if (managerUid.isNotEmpty()) {
+            viewModel.getStaffList(managerUid)
+        }
         viewModel.staffList.observe(viewLifecycleOwner) { list ->
             binding.layoutFormInput.spinnerStaff.adapter = ArrayAdapter(
                 requireContext(),
@@ -118,21 +123,17 @@ class TugasFragment : Fragment() {
 
     private fun setupAction() {
         binding.fabTambahTugas.setOnClickListener {
-            binding.layoutPilihVillaContainer.visibility = View.VISIBLE
-            viewModel.getVillaList()
+            bukaPilihVillaOverlay()
         }
 
         binding.fabTambahTugas.setOnLongClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, FragmentTemplateForm())
-                .addToBackStack(null)
-                .commit()
+                .addToBackStack(null).commit()
             true
         }
 
-        binding.layoutFormInput.btnPilihTanggal.setOnClickListener {
-            showDatePicker()
-        }
+        binding.layoutFormInput.btnPilihTanggal.setOnClickListener { showDatePicker() }
 
         binding.layoutFormInput.btnBatal.setOnClickListener {
             binding.containerFormInput.visibility = View.GONE
@@ -142,8 +143,7 @@ class TugasFragment : Fragment() {
         binding.btnLihatSemua.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, ProgresDetailFragment())
-                .addToBackStack(null)
-                .commit()
+                .addToBackStack(null).commit()
         }
 
         binding.toggleGroupFilter.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -158,14 +158,12 @@ class TugasFragment : Fragment() {
     }
 
     private fun observeData() {
-        // Mengamati data yang sudah di-group menjadi WaktuContainer (Card Per Waktu)
         viewModel.waktuListLive.observe(viewLifecycleOwner) { listWaktu ->
             if (!listWaktu.isNullOrEmpty()) {
                 containerAdapter.submitList(listWaktu)
             }
         }
 
-        // Statistik presentase
         viewModel.rawGroupsLive.observe(viewLifecycleOwner) { data ->
             val all = data.flatMap { it.listTugas }
             val selesai = all.count { it.status.equals("selesai", true) }
@@ -188,30 +186,16 @@ class TugasFragment : Fragment() {
 
         binding.layoutPilihVillaContainer.visibility = View.GONE
         binding.containerFormInput.visibility = View.VISIBLE
-
-        binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan() }
-    }
-
-    private fun bukaFormEdit(tugas: TugasModel) {
-        currentEditTaskId = tugas.id
-        currentVillaId = tugas.villa_id
-        currentVillaName = tugas.villa_nama
-        currentRoom = tugas.ruangan
-
-        binding.containerFormInput.visibility = View.VISIBLE
-
-        binding.layoutFormInput.etNamaTugas.setText(tugas.tugas)
-        binding.layoutFormInput.etDeskripsiTugas.setText(tugas.deskripsi)
-        tanggalTerpilih = tugas.deadline
-
         binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan() }
     }
 
     private fun prosesSimpan() {
-        val nama = binding.layoutFormInput.etNamaTugas.text.toString()
+        val nama = binding.layoutFormInput.etNamaTugas.text.toString().trim()
+        val staffTerpilih = binding.layoutFormInput.spinnerStaff.selectedItem?.toString() ?: ""
+        val staffObject = viewModel.staffList.value?.find { it.nama == staffTerpilih }
 
         if (nama.isEmpty() || currentVillaId == null) {
-            Toast.makeText(context, "Isi data!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Harap lengkapi isi data!", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -221,7 +205,9 @@ class TugasFragment : Fragment() {
             "ruangan" to currentRoom,
             "tugas" to nama,
             "deadline" to tanggalTerpilih,
-            "status" to "pending"
+            "status" to "pending",
+            "staff_id" to (staffObject?.uid ?: ""),
+            "staff_nama" to staffTerpilih
         )
 
         val cb = { ok: Boolean ->
@@ -232,33 +218,62 @@ class TugasFragment : Fragment() {
         }
 
         if (currentEditTaskId == null)
-            viewModel.simpanTugasLengkap(currentVillaId!!, data, cb)
+            viewModel.simpanTugasLengkap(managerUid, currentVillaId!!, data, cb)
         else
-            viewModel.updateTugas(currentVillaId!!, currentEditTaskId!!, data, cb)
-    }
-
-    private fun konfirmasiHapus(tugas: TugasModel) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Hapus?")
-            .setPositiveButton("Ya") { _, _ ->
-                viewModel.hapusTugas(tugas.villa_id, tugas.id) {}
-            }
-            .setNegativeButton("Batal", null)
-            .show()
+            viewModel.updateTugas(managerUid, currentVillaId!!, currentEditTaskId!!, data, cb)
     }
 
     private fun showDatePicker() {
         val c = Calendar.getInstance()
-        DatePickerDialog(requireContext(), { _, y, m, d ->
+        val year = c.get(Calendar.YEAR)
+        val month = c.get(Calendar.MONTH)
+        val day = c.get(Calendar.DAY_OF_MONTH)
+
+        val datePickerDialog = DatePickerDialog(requireContext(), { _, y, m, d ->
             tanggalTerpilih = "%02d-%02d-%d".format(d, m + 1, y)
-        }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
+            binding.layoutFormInput.tvTanggalTerpilih.apply {
+                text = tanggalTerpilih
+                setTextColor(resources.getColor(android.R.color.black))
+            }
+        }, year, month, day)
+
+        datePickerDialog.datePicker.minDate = c.timeInMillis
+        datePickerDialog.show()
     }
 
     private fun resetForm() {
         binding.layoutFormInput.etNamaTugas.text?.clear()
         binding.layoutFormInput.etDeskripsiTugas.text?.clear()
+        binding.layoutFormInput.tvTanggalTerpilih.apply {
+            text = "Pilih Tanggal"
+            setTextColor(resources.getColor(android.R.color.darker_gray))
+        }
+        binding.layoutFormInput.rgKategori.clearCheck()
+
         tanggalTerpilih = ""
         currentEditTaskId = null
+    }
+
+    // =========================================================
+    // HELPER FOR BACK NAVIGATION (DIPANGGIL OLEH MANAGERACTIVITY)
+    // =========================================================
+
+    fun isFormOverlayOpen(): Boolean {
+        return _binding != null && (
+                binding.layoutPilihVillaContainer.visibility == View.VISIBLE ||
+                        binding.containerFormInput.visibility == View.VISIBLE
+                )
+    }
+
+    fun closeFormOverlay() {
+        if (_binding != null) {
+            if (binding.containerFormInput.visibility == View.VISIBLE) {
+                binding.containerFormInput.visibility = View.GONE
+                resetForm()
+            } else if (binding.layoutPilihVillaContainer.visibility == View.VISIBLE) {
+                binding.layoutPilihVillaContainer.visibility = View.GONE
+            }
+        }
     }
 
     override fun onDestroyView() {

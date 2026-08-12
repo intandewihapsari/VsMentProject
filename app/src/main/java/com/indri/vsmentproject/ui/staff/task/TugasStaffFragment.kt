@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.TugasModel
@@ -23,16 +24,18 @@ class TugasStaffFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var villaAdapter: VillaTugasAdapter
-    private lateinit var dbRef: DatabaseReference
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseDatabase.getInstance().reference
 
     private var listTugasFull = mutableListOf<TugasModel>()
     private var currentFilter = "Seluruh Tugas"
+    private var managerId: String? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    // Variabel penampung dinamis untuk data staff yang sedang login
+    private var currentStaffNama: String = ""
+    private var currentCustomStaffId: String = "" // Menampung STF_001, STF_002, dll.
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTugasStaffBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -40,111 +43,149 @@ class TugasStaffFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dbRef = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.PATH_TASK_MANAGEMENT)
-
         setupRecyclerView()
         setupFilterTabs()
         setupSearchBar()
-        loadTugasFromFirebase()
+        fetchManagerIdAndStaffProfile()
     }
 
-    // 🔥 SETUP RECYCLER VIEW
     private fun setupRecyclerView() {
         villaAdapter = VillaTugasAdapter(
             onDoneClick = { tugas -> updateStatusTugas(tugas) },
-            onReportClick = { tugas -> goToUploadBukti(tugas) } // 🔥 arah ke upload
+            onReportClick = { tugas -> goToUploadBukti(tugas) }
         )
-
         binding.rvVillaTugas.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = villaAdapter
         }
     }
 
-    // 🔥 LOAD DATA FIREBASE
-    private fun loadTugasFromFirebase() {
-        val sharedPref = requireActivity().getSharedPreferences("UserSession", 0)
-        val staffId = sharedPref.getString("staff_id", "") ?: ""
+    private fun fetchManagerIdAndStaffProfile() {
+        val uid = auth.currentUser?.uid ?: return
 
-        if (staffId.isNotEmpty()) {
-            dbRef.orderByChild("staff_id").equalTo(staffId)
-                .addValueEventListener(object : ValueEventListener {
+        // Step 1: Dapatkan Manager ID dari user_mapping
+        db.child(FirebaseConfig.PATH_USER_MAPPING).child(uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    managerId = snapshot.child(FirebaseConfig.FIELD_BELONGS_TO_MANAGER).value.toString()
+                    if (managerId != "null" && managerId!!.isNotEmpty()) {
 
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        if (_binding == null) return
+                        // Step 2: Cari data staff di master_data/staffs secara dinamis
+                        db.child(FirebaseConfig.PATH_VILLA_MANAGEMENT)
+                            .child(managerId!!)
+                            .child(FirebaseConfig.CHILD_MASTER_DATA)
+                            .child(FirebaseConfig.CHILD_STAFFS)
+                            .addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(staffsSnapshot: DataSnapshot) {
 
-                        listTugasFull.clear()
+                                    // Cari anak node yang memiliki field uid sesuai dengan user yang login
+                                    for (staffSnap in staffsSnapshot.children) {
+                                        val staffUidInDb = staffSnap.child("uid").value?.toString()
 
-                        for (data in snapshot.children) {
-                            val tugas = data.getValue(TugasModel::class.java)
-                            tugas?.let {
-                                it.id = data.key ?: ""
-                                listTugasFull.add(it)
-                            }
-                        }
+                                        if (staffUidInDb == uid) {
+                                            // Ambil KEY node-nya (misal: "STF_002" atau "W7lUve...")
+                                            currentCustomStaffId = staffSnap.key ?: ""
+                                            currentStaffNama = staffSnap.child("nama").value?.toString() ?: ""
+                                            break
+                                        }
+                                    }
 
-                        filterData(binding.etSearch.text.toString(), currentFilter)
+                                    // Jalankan loading tugas dengan data identitas asli yang dinamis
+                                    loadTugasFromFirebase(managerId!!, uid, currentCustomStaffId, currentStaffNama)
+                                }
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
                     }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        Toast.makeText(context, "Gagal ambil data", Toast.LENGTH_SHORT).show()
-                    }
-                })
-        }
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 
-    // 🔥 FILTER + SEARCH
+    private fun loadTugasFromFirebase(mId: String, staffUid: String, customStaffId: String, staffNama: String) {
+        // Step 3: Query masuk ke operational/task_management
+        FirebaseConfig.getTaskManagementRef(mId)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (_binding == null) return
+                    listTugasFull.clear()
+
+                    snapshot.children.forEach { villaSnap ->
+                        villaSnap.child("list_tugas").children.forEach { tugasSnap ->
+                            val tugas = tugasSnap.getValue(TugasModel::class.java)
+
+                            if (tugas != null) {
+                                // PERBAIKAN TOTAL: Pengecekan dinamis tanpa hardcode string lagi!
+                                val isMyUid = tugas.staff_id == staffUid
+                                val isMyCustomId = customStaffId.isNotEmpty() && tugas.staff_id == customStaffId
+                                val isMyName = staffNama.isNotEmpty() && tugas.staff_nama.equals(staffNama, ignoreCase = true)
+
+                                // Jika salah satu kriteria COCOK, maka tugas ini miliknya
+                                if (isMyUid || isMyCustomId || isMyName) {
+                                    tugas.id = tugasSnap.key ?: ""
+                                    tugas.villa_id = villaSnap.key ?: ""
+                                    listTugasFull.add(tugas)
+                                }
+                            }
+                        }
+                    }
+                    filterData(binding.etSearch.text.toString(), currentFilter)
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
     private fun filterData(query: String, filterStatus: String) {
         var filteredList = listTugasFull.filter {
-            it.tugas.contains(query, ignoreCase = true) ||
-                    it.villa_nama.contains(query, ignoreCase = true)
+            it.tugas.contains(query, ignoreCase = true) || it.villa_nama.contains(query, ignoreCase = true)
         }
 
         when (filterStatus) {
-            "Pending" -> filteredList = filteredList.filter { it.status == "pending" }
-            "Selesai" -> filteredList = filteredList.filter { it.status == "selesai" }
+            "Pending" -> filteredList = filteredList.filter { it.status == FirebaseConfig.STATUS_PENDING }
+            "Selesai" -> filteredList = filteredList.filter { it.status == FirebaseConfig.STATUS_DONE }
         }
-
         groupTugasByVilla(filteredList)
     }
 
-    // 🔥 GROUP BY VILLA
     private fun groupTugasByVilla(list: List<TugasModel>) {
         val grouped = list.groupBy { it.villa_id }.map { (villaId, tugasList) ->
             VillaTugasGroup(
                 villa_id = villaId,
-                namaVilla = tugasList.firstOrNull()?.villa_nama ?: "Tanpa Nama",
+                namaVilla = tugasList.firstOrNull()?.villa_nama ?: "Villa",
                 totalTugas = tugasList.size,
-                tugasSelesai = tugasList.count { it.status == "selesai" },
+                tugasSelesai = tugasList.count { it.status == FirebaseConfig.STATUS_DONE },
                 listTugas = tugasList
             )
         }
-
         villaAdapter.setData(grouped)
     }
 
-    // 🔥 UPDATE STATUS (UNTUK TUGAS BIASA)
     private fun updateStatusTugas(tugas: TugasModel) {
-        val newStatus = if (tugas.status == "selesai") "pending" else "selesai"
+        val mId = managerId ?: return
+        val newStatus = if (tugas.status == FirebaseConfig.STATUS_DONE) FirebaseConfig.STATUS_PENDING else FirebaseConfig.STATUS_DONE
 
-        val updates = HashMap<String, Any>()
-        updates["status"] = newStatus
-        updates["completed_at"] =
-            if (newStatus == "selesai") System.currentTimeMillis() else 0L
+        val updates = mapOf(
+            "status" to newStatus,
+            "completed_at" to if (newStatus == FirebaseConfig.STATUS_DONE) System.currentTimeMillis() else 0L
+        )
 
-        dbRef.child(tugas.id).updateChildren(updates)
+        FirebaseConfig.getTaskManagementRef(mId)
+            .child(tugas.villa_id)
+            .child("list_tugas")
+            .child(tugas.id)
+            .updateChildren(updates)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Status diperbarui", Toast.LENGTH_SHORT).show()
+            }
     }
 
-    // 🔥 PINDAH KE UPLOAD BUKTI
     private fun goToUploadBukti(tugas: TugasModel) {
-        Toast.makeText(context, "Upload bukti foto dulu ya 📸", Toast.LENGTH_SHORT).show()
-
-        val fragment = UploadBuktiTugasFragment()
-        val bundle = Bundle().apply {
-            putParcelable("TUGAS_DATA", tugas)
+        val mId = managerId ?: return
+        val fragment = UploadBuktiTugasFragment().apply {
+            arguments = Bundle().apply {
+                putParcelable("TUGAS_DATA", tugas)
+                putString("MANAGER_ID", mId)
+            }
         }
-        fragment.arguments = bundle
 
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
@@ -152,34 +193,24 @@ class TugasStaffFragment : Fragment() {
             .commit()
     }
 
-    // 🔥 TAB FILTER
     private fun setupFilterTabs() {
         val tabs = listOf(binding.tabAll, binding.tabPending, binding.tabSelesai)
-
         tabs.forEach { tab ->
             tab.setOnClickListener {
-
                 tabs.forEach {
                     it.setBackgroundResource(0)
                     it.setTypeface(null, Typeface.NORMAL)
                 }
-
-                tab.setBackgroundColor(
-                    ContextCompat.getColor(requireContext(), R.color.myWhite)
-                )
+                tab.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.myWhite))
                 tab.setTypeface(null, Typeface.BOLD)
-
                 currentFilter = tab.text.toString()
                 filterData(binding.etSearch.text.toString(), currentFilter)
             }
         }
     }
 
-    // 🔥 SEARCH BAR
     private fun setupSearchBar() {
-        binding.etSearch.addTextChangedListener { text ->
-            filterData(text.toString(), currentFilter)
-        }
+        binding.etSearch.addTextChangedListener { text -> filterData(text.toString(), currentFilter) }
     }
 
     override fun onDestroyView() {

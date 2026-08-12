@@ -1,100 +1,100 @@
 package com.indri.vsmentproject.ui.manager.template
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.database.FirebaseDatabase
 import com.indri.vsmentproject.data.model.task.TaskTemplateModel
-import com.indri.vsmentproject.data.model.task.TugasModel
-import com.indri.vsmentproject.data.utils.FirebaseConfig
+import com.indri.vsmentproject.data.repository.TaskRepository
+import com.indri.vsmentproject.data.utils.Resource
 
 class TemplateViewModel : ViewModel() {
 
-    private val db = FirebaseDatabase.getInstance().reference
+    private val repository = TaskRepository()
 
-    // =========================
-    // CREATE TEMPLATE
-    // =========================
-    fun createTemplate(template: TaskTemplateModel, onDone: (Boolean) -> Unit) {
+    private val _templateList = MutableLiveData<Resource<List<TaskTemplateModel>>>()
+    val templateList: LiveData<Resource<List<TaskTemplateModel>>> get() = _templateList
 
-        val ref = db.child(FirebaseConfig.PATH_TASK_TEMPLATES).push()
+    private val _saveStatus = MutableLiveData<Resource<Boolean>>()
+    val saveStatus: LiveData<Resource<Boolean>> get() = _saveStatus
 
-        val data = template.copy(id = ref.key ?: "")
+    private val _applyStatus = MutableLiveData<Resource<Boolean>>()
+    val applyStatus: LiveData<Resource<Boolean>> get() = _applyStatus
 
-        ref.setValue(data).addOnCompleteListener {
-            onDone(it.isSuccessful)
+    private val _villaList = MutableLiveData<List<Pair<String, String>>>()
+    val villaList: LiveData<List<Pair<String, String>>> get() = _villaList
+
+    private val _staffList = MutableLiveData<List<Pair<String, String>>>()
+    val staffList: LiveData<List<Pair<String, String>>> get() = _staffList
+
+    fun fetchTemplates(managerId: String) {
+        _templateList.value = Resource.Loading()
+        repository.getTemplates(managerId) { list ->
+            _templateList.postValue(Resource.Success(list))
         }
     }
 
-    // =========================
-    // UPDATE TEMPLATE
-    // =========================
-    fun updateTemplate(template: TaskTemplateModel, onDone: (Boolean) -> Unit) {
-
-        db.child(FirebaseConfig.PATH_TASK_TEMPLATES)
-            .child(template.id)
-            .setValue(template)
-            .addOnCompleteListener {
-                onDone(it.isSuccessful)
+    fun fetchVillasAndStaffs(managerId: String) {
+        // Fetch Villas
+        repository.getVillaList(managerId) { snapshot ->
+            val villas = snapshot.children.mapNotNull {
+                val id = it.key ?: ""
+                val nama = it.child("nama").value?.toString() ?: ""
+                if (id.isNotEmpty() && nama.isNotEmpty()) Pair(id, nama) else null
             }
-    }
-
-    // =========================
-    // DELETE TEMPLATE
-    // =========================
-    fun deleteTemplate(templateId: String, onDone: (Boolean) -> Unit) {
-
-        db.child(FirebaseConfig.PATH_TASK_TEMPLATES)
-            .child(templateId)
-            .removeValue()
-            .addOnCompleteListener {
-                onDone(it.isSuccessful)
-            }
-    }
-
-    // =========================
-    // GENERATE TASK DARI TEMPLATE
-    // =========================
-    fun generateFromTemplate(
-        template: TaskTemplateModel,
-        villaId: String,
-        villaName: String,
-        staffId: String,
-        staffName: String,
-        deadline: String,
-        onDone: (Boolean) -> Unit
-    ) {
-
-        val ref = db.child(FirebaseConfig.PATH_TASK_MANAGEMENT)
-            .child(villaId)
-            .child("list_tugas")
-
-        val tasks = template.tasks.map { taskName ->
-
-            val taskRef = ref.push()
-
-            TugasModel(
-                id = taskRef.key ?: "",
-                villa_id = villaId,
-                villa_nama = villaName,
-                tugas = taskName,
-                staff_id = staffId,
-                staff_name = staffName,
-                deadline = deadline,
-                status = "pending",
-                kategori = template.kategori
-            )
+            _villaList.postValue(villas)
         }
 
-        var successCount = 0
-
-        tasks.forEach { task ->
-            ref.child(task.id).setValue(task)
-                .addOnCompleteListener {
-                    if (it.isSuccessful) successCount++
-
-                    if (successCount == tasks.size) {
-                        onDone(true)
+        // Fetch Staffs
+        com.indri.vsmentproject.data.utils.FirebaseConfig.getStaffsRef(managerId)
+            .addValueEventListener(object : com.google.firebase.database.ValueEventListener {
+                override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+                    val staffs = snapshot.children.mapNotNull {
+                        val id = it.key ?: "" // Menggunakan key staff (STF_...)
+                        val nama = it.child("nama").value?.toString() ?: ""
+                        if (id.isNotEmpty() && nama.isNotEmpty()) Pair(id, nama) else null
                     }
+                    _staffList.postValue(staffs)
                 }
+                override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
+            })
+    }
+
+    fun saveTemplate(managerId: String, template: TaskTemplateModel) {
+        _saveStatus.value = Resource.Loading()
+        repository.saveTemplate(managerId, template) { success ->
+            if (success) {
+                _saveStatus.postValue(Resource.Success(true))
+                fetchTemplates(managerId)
+            } else {
+                _saveStatus.postValue(Resource.Error("Gagal menyimpan template"))
+            }
+        }
+    }
+
+    fun deleteTemplate(managerId: String, templateId: String) {
+        repository.deleteTemplate(managerId, templateId) { success ->
+            if (success) fetchTemplates(managerId)
+        }
+    }
+
+    fun applyTemplate(
+        managerId: String,
+        villaId: String,
+        villaNama: String,
+        ruanganNama: String,
+        selectedStaffs: List<Pair<String, String>>,
+        template: TaskTemplateModel,
+        deadline: String
+    ) {
+        _applyStatus.value = Resource.Loading()
+        repository.applyTemplateToStaff(
+            managerId, villaId, villaNama, ruanganNama, selectedStaffs, template, deadline
+        ) { success ->
+            if (success) {
+                _applyStatus.postValue(Resource.Success(true))
+            } else {
+                _applyStatus.postValue(Resource.Error("Gagal menerapkan template ke staff"))
+            }
         }
     }
 }
