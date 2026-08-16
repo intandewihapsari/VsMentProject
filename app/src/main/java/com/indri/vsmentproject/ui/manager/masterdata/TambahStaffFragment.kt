@@ -61,6 +61,8 @@ class TambahStaffFragment : Fragment() {
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
+
+        observeViewModel()
     }
 
     private fun setupAddMode() {
@@ -92,6 +94,30 @@ class TambahStaffFragment : Fragment() {
         }
     }
 
+    private fun observeViewModel() {
+        viewModel.operationStatus.observe(viewLifecycleOwner) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    setLoading(true)
+                }
+                is Resource.Success -> {
+                    setLoading(false)
+                    Toast.makeText(requireContext(), resource.data, Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
+                }
+                is Resource.Error -> {
+                    setLoading(false)
+                    Toast.makeText(requireContext(), resource.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun setLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.btnSimpanStaff.isEnabled = !isLoading
+    }
+
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
@@ -114,6 +140,7 @@ class TambahStaffFragment : Fragment() {
         }
 
         val managerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        setLoading(true)
 
         FirebaseAuth.getInstance()
             .createUserWithEmailAndPassword(email, password)
@@ -122,18 +149,19 @@ class TambahStaffFragment : Fragment() {
                 val imageUri = selectedImageUri
 
                 if (imageUri != null) {
-                    Toast.makeText(requireContext(), "Uploading foto...", Toast.LENGTH_SHORT).show()
                     CloudinaryHelper.uploadImage(imageUri, "staff") { result ->
                         when (result) {
                             is Resource.Success -> {
                                 val url = result.data?.secure_url
                                 if (url.isNullOrEmpty()) {
+                                    setLoading(false)
                                     Toast.makeText(requireContext(), "Upload gagal (URL kosong)", Toast.LENGTH_SHORT).show()
                                     return@uploadImage
                                 }
                                 simpanKeFirebase(uid, nama, email, posisi, telepon, status, url, managerId)
                             }
                             is Resource.Error -> {
+                                setLoading(false)
                                 Toast.makeText(requireContext(), "Upload gagal: ${result.message}", Toast.LENGTH_LONG).show()
                             }
                             else -> {}
@@ -144,6 +172,7 @@ class TambahStaffFragment : Fragment() {
                 }
             }
             .addOnFailureListener {
+                setLoading(false)
                 Toast.makeText(requireContext(), "Gagal membuat akun: ${it.message}", Toast.LENGTH_LONG).show()
             }
     }
@@ -160,7 +189,7 @@ class TambahStaffFragment : Fragment() {
         val imageUri = selectedImageUri
 
         if (imageUri != null) {
-            Toast.makeText(requireContext(), "Uploading foto...", Toast.LENGTH_SHORT).show()
+            setLoading(true)
             CloudinaryHelper.uploadImage(imageUri, "staff") { result ->
                 when (result) {
                     is Resource.Success -> {
@@ -174,10 +203,9 @@ class TambahStaffFragment : Fragment() {
                             "foto_profil" to url
                         )
                         viewModel.simpanStaff(managerId, id, data)
-                        Toast.makeText(requireContext(), "Data & Foto berhasil diupdate", Toast.LENGTH_SHORT).show()
-                        parentFragmentManager.popBackStack()
                     }
                     is Resource.Error -> {
+                        setLoading(false)
                         Toast.makeText(requireContext(), "Upload gagal: ${result.message}", Toast.LENGTH_LONG).show()
                     }
                     else -> {}
@@ -192,8 +220,6 @@ class TambahStaffFragment : Fragment() {
                 "status" to status
             )
             viewModel.simpanStaff(managerId, id, data)
-            Toast.makeText(requireContext(), "Data berhasil diupdate", Toast.LENGTH_SHORT).show()
-            parentFragmentManager.popBackStack()
         }
     }
 
@@ -218,18 +244,19 @@ class TambahStaffFragment : Fragment() {
             FirebaseConfig.FIELD_BELONGS_TO_MANAGER to managerId
         )
 
-        // Menggunakan Atomic Multi-Path Update
         val childUpdates = hashMapOf<String, Any>(
             "${FirebaseConfig.PATH_USER_MAPPING}/$uid" to userMapping,
             "${FirebaseConfig.getManagerRootPath(managerId)}/${FirebaseConfig.CHILD_STAFFS}/$uid" to staffProfile
         )
 
         FirebaseDatabase.getInstance().reference.updateChildren(childUpdates)
-            .addOnSuccessListener { // <-- Sudah diperbaiki menjadi addOnSuccessListener
+            .addOnSuccessListener {
+                setLoading(false)
                 Toast.makeText(requireContext(), "Staff berhasil ditambahkan", Toast.LENGTH_SHORT).show()
                 parentFragmentManager.popBackStack()
             }
             .addOnFailureListener {
+                setLoading(false)
                 Toast.makeText(requireContext(), "Gagal simpan: ${it.message}", Toast.LENGTH_LONG).show()
             }
     }

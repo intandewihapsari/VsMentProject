@@ -91,24 +91,31 @@ class FragmentTemplateForm : Fragment() {
     }
 
     private fun renderItemsText() {
-        binding.tvPreviewItems.text = itemList.joinToString(separator = "\n") { "• $it" }
+        binding.tvPreviewItems.text = "Daftar Sub-Tugas:\n" + itemList.joinToString(separator = "\n") { "• $it" }
     }
 
     private fun observeViewModel() {
         viewModel.saveStatus.observe(viewLifecycleOwner) { resource ->
             when (resource) {
-                is Resource.Loading -> binding.progressBar.visibility = View.VISIBLE
+                is Resource.Loading -> {
+                    setLoading(true)
+                }
                 is Resource.Success -> {
-                    binding.progressBar.visibility = View.GONE
+                    setLoading(false)
                     Toast.makeText(context, "Template Berhasil Disimpan!", Toast.LENGTH_SHORT).show()
                     parentFragmentManager.popBackStack()
                 }
                 is Resource.Error -> {
-                    binding.progressBar.visibility = View.GONE
+                    setLoading(false)
                     Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
                 }
             }
         }
+    }
+
+    private fun setLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.btnSimpanTemplate.isEnabled = !isLoading
     }
 
     override fun onDestroyView() {

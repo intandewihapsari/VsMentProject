@@ -2,6 +2,7 @@ package com.indri.vsmentproject.ui.manager.task
 
 import android.app.DatePickerDialog
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -79,6 +80,7 @@ class TugasFragment : Fragment() {
 
     private fun setupPilihVillaAdapter() {
         villaAdapter = PilihVillaAdapter { villa ->
+            Log.d("DEBUG_KLIK", "Villa diklik: ${villa.nama}, Area list: ${villa.area}")
             currentVillaId = villa.id
             currentVillaName = villa.nama
 
@@ -184,23 +186,26 @@ class TugasFragment : Fragment() {
         currentVillaId = villaId
         currentRoom = ruangan
 
+        binding.layoutFormInput.tvHeaderVilla.text = "${currentVillaName ?: ""} - $ruangan"
+
         binding.layoutPilihVillaContainer.visibility = View.GONE
         binding.containerFormInput.visibility = View.VISIBLE
         binding.layoutFormInput.btnSimpan.setOnClickListener { prosesSimpan() }
     }
 
     private fun prosesSimpan() {
+        val villaId = currentVillaId ?: return
         val nama = binding.layoutFormInput.etNamaTugas.text.toString().trim()
         val staffTerpilih = binding.layoutFormInput.spinnerStaff.selectedItem?.toString() ?: ""
         val staffObject = viewModel.staffList.value?.find { it.nama == staffTerpilih }
 
-        if (nama.isEmpty() || currentVillaId == null) {
+        if (nama.isEmpty()) {
             Toast.makeText(context, "Harap lengkapi isi data!", Toast.LENGTH_SHORT).show()
             return
         }
 
         val data = mapOf(
-            "villa_id" to currentVillaId!!,
+            "villa_id" to villaId,
             "villa_nama" to (currentVillaName ?: ""),
             "ruangan" to currentRoom,
             "tugas" to nama,
@@ -211,16 +216,16 @@ class TugasFragment : Fragment() {
         )
 
         val cb = { ok: Boolean ->
-            if (ok) {
+            if (ok && _binding != null) {
                 binding.containerFormInput.visibility = View.GONE
                 resetForm()
             }
         }
 
         if (currentEditTaskId == null)
-            viewModel.simpanTugasLengkap(managerUid, currentVillaId!!, data, cb)
+            viewModel.simpanTugasLengkap(managerUid, villaId, data, cb)
         else
-            viewModel.updateTugas(managerUid, currentVillaId!!, currentEditTaskId!!, data, cb)
+            viewModel.updateTugas(managerUid, villaId, currentEditTaskId!!, data, cb)
     }
 
     private fun showDatePicker() {

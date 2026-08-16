@@ -2,6 +2,7 @@ package com.indri.vsmentproject.ui.main
 
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -22,6 +23,7 @@ import com.google.firebase.database.FirebaseDatabase
 class StaffActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityStaffBinding
+    private var backPressedTime: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +31,9 @@ class StaffActivity : AppCompatActivity() {
 
         binding = ActivityStaffBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Setup back navigation
+        setupBackNavigation()
 
         // PERBAIKAN: Menggunakan binding, bukan findViewById lagi
         binding.bottomNavigation.itemIconTintList = ContextCompat.getColorStateList(this, R.color.nav_item_color)
@@ -42,6 +47,7 @@ class StaffActivity : AppCompatActivity() {
 
         // Load Fragment Pertama kali
         if (savedInstanceState == null) {
+            binding.tvTitlePage.text = "Home"
             replaceFragment(DashboardStaffFragment())
         }
 
@@ -51,29 +57,33 @@ class StaffActivity : AppCompatActivity() {
 
     private fun setupBottomNav() {
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
+            val title = when (item.itemId) {
                 R.id.navigation_home -> {
                     replaceFragment(DashboardStaffFragment())
-                    true
+                    "Home"
                 }
                 R.id.navigation_tugas -> {
                     replaceFragment(TugasStaffFragment())
-                    true
+                    "Tugas"
                 }
                 R.id.navigation_laporan -> {
                     replaceFragment(LaporanStaffFragment())
-                    true
+                    "Laporan"
                 }
                 R.id.navigation_aktivitas -> {
                     replaceFragment(AktivitasStaffFragment())
-                    true
+                    "Aktivitas"
                 }
                 R.id.navigation_profile -> {
                     replaceFragment(ProfileFragment())
-                    true
+                    "Profile"
                 }
-                else -> false
+                else -> ""
             }
+            if (title.isNotEmpty()) {
+                binding.tvTitlePage.text = title
+            }
+            title.isNotEmpty()
         }
     }
 
@@ -90,6 +100,34 @@ class StaffActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(binding.fragmentContainer.id, fragment)
             .commit()
+    }
+
+    private fun setupBackNavigation() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // 1. CEK: Apakah ada Sub-Fragment di BackStack?
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                }
+                // 2. CEK: Jika sedang tidak berada di Tab Home
+                else if (binding.bottomNavigation.selectedItemId != R.id.navigation_home) {
+                    binding.bottomNavigation.selectedItemId = R.id.navigation_home
+                }
+                // 3. CEK: Jika sudah di Home, berikan Toast untuk keluar
+                else {
+                    if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                        finish()
+                    } else {
+                        Toast.makeText(
+                            this@StaffActivity,
+                            "Tekan sekali lagi untuk keluar",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    backPressedTime = System.currentTimeMillis()
+                }
+            }
+        })
     }
 
     fun saveFcmTokenToDatabase(managerId: String, staffUid: String) {

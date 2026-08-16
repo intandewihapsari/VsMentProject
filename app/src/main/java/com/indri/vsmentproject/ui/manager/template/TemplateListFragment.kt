@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.TaskTemplateModel
@@ -51,7 +52,7 @@ class TemplateListFragment : Fragment() {
         }
 
         viewModel.fetchTemplates(currentManagerId)
-        viewModel.fetchVillasAndStaffs(currentManagerId) // 👈 Pre-fetch data untuk dialog
+        viewModel.fetchVillasAndStaffs(currentManagerId)
     }
 
     private fun setupRecyclerView() {
@@ -71,11 +72,22 @@ class TemplateListFragment : Fragment() {
                     .commit()
             },
             onDeleteClick = { template ->
-                viewModel.deleteTemplate(currentManagerId, template.id)
+                showKonfirmasiHapusTemplate(template)
             }
         )
         binding.rvTemplate.layoutManager = LinearLayoutManager(context)
         binding.rvTemplate.adapter = adapter
+    }
+
+    private fun showKonfirmasiHapusTemplate(template: TaskTemplateModel) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Hapus Data")
+            .setMessage("Apakah Anda yakin ingin menghapus ${template.nama_template}? Tindakan ini tidak dapat dibatalkan.")
+            .setPositiveButton("Hapus") { _, _ ->
+                viewModel.deleteTemplate(currentManagerId, template.id)
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
     private fun showApplyDialog(template: TaskTemplateModel) {

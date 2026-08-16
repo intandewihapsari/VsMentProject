@@ -4,25 +4,24 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
-import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.user.UserModel
+import com.indri.vsmentproject.data.utils.Resource
 import com.indri.vsmentproject.databinding.FragmentStaffListBinding
-import com.indri.vsmentproject.ui.main.ManagerActivity
-import com.indri.vsmentproject.ui.manager.report.LaporanAdapter
+
 class StaffListFragment : Fragment() {
 
     private var _binding: FragmentStaffListBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: DataViewModel by viewModels()
-    private lateinit var adapter: StaffAdapter
+    private lateinit var staffAdapter: StaffAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,63 +33,90 @@ class StaffListFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        // 🔥 ADAPTER GRID STAFF
-        adapter = StaffAdapter { staff ->
-            showMenuOpsiStaff(staff)
-        }
-
-        binding.rvStaff.apply {
-            layoutManager = GridLayoutManager(requireContext(), 2)
-            adapter = this@StaffListFragment.adapter
-        }
+        setupRecyclerView()
+        observeViewModel()
 
         val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        viewModel.getData(managerUid)
-
-        viewModel.staffList.observe(viewLifecycleOwner) { list ->
-            adapter.submitList(list)
+        if (managerUid.isNotEmpty()) {
+            viewModel.getData(managerUid)
         }
 
-        // 🔥 BUTTON TAMBAH STAFF
         binding.btnTambahStaff.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, TambahStaffFragment())
                 .addToBackStack(null)
                 .commit()
         }
+
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
     }
 
-    // 🔥 MENU EDIT + DELETE
-    private fun showMenuOpsiStaff(staff: UserModel) {
+    private fun setupRecyclerView() {
+        staffAdapter = StaffAdapter { staff ->
+            showMenuOpsiStaff(staff)
+        }
 
+        binding.rvStaff.apply {
+            layoutManager = GridLayoutManager(requireContext(), 2)
+            adapter = staffAdapter
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.staffList.observe(viewLifecycleOwner) { list ->
+            binding.progressBar.visibility = View.GONE
+            if (list.isNullOrEmpty()) {
+                binding.layoutEmptyStaff.visibility = View.VISIBLE
+                binding.rvStaff.visibility = View.GONE
+            } else {
+                binding.layoutEmptyStaff.visibility = View.GONE
+                binding.rvStaff.visibility = View.VISIBLE
+                staffAdapter.submitList(list)
+            }
+        }
+
+        viewModel.operationStatus.observe(viewLifecycleOwner) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    binding.progressBar.visibility = View.VISIBLE
+                }
+                is Resource.Success -> {
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(requireContext(), resource.data, Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Error -> {
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(requireContext(), resource.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun showMenuOpsiStaff(staff: UserModel) {
         val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         val opsi = arrayOf("Edit Staff", "Hapus Staff")
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(staff.nama)
             .setItems(opsi) { _, which ->
-
                 when (which) {
-
                     0 -> {
                         val fragment = TambahStaffFragment.newInstance(staff)
-
                         parentFragmentManager.beginTransaction()
                             .replace(R.id.fragmentContainer, fragment)
                             .addToBackStack(null)
                             .commit()
                     }
-
                     1 -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Hapus Staff")
-                            .setMessage("Hapus ${staff.nama}?")
+                            .setTitle("Hapus Data")
+                            .setMessage("Apakah Anda yakin ingin menghapus ${staff.nama}? Tindakan ini tidak dapat dibatalkan.")
                             .setPositiveButton("Hapus") { _, _ ->
-                                viewModel.hapusStaff(managerUid, staff.uid) // Ditambahkan managerUid
+                                viewModel.hapusStaff(managerUid, staff.uid)
                             }
                             .setNegativeButton("Batal", null)
                             .show()
@@ -99,7 +125,6 @@ class StaffListFragment : Fragment() {
             }
             .show()
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

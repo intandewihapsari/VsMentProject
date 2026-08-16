@@ -26,6 +26,9 @@ class DataViewModel : ViewModel() {
     private val _riwayatNotif = MutableLiveData<List<NotifikasiModel>>()
     val riwayatNotif: LiveData<List<NotifikasiModel>> = _riwayatNotif
 
+    private val _operationStatus = MutableLiveData<Resource<String>>()
+    val operationStatus: LiveData<Resource<String>> = _operationStatus
+
     private var originalNotifList: List<NotifikasiModel> = listOf()
 
     // =============================
@@ -91,21 +94,49 @@ class DataViewModel : ViewModel() {
     // STAFF CRUD
     // =============================
     fun simpanStaff(managerId: String, staffUid: String, data: Map<String, Any>) {
+        _operationStatus.value = Resource.Loading()
         FirebaseConfig.getStaffsRef(managerId).child(staffUid).updateChildren(data)
+            .addOnSuccessListener {
+                _operationStatus.postValue(Resource.Success("Data staff berhasil diupdate"))
+            }
+            .addOnFailureListener {
+                _operationStatus.postValue(Resource.Error(it.message ?: "Gagal update staff"))
+            }
     }
 
     fun hapusStaff(managerId: String, staffUid: String) {
+        _operationStatus.value = Resource.Loading()
         FirebaseConfig.getStaffsRef(managerId).child(staffUid).removeValue()
+            .addOnSuccessListener {
+                _operationStatus.postValue(Resource.Success("Staff berhasil dihapus"))
+            }
+            .addOnFailureListener {
+                _operationStatus.postValue(Resource.Error(it.message ?: "Gagal hapus staff"))
+            }
     }
 
     // =============================
     // VILLA CRUD
     // =============================
     fun simpanVilla(managerId: String, villaId: String, villa: VillaModel) {
+        _operationStatus.value = Resource.Loading()
         FirebaseConfig.getVillasRef(managerId).child(villaId).setValue(villa)
+            .addOnSuccessListener {
+                _operationStatus.postValue(Resource.Success("Data villa berhasil disimpan"))
+            }
+            .addOnFailureListener {
+                _operationStatus.postValue(Resource.Error(it.message ?: "Gagal simpan villa"))
+            }
     }
 
     fun hapusVilla(managerId: String, villaId: String) {
+        _operationStatus.value = Resource.Loading()
         FirebaseConfig.getVillasRef(managerId).child(villaId).removeValue()
+            .addOnSuccessListener {
+                _operationStatus.postValue(Resource.Success("Villa berhasil dihapus"))
+            }
+            .addOnFailureListener {
+                _operationStatus.postValue(Resource.Error(it.message ?: "Gagal hapus villa"))
+            }
     }
 }

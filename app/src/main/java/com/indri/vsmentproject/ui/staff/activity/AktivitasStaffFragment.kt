@@ -44,6 +44,10 @@ class AktivitasStaffFragment : Fragment() {
         setupRecyclerView()
         getManagerIdAndFetchData()
         setupFilterButtons()
+
+        // SET DEFAULT UI STATE
+        updateTimeUI(binding.btnSemuaWaktu)
+        updateTypeUI(binding.btnSemuaJenis)
     }
 
     private fun getManagerIdAndFetchData() {

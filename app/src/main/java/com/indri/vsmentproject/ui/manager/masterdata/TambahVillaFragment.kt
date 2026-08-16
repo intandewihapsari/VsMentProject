@@ -33,7 +33,7 @@ class TambahVillaFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
 
         val villa = arguments?.getParcelable<VillaModel>(ARG_VILLA)
 
@@ -54,6 +54,8 @@ class TambahVillaFragment : Fragment() {
         binding.btnSimpan.setOnClickListener {
             simpanDataVilla()
         }
+
+        observeViewModel()
     }
 
     private fun setupAddMode() {
@@ -79,6 +81,30 @@ class TambahVillaFragment : Fragment() {
                 .load(villa.foto_villa)
                 .into(binding.ivFotoVilla)
         }
+    }
+
+    private fun observeViewModel() {
+        viewModel.operationStatus.observe(viewLifecycleOwner) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    setLoading(true)
+                }
+                is Resource.Success -> {
+                    setLoading(false)
+                    Toast.makeText(requireContext(), resource.data, Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
+                }
+                is Resource.Error -> {
+                    setLoading(false)
+                    Toast.makeText(requireContext(), resource.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun setLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.btnSimpan.isEnabled = !isLoading
     }
 
     private val pickImageLauncher =
@@ -112,9 +138,6 @@ class TambahVillaFragment : Fragment() {
         val idFinal = villaEdit?.id ?: "V${System.currentTimeMillis()}"
         val imageUri = selectedImageUri
 
-        // =============================
-        // EDIT TANPA GANTI FOTO
-        // =============================
         if (isEditMode && imageUri == null) {
             val villa = VillaModel(
                 id = idFinal,
@@ -129,30 +152,22 @@ class TambahVillaFragment : Fragment() {
             )
 
             viewModel.simpanVilla(managerUid, idFinal, villa)
-            Toast.makeText(requireContext(), "Villa berhasil diupdate!", Toast.LENGTH_SHORT).show()
-            parentFragmentManager.popBackStack()
             return
         }
 
-        // =============================
-        // VALIDASI FOTO SAAT CREATE
-        // =============================
         if (!isEditMode && imageUri == null) {
             Toast.makeText(requireContext(), "Pilih gambar dulu", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // =============================
-        // UPLOAD FOTO (CREATE / EDIT)
-        // =============================
         if (imageUri != null) {
-            Toast.makeText(requireContext(), "Uploading foto...", Toast.LENGTH_SHORT).show()
-
+            setLoading(true)
             CloudinaryHelper.uploadImage(imageUri, "villa") { result ->
                 when (result) {
                     is Resource.Success -> {
                         val url = result.data?.secure_url
                         if (url.isNullOrEmpty()) {
+                            setLoading(false)
                             Toast.makeText(requireContext(), "Upload gagal (URL kosong)", Toast.LENGTH_SHORT).show()
                             return@uploadImage
                         }
@@ -170,10 +185,9 @@ class TambahVillaFragment : Fragment() {
                         )
 
                         viewModel.simpanVilla(managerUid, idFinal, villa)
-                        Toast.makeText(requireContext(), "Villa berhasil disimpan!", Toast.LENGTH_SHORT).show()
-                        parentFragmentManager.popBackStack()
                     }
                     is Resource.Error -> {
+                        setLoading(false)
                         Toast.makeText(requireContext(), result.message ?: "Upload gagal", Toast.LENGTH_SHORT).show()
                     }
                     else -> {}

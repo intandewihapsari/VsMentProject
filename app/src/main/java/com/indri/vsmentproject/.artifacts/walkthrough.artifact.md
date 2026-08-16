@@ -1,31 +1,31 @@
-# Walkthrough - Master Template Tugas Final Fix
+# Walkthrough - Bug Fixes & Scoped Data Alignment
 
-Seluruh fitur **Master Template Tugas** telah diperbaiki dan disempurnakan. Fokus utama perbaikan adalah pada alur navigasi yang tepat dan jaminan penyimpanan data ke Firebase.
+I have performed an audit based on the 15 Black Box Testing scenarios and identified several critical pathing issues that could lead to data leakage or functional failures in a multi-tenant environment.
 
-## Perubahan Utama
+## Key Fixes
 
-### 1. Perbaikan Alur Navigasi
-- **DataFragment**: Tombol "Template Tugas" kini diarahkan langsung ke `TemplateListFragment` (Daftar Template) alih-alih langsung ke form pembuatan.
-- **Empty State**: Jika belum ada template di `master_data/template_tugas`, sistem akan menampilkan layar "Belum Ada Template" dengan tombol ajakan untuk membuat template pertama.
+### 1. Scoped Data Access for Staff Reports
+> [!IMPORTANT]
+> Previously, `LaporanStaffFragment.kt` was accessing the database root for villas and reports, which would cause staff to see villas from other managers and save reports in the wrong location.
 
-### 2. Jaminan Penyimpanan Firebase (Absolute Pathing)
-- **TaskRepository**: Saya telah merombak fungsi `saveTaskWithNotification` dan `applyTemplateToStaff` untuk menggunakan **Absolute Path** dari root database.
-- **Fix "Not Saving"**: Dengan metode ini, data dijamin masuk ke:
-    - `villa_management/{uid}/operational/task_management/...`
-    - `villa_management/{uid}/operational/notifikasi/...`
-- **Atomic Transaction**: Semua tugas dan notifikasi untuk beberapa staff dikirimkan dalam satu transaksi atomik, memastikan konsistensi data.
+- **Manager ID Context**: The fragment now retrieves the `managerId` from `user_mapping` before fetching any data.
+- **Path Correction**: All villa and reporting paths are now scoped under `villa_management/{managerId}/...`.
+- **UI Robustness**: Added checks for `isAdded` and `_binding != null` to prevent crashes when asynchronous Firebase callbacks return after a fragment has been detached.
 
-### 3. Dukungan Multi-Staff & Dialog
-- `DialogApplyTemplate` kini berfungsi penuh untuk memilih Villa, Ruangan, **banyak Staff**, dan Deadline.
-- Setiap staff yang dipilih akan menerima tugas lengkap beserta notifikasinya masing-masing secara instan.
+### 2. Cloud Function Alignment
+> [!WARNING]
+> The Cloud Function was listening to a non-existent path (`/notification/`), whereas the app was writing to `/notifikasi/`.
 
-## Hasil Pengujian
-- **Navigasi**: ✅ Berhasil membuka daftar template terlebih dahulu.
-- **Penyimpanan**: ✅ Data tersimpan secara presisi di node `operational` tanpa duplikasi path.
-- **Build**: ✅ Proyek dikompilasi dengan sukses.
+- **Trigger Path Fix**: Updated `functions/index.js` to listen to `/villa_management/{managerId}/operational/notifikasi/{notifId}`.
+- **FCM Delivery**: This ensures that push notifications are correctly triggered when a manager sends a "Quick Instruction".
 
-## Cara Mencoba
-1. Buka **Data Villa & Staff** -> Klik **Template Tugas**.
-2. Jika daftar muncul, klik tombol **⚡ Terapkan** pada salah satu template.
-3. Pilih Villa, Ruangan, centang beberapa Staff, dan tentukan Deadline.
-4. Klik **Kirim Tugas**. Cek Firebase Console atau Dashboard Staff untuk memastikan tugas telah masuk.
+## Audit Checklist Results (Selected)
+
+| Scenario | Status | Improvement |
+| :--- | :--- | :--- |
+| **Penugasan & Delegasi** | ✅ FIXED | Scoped FCM trigger path fixed. |
+| **Eksekusi Staf & Pelaporan** | ✅ FIXED | Reporting path scoped to specific manager node. |
+
+## Verification Results
+- **Build Status**: ✅ Success (`./gradlew assembleDebug` passed).
+- **Architecture**: Better adherence to multi-tenant isolation by ensuring staff can only interact with their manager's data.

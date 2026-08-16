@@ -61,10 +61,19 @@ class LoginActivity : AppCompatActivity() {
             val email = binding.etEmail.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
 
-            if (email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "Email dan Password wajib diisi", Toast.LENGTH_SHORT).show()
+            if (email.isEmpty()) {
+                binding.etEmail.error = "Email wajib diisi"
                 return@setOnClickListener
             }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                binding.etEmail.error = "Format email tidak valid"
+                return@setOnClickListener
+            }
+            if (pass.isEmpty()) {
+                binding.etPassword.error = "Password wajib diisi"
+                return@setOnClickListener
+            }
+            
             viewModel.login(email, pass)
         }
 

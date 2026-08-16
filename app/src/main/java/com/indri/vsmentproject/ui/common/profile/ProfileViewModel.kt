@@ -1,11 +1,14 @@
 package com.indri.vsmentproject.ui.common.profile
 
 import androidx.lifecycle.*
+import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.indri.vsmentproject.data.model.user.ProfileSummary
 import com.indri.vsmentproject.data.model.user.UserModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
+import com.indri.vsmentproject.data.utils.Resource
+import com.google.firebase.auth.UserProfileChangeRequest
 
 class ProfileViewModel : ViewModel() {
 
@@ -14,6 +17,9 @@ class ProfileViewModel : ViewModel() {
 
     private val _summary = MutableLiveData<ProfileSummary>()
     val summary: LiveData<ProfileSummary> = _summary
+
+    private val _updateStatus = MutableLiveData<Resource<String>>()
+    val updateStatus: LiveData<Resource<String>> = _updateStatus
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseDatabase.getInstance().reference
@@ -95,48 +101,72 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    fun updateFullProfile(name: String, phone: String, email: String, photoUrl: String? = null, onResult: (String) -> Unit) {
-        val currentUser = _userData.value ?: return onResult("Gagal, data user belum termuat")
+    fun updateFullProfile(name: String, phone: String, email: String, photoUrl: String? = null, onResult: ((String) -> Unit)? = null) {
+        val currentUser = _userData.value ?: return
         val firebaseUser = auth.currentUser
 
         if (firebaseUser == null) {
-            onResult("Sesi login kedaluwarsa, silakan login ulang")
+            _updateStatus.postValue(Resource.Error("Sesi login kedaluwarsa, silakan login ulang"))
             return
         }
 
-        // 1. Update Email di Firebase Authentication Terlebih Dahulu
-        firebaseUser.updateEmail(email).addOnCompleteListener { authTask ->
-            if (authTask.isSuccessful) {
+        _updateStatus.postValue(Resource.Loading())
 
-                // 2. Jika Auth Sukses, Tentukan Reference Database Sesuai Role
-                val profileRef = if (currentUser.role == "manager") {
-                    FirebaseConfig.getManagerRef(currentUser.uid).child(FirebaseConfig.CHILD_MANAGER_PROFILE)
+        // 1. Update Display Name di Firebase Auth
+        val profileUpdates = UserProfileChangeRequest.Builder()
+            .setDisplayName(name)
+            .apply { photoUrl?.let { setPhotoUri(Uri.parse(it)) } }
+            .build()
+
+        firebaseUser.updateProfile(profileUpdates).addOnCompleteListener { authProfileTask ->
+            if (authProfileTask.isSuccessful) {
+                
+                // 2. Update Email di Firebase Auth (jika berbeda)
+                if (email != firebaseUser.email) {
+                    firebaseUser.updateEmail(email).addOnCompleteListener { emailTask ->
+                        if (emailTask.isSuccessful) {
+                            updateDatabaseProfile(currentUser, name, phone, email, photoUrl, onResult)
+                        } else {
+                            _updateStatus.postValue(Resource.Error("Gagal update Email Auth: ${emailTask.exception?.message}"))
+                        }
+                    }
                 } else {
-                    FirebaseConfig.getStaffsRef(currentUser.manager_id).child(currentUser.uid)
+                    updateDatabaseProfile(currentUser, name, phone, email, photoUrl, onResult)
                 }
-
-                // Susun data yang akan diupdate ke Database
-                val updates = mutableMapOf<String, Any>("nama" to name, "telepon" to phone, "email" to email)
-                photoUrl?.let { updates["foto_profil"] = it }
-
-                // 3. Update Data di Realtime Database
-                profileRef.updateChildren(updates).addOnSuccessListener {
-                    // Update state lokal agar UI langsung berubah
-                    currentUser.nama = name
-                    currentUser.telepon = phone
-                    currentUser.email = email
-                    photoUrl?.let { currentUser.foto_profil = it }
-                    _userData.postValue(currentUser)
-
-                    onResult("Profil dan Email Authentication berhasil diperbarui")
-                }.addOnFailureListener { dbError ->
-                    onResult("Auth berhasil, tetapi gagal simpan biodata ke DB: ${dbError.message}")
-                }
-
             } else {
-                // Gagal update email di Authentication (Misal: format salah atau email sudah dipakai akun lain)
-                onResult("Gagal memperbarui Email Auth: ${authTask.exception?.message}")
+                _updateStatus.postValue(Resource.Error("Gagal update profil Auth: ${authProfileTask.exception?.message}"))
             }
+        }
+    }
+
+    private fun updateDatabaseProfile(
+        currentUser: UserModel,
+        name: String,
+        phone: String,
+        email: String,
+        photoUrl: String?,
+        onResult: ((String) -> Unit)?
+    ) {
+        val profileRef = if (currentUser.role == "manager") {
+            FirebaseConfig.getManagerRef(currentUser.uid).child(FirebaseConfig.CHILD_MANAGER_PROFILE)
+        } else {
+            FirebaseConfig.getStaffsRef(currentUser.manager_id).child(currentUser.uid)
+        }
+
+        val updates = mutableMapOf<String, Any>("nama" to name, "telepon" to phone, "email" to email)
+        photoUrl?.let { updates["foto_profil"] = it }
+
+        profileRef.updateChildren(updates).addOnSuccessListener {
+            currentUser.nama = name
+            currentUser.telepon = phone
+            currentUser.email = email
+            photoUrl?.let { currentUser.foto_profil = it }
+            _userData.postValue(currentUser)
+
+            _updateStatus.postValue(Resource.Success("Profil berhasil diperbarui"))
+            onResult?.invoke("Profil berhasil diperbarui")
+        }.addOnFailureListener { dbError ->
+            _updateStatus.postValue(Resource.Error("Gagal simpan ke DB: ${dbError.message}"))
         }
     }
 }

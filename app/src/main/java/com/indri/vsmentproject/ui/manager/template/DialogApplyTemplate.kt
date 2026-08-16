@@ -85,7 +85,7 @@ class DialogApplyTemplate(
             val selectedRuangan = binding.spinnerRuangan.selectedItem?.toString() ?: ""
             val selectedStaffList = checkBoxStaffMap.filter { it.key.isChecked }.values.toList()
 
-            val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm 'WITA'", Locale("id", "ID"))
+            val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id", "ID"))
             val formattedDeadline = if (isDeadlineSelected) sdf.format(calendarDeadline.time) else ""
 
             if (selectedVillaPair == null) {

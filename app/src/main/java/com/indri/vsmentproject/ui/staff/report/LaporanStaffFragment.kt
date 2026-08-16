@@ -31,6 +31,9 @@ class LaporanStaffFragment : Fragment() {
     private var currentPhotoUri: Uri? = null
     private val villaNames = mutableListOf<String>()
     private val villaIds = mutableListOf<String>()
+    private var managerId: String? = null
+    private val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    private val db = com.google.firebase.database.FirebaseDatabase.getInstance().reference
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) startCameraFlow() else Toast.makeText(context, "Izin Kamera Ditolak", Toast.LENGTH_SHORT).show()
@@ -49,7 +52,7 @@ class LaporanStaffFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupVillaDropdown()
+        fetchManagerId()
         setupStatusDropdown()
         checkIncomingArguments()
 
@@ -106,9 +109,23 @@ class LaporanStaffFragment : Fragment() {
         galleryLauncher.launch("image/*")
     }
 
+    private fun fetchManagerId() {
+        val uid = auth.currentUser?.uid ?: return
+        db.child(FirebaseConfig.PATH_USER_MAPPING).child(uid)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    managerId = snapshot.child(FirebaseConfig.FIELD_BELONGS_TO_MANAGER).value.toString()
+                    if (managerId != "null" && !managerId.isNullOrEmpty()) {
+                        setupVillaDropdown()
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
     private fun setupVillaDropdown() {
-        val dbVillas = FirebaseDatabase.getInstance().getReference(FirebaseConfig.CHILD_VILLAS)
-        dbVillas.addListenerForSingleValueEvent(object : ValueEventListener {
+        val mId = managerId ?: return
+        FirebaseConfig.getVillasRef(mId).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 villaNames.clear()
                 villaIds.clear()
@@ -116,7 +133,9 @@ class LaporanStaffFragment : Fragment() {
                     villaNames.add(ds.child("nama").value.toString())
                     villaIds.add(ds.key ?: "")
                 }
-                binding.actvVilla.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, villaNames))
+                if (isAdded && _binding != null) {
+                    binding.actvVilla.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, villaNames))
+                }
             }
             override fun onCancelled(error: DatabaseError) {}
         })
@@ -127,12 +146,15 @@ class LaporanStaffFragment : Fragment() {
     }
 
     private fun fetchAreas(villaId: String) {
+        val mId = managerId ?: return
         binding.actvLokasi.setText("")
-        FirebaseDatabase.getInstance().getReference(FirebaseConfig.CHILD_VILLAS).child(villaId).child("area")
+        FirebaseConfig.getVillasRef(mId).child(villaId).child("area")
             .get().addOnSuccessListener { snapshot ->
-                val areas = snapshot.children.map { it.value.toString() }
-                binding.actvLokasi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, areas))
-                binding.actvLokasi.isEnabled = true
+                if (isAdded && _binding != null) {
+                    val areas = snapshot.children.map { it.value.toString() }
+                    binding.actvLokasi.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, areas))
+                    binding.actvLokasi.isEnabled = true
+                }
             }
     }
 
@@ -142,29 +164,30 @@ class LaporanStaffFragment : Fragment() {
     }
 
     private fun validateAndUpload() {
-        if (binding.etNamaBarang.text.isEmpty() || currentPhotoUri == null) {
-            Toast.makeText(context, "Mohon lengkapi data!", Toast.LENGTH_SHORT).show()
+        val photoUri = currentPhotoUri
+        if (binding.etNamaBarang.text.isEmpty() || photoUri == null) {
+            Toast.makeText(context, "Mohon lengkapi data dan pilih foto!", Toast.LENGTH_SHORT).show()
             return
         }
 
         binding.btnLaporkan.isEnabled = false
         binding.progressBar.visibility = View.VISIBLE
 
-        CloudinaryHelper.uploadImage(currentPhotoUri!!, "laporan") { res ->
+        CloudinaryHelper.uploadImage(photoUri, "laporan") { res ->
+            if (_binding == null) return@uploadImage
+            
             if (res is Resource.Success) {
                 saveToFirebase(res.data?.secure_url ?: "")
             } else if (res is Resource.Error) {
                 binding.btnLaporkan.isEnabled = true
                 binding.progressBar.visibility = View.GONE
-                Toast.makeText(context, res.message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, res.message ?: "Gagal upload gambar", Toast.LENGTH_SHORT).show()
             }
         }
     }
     private fun generateReportId(callback: (String) -> Unit) {
-        val db = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.CHILD_LAPORAN_KERUSAKAN)
-
-        db.get().addOnSuccessListener { snapshot ->
+        val mId = managerId ?: return
+        FirebaseConfig.getLaporanKerusakanRef(mId).get().addOnSuccessListener { snapshot ->
             val count = snapshot.childrenCount.toInt() + 1
             val newId = "REP_" + String.format("%03d", count)
             callback(newId)
@@ -172,9 +195,8 @@ class LaporanStaffFragment : Fragment() {
     }
 
     private fun saveToFirebase(url: String) {
-
-        val db = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.CHILD_LAPORAN_KERUSAKAN)
+        val mId = managerId ?: return
+        val dbLaporan = FirebaseConfig.getLaporanKerusakanRef(mId)
 
         val pref = requireActivity()
             .getSharedPreferences("UserSession", Context.MODE_PRIVATE)
@@ -193,36 +215,27 @@ class LaporanStaffFragment : Fragment() {
         generateReportId { newId ->
 
             val laporan = LaporanModel(
-
-                id = newId, // 🔥 pakai REP_001
-
+                id = newId,
                 villa_id = selectedVillaId,
                 villa_nama = binding.actvVilla.text.toString(),
                 area = binding.actvLokasi.text.toString(),
-
-                staff_id = pref.getString("staff_id", "") ?: "",
+                staff_id = auth.currentUser?.uid ?: "",
                 staff_nama = pref.getString("nama", "Staff") ?: "",
-
                 tipe_laporan = binding.actvKondisi.text.toString(),
                 nama_barang = binding.etNamaBarang.text.toString(),
                 deskripsi = binding.etDeskripsi.text.toString(),
-
                 foto_url = url,
                 status = "pending",
                 catatan_manager = "",
-
                 created_at = System.currentTimeMillis(),
-
                 waktu_lapor = SimpleDateFormat(
                     "yyyy-MM-dd HH:mm",
                     Locale.getDefault()
                 ).format(Date()),
-
                 waktu_selesai = ""
             )
 
-            // 🔥 INI TETAP DISINI
-            newRef.setValue(laporan).addOnCompleteListener {
+            dbLaporan.push().setValue(laporan).addOnCompleteListener {
 
                 binding.btnLaporkan.isEnabled = true
                 binding.progressBar.visibility = View.GONE

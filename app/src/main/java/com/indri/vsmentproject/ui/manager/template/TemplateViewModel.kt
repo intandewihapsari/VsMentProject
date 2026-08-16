@@ -34,7 +34,6 @@ class TemplateViewModel : ViewModel() {
     }
 
     fun fetchVillasAndStaffs(managerId: String) {
-        // Fetch Villas
         repository.getVillaList(managerId) { snapshot ->
             val villas = snapshot.children.mapNotNull {
                 val id = it.key ?: ""
@@ -44,12 +43,11 @@ class TemplateViewModel : ViewModel() {
             _villaList.postValue(villas)
         }
 
-        // Fetch Staffs
         com.indri.vsmentproject.data.utils.FirebaseConfig.getStaffsRef(managerId)
             .addValueEventListener(object : com.google.firebase.database.ValueEventListener {
                 override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
                     val staffs = snapshot.children.mapNotNull {
-                        val id = it.key ?: "" // Menggunakan key staff (STF_...)
+                        val id = it.key ?: ""
                         val nama = it.child("nama").value?.toString() ?: ""
                         if (id.isNotEmpty() && nama.isNotEmpty()) Pair(id, nama) else null
                     }

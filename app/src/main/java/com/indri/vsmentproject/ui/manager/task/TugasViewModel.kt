@@ -11,6 +11,7 @@ import java.util.*
 
 class TugasViewModel : ViewModel() {
     private val db = FirebaseDatabase.getInstance().reference
+    private val activeListeners = mutableMapOf<Query, ValueEventListener>()
 
     private var allRawTasks = listOf<TugasModel>()
 
@@ -29,25 +30,27 @@ class TugasViewModel : ViewModel() {
     // --- DATA FETCHING (Operational Path) ---
 
     fun getTugasGroupedByVilla(managerId: String) {
-        FirebaseConfig.getTaskManagementRef(managerId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val tasks = mutableListOf<TugasModel>()
-                    // Structure: task_management -> [villaId] -> list_tugas -> [taskId]
-                    snapshot.children.forEach { villaSnap ->
-                        villaSnap.child("list_tugas").children.forEach { tugasSnap ->
-                            tugasSnap.getValue(TugasModel::class.java)?.let {
-                                it.id = tugasSnap.key ?: ""
-                                tasks.add(it)
-                            }
+        val ref = FirebaseConfig.getTaskManagementRef(managerId)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val tasks = mutableListOf<TugasModel>()
+                // Structure: task_management -> [villaId] -> list_tugas -> [taskId]
+                snapshot.children.forEach { villaSnap ->
+                    villaSnap.child("list_tugas").children.forEach { tugasSnap ->
+                        tugasSnap.getValue(TugasModel::class.java)?.let {
+                            it.id = tugasSnap.key ?: ""
+                            tasks.add(it)
                         }
                     }
-                    allRawTasks = tasks
-                    updateStats(tasks)
-                    processTasksToWaktuContainer(tasks)
                 }
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                allRawTasks = tasks
+                updateStats(tasks)
+                processTasksToWaktuContainer(tasks)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
     }
 
     private fun processTasksToWaktuContainer(tasks: List<TugasModel>) {
@@ -110,23 +113,37 @@ class TugasViewModel : ViewModel() {
     // --- MASTER DATA (Master Data Path) ---
 
     fun getStaffList(managerId: String) {
-        FirebaseConfig.getStaffsRef(managerId).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getStaffsRef(managerId)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 _staffList.postValue(snapshot.children.mapNotNull { it.getValue(UserModel::class.java) })
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
     }
 
     fun getVillaList(managerId: String) {
-        FirebaseConfig.getVillasRef(managerId).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getVillasRef(managerId)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 _villaList.postValue(snapshot.children.mapNotNull {
                     it.getValue(VillaModel::class.java)?.apply { id = it.key ?: "" }
                 })
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        activeListeners.forEach { (query, listener) ->
+            query.removeEventListener(listener)
+        }
+        activeListeners.clear()
     }
 
     // --- CRUD (Operational Path) ---

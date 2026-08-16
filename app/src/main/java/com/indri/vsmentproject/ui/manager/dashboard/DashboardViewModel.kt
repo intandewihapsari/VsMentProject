@@ -21,6 +21,8 @@ class DashboardViewModel : ViewModel() {
     private val taskRepo = TaskRepository()
     private val notifRepo = NotificationRepository()
 
+    private val activeListeners = mutableMapOf<Query, ValueEventListener>()
+
     private val _managerUid = MutableLiveData<String>()
 
     private val _villaList = MutableLiveData<List<VillaModel>>()
@@ -82,8 +84,8 @@ class DashboardViewModel : ViewModel() {
 
     fun getVillaList() {
         val uid = _managerUid.value ?: return
-        // PATH: villa_management/{uid}/master_data/villas
-        FirebaseConfig.getVillasRef(uid).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getVillasRef(uid)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = snapshot.children.mapNotNull { child ->
                     child.getValue(VillaModel::class.java)?.apply { id = child.key ?: "" }
@@ -91,25 +93,29 @@ class DashboardViewModel : ViewModel() {
                 _villaList.postValue(list)
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
     }
 
     fun getStaffList() {
         val uid = _managerUid.value ?: return
-        // PATH: villa_management/{uid}/master_data/staffs
-        FirebaseConfig.getStaffsRef(uid).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getStaffsRef(uid)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = snapshot.children.mapNotNull { it.getValue(UserModel::class.java) }
                 _staffList.postValue(list)
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
     }
 
     private fun getLatestLaporan(uid: String): LiveData<LaporanModel?> {
         val result = MutableLiveData<LaporanModel?>()
-        // PATH: villa_management/{uid}/operational/laporan_kerusakan
-        FirebaseConfig.getLaporanKerusakanRef(uid).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getLaporanKerusakanRef(uid)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val latest = snapshot.children
                     .mapNotNull { child -> child.getValue(LaporanModel::class.java)?.apply { id = child.key ?: "" } }
@@ -117,13 +123,15 @@ class DashboardViewModel : ViewModel() {
                 result.postValue(latest)
             }
             override fun onCancelled(error: DatabaseError) { result.postValue(null) }
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
         return result
     }
 
     private fun hitungAnalisisRealtime(uid: String) {
-        // PATH: villa_management/{uid}/operational/task_management
-        FirebaseConfig.getTaskManagementRef(uid).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getTaskManagementRef(uid)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshotTugas: DataSnapshot) {
                 var totalSeluruhTugas = 0
                 var totalSelesai = 0
@@ -140,12 +148,15 @@ class DashboardViewModel : ViewModel() {
                 _analisisNyata.postValue(AnalisisCepatModel(progressTugas = "$progressPercent%"))
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
     }
 
     private fun getInventarisRealtime(uid: String): LiveData<InventarisModel> {
         val result = MutableLiveData<InventarisModel>()
-        FirebaseConfig.getLaporanKerusakanRef(uid).addValueEventListener(object : ValueEventListener {
+        val ref = FirebaseConfig.getLaporanKerusakanRef(uid)
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 var countRusak = 0
                 var countHilang = 0
@@ -161,8 +172,18 @@ class DashboardViewModel : ViewModel() {
                 result.postValue(InventarisModel(total_rusak = countRusak, total_hilang = countHilang, total_habis = countHabis))
             }
             override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
         return result
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        activeListeners.forEach { (query, listener) ->
+            query.removeEventListener(listener)
+        }
+        activeListeners.clear()
     }
 
     val dashboardData: LiveData<Resource<List<DashboardItem>>> = _managerUid.switchMap { uid ->

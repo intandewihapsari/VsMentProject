@@ -55,25 +55,7 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        // 2. Sinkronisasi Statistik Angka
-        viewModel.summary.observe(viewLifecycleOwner) { stat ->
-            with(binding) {
-                // Silakan sesuaikan ID komponen TextView (seperti tvStat1, dll)
-                // dengan nama ID yang ada pada file fragment_profile.xml Anda.
-//                if (viewModel.userData.value?.role == "manager") {
-//                    tvStat1.text = "${stat.totalVilla} Villa"
-//                    tvStat2.text = "${stat.totalStaff} Staff"
-//                    tvStat3.text = "${stat.totalLaporanPending} Pending"
-//                } else {
-//                    // Mapping untuk role staff (menyesuaikan isi kalkulasi di ViewModel)
-//                    tvStat1.text = "${stat.totalVilla} Selesai"      // totalBeres
-//                    tvStat2.text = "${stat.totalStaff} Laporan"      // totalLaporan
-//                    tvStat3.text = "${stat.totalLaporanPending} Sisa" // sisaTugas
-//                }
-            }
-        }
-
-        // 3. Click Listeners utama fragment
+        // 2. Click Listeners utama fragment
         binding.btnEditFoto.setOnClickListener { galleryLauncher.launch("image/*") }
         binding.btnEditProfile.setOnClickListener { showEditDialog() }
         binding.btnLogout.setOnClickListener {
@@ -98,41 +80,69 @@ class ProfileFragment : Fragment() {
         val user = viewModel.userData.value ?: return
         val dialogBinding = DialogEditProfileBinding.inflate(layoutInflater)
 
-        // Tampilkan data profil saat ini ke dalam EditText
         dialogBinding.etEditNama.setText(user.nama)
         dialogBinding.etEditTelp.setText(user.telepon)
         dialogBinding.etEditEmail.setText(user.email)
 
-        // Buat Dialog tanpa menggunakan Positive/Negative Button bawaan builder
-        // agar tombol custom di XML (btnSave dan btnCancel) yang memegang kendali penuh
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogBinding.root)
+            .setCancelable(false) // Prevent accidental dismissal during save
             .create()
 
-        // Listener Aksi Tombol Batal Custom XML
         dialogBinding.btnCancel.setOnClickListener {
             dialog.dismiss()
         }
 
-        // Listener Aksi Tombol Simpan Custom XML
         dialogBinding.btnSave.setOnClickListener {
             val newNama = dialogBinding.etEditNama.text.toString().trim()
             val newTelp = dialogBinding.etEditTelp.text.toString().trim()
             val newEmail = dialogBinding.etEditEmail.text.toString().trim()
 
-            if (newNama.isNotEmpty() && newEmail.isNotEmpty()) {
-                viewModel.updateFullProfile(newNama, newTelp, newEmail) { msg ->
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                    dialog.dismiss() // Dialog ditutup hanya jika berhasil menyimpan data
+            // 1. Validasi Input
+            if (newNama.isEmpty()) {
+                dialogBinding.etEditNama.error = "Nama tidak boleh kosong"
+                return@setOnClickListener
+            }
+
+            if (newEmail.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+                dialogBinding.etEditEmail.error = "Email tidak valid"
+                return@setOnClickListener
+            }
+
+            if (newTelp.isNotEmpty() && newTelp.length < 10) {
+                dialogBinding.etEditTelp.error = "Nomor telepon minimal 10 digit"
+                return@setOnClickListener
+            }
+
+            // 2. Jalankan Update via ViewModel
+            viewModel.updateFullProfile(newNama, newTelp, newEmail)
+        }
+
+        // 3. Observasi Status Update di dalam Dialog
+        viewModel.updateStatus.observe(viewLifecycleOwner) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    dialogBinding.progressBar.visibility = View.VISIBLE
+                    dialogBinding.btnSave.isEnabled = false
+                    dialogBinding.btnCancel.isEnabled = false
                 }
-            } else {
-                Toast.makeText(context, "Nama dan Email tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                is Resource.Success -> {
+                    dialogBinding.progressBar.visibility = View.GONE
+                    Toast.makeText(context, resource.data, Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                    // Reset status agar tidak terpicu ulang saat dialog dibuka lagi
+                    // (ViewModel lifecycle lasts longer than dialog)
+                }
+                is Resource.Error -> {
+                    dialogBinding.progressBar.visibility = View.GONE
+                    dialogBinding.btnSave.isEnabled = true
+                    dialogBinding.btnCancel.isEnabled = true
+                    Toast.makeText(context, resource.message, Toast.LENGTH_LONG).show()
+                }
             }
         }
 
         dialog.show()
-
-        // Membuat latar belakang bawaan dialog transparan agar sudut melengkung CardView terlihat rapi
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
     }
 
@@ -142,17 +152,18 @@ class ProfileFragment : Fragment() {
         CloudinaryHelper.uploadImage(uri, targetFolder) { resource ->
             when (resource) {
                 is Resource.Loading -> {
+                    binding.progressBar.visibility = View.VISIBLE
                     Toast.makeText(context, "Mengunggah foto...", Toast.LENGTH_SHORT).show()
                 }
                 is Resource.Success -> {
+                    binding.progressBar.visibility = View.GONE
                     val secureUrl = resource.data?.secure_url ?: ""
                     val user = viewModel.userData.value ?: return@uploadImage
 
-                    viewModel.updateFullProfile(user.nama, user.telepon, user.email, secureUrl) {
-                        Toast.makeText(context, "Foto profil berhasil diperbarui!", Toast.LENGTH_SHORT).show()
-                    }
+                    viewModel.updateFullProfile(user.nama, user.telepon, user.email, secureUrl)
                 }
                 is Resource.Error -> {
+                    binding.progressBar.visibility = View.GONE
                     Toast.makeText(context, "Upload gagal: ${resource.message}", Toast.LENGTH_SHORT).show()
                 }
             }
