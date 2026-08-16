@@ -116,6 +116,17 @@ class LoginActivity : AppCompatActivity() {
         val sharedPref = getSharedPreferences("UserSession", MODE_PRIVATE)
         sharedPref.edit().putString("staff_id", uid).apply()
 
+        // Ambil Manager ID jika ini adalah staff
+        FirebaseDatabase.getInstance().reference.child(FirebaseConfig.PATH_USER_MAPPING).child(uid).get()
+            .addOnSuccessListener { snapshot ->
+                val managerId = if (role.lowercase() == "manager") uid 
+                else snapshot.child(FirebaseConfig.FIELD_BELONGS_TO_MANAGER).value.toString()
+                
+                if (managerId != "null") {
+                    FirebaseConfig.enableSync(managerId)
+                }
+            }
+
         if (role.equals("manager", ignoreCase = true)) {
             startActivity(Intent(this, ManagerActivity::class.java))
         } else {

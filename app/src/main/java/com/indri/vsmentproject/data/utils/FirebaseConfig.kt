@@ -28,6 +28,15 @@ object FirebaseConfig {
     fun getNotifikasiRef(managerId: String) = getOperationalRef(managerId).child(CHILD_NOTIFIKASI)
     fun getSystemLogsRef(managerId: String) = getOperationalRef(managerId).child(CHILD_SYSTEM_LOGS)
 
+    /**
+     * Mengaktifkan sinkronisasi background untuk data krusial agar tersedia secara offline.
+     */
+    fun enableSync(managerId: String) {
+        getTaskManagementRef(managerId).keepSynced(true)
+        getNotifikasiRef(managerId).keepSynced(true)
+        getLaporanKerusakanRef(managerId).keepSynced(true)
+    }
+
     // --- Sub-Paths ---
     const val CHILD_MANAGER_PROFILE = "manager_profile"
     const val CHILD_OPERATIONAL = "operational"

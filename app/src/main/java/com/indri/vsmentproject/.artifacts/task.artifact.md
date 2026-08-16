@@ -1,8 +1,6 @@
-- [ ] Remove useless comments from `ManagerActivity.kt`
-- [ ] Remove useless comments from `StaffActivity.kt`
-- [ ] Remove useless comments from `TugasFragment.kt`
-- [ ] Remove useless comments from `TaskRepository.kt`
-- [ ] Remove useless comments from `LaporanStaffFragment.kt`
-- [ ] Remove useless comments from `DashboardViewModel.kt`
-- [ ] Remove useless comments from `LoginActivity.kt`
-- [ ] Remove useless comments from `AktivitasStaffFragment.kt`
+# Tasks - Firebase Offline Persistence & Optimization
+
+- [x] Enable global persistence in `VsMentApp.kt`
+- [x] Add sync optimization helpers in `FirebaseConfig.kt`
+- [x] Initialize synchronization logic in `LoginActivity.kt`
+- [x] Verify offline data retention and optimistic UI updates
