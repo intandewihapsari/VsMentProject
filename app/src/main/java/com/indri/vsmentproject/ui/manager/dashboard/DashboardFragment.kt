@@ -104,7 +104,6 @@ class DashboardFragment : Fragment() {
             val managerUid = auth.currentUser?.uid ?: ""
 
             if (judul.isNotEmpty() && pesan.isNotEmpty() && managerUid.isNotEmpty()) {
-                // 🔥 PANGGIL VIEWMODEL UNTUK SIMPAN KE FIREBASE
                 viewModel.kirimNotifikasi(
                     managerUid = managerUid,
                     villaNama = villaTerpilih,

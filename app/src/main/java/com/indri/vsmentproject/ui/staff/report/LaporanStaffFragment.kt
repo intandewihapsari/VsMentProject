@@ -56,15 +56,12 @@ class LaporanStaffFragment : Fragment() {
         setupStatusDropdown()
         checkIncomingArguments()
 
-        //binding.ivPreviewForm.setOnClickListener { checkCameraPermission() }
         binding.ivPreviewForm.setOnClickListener {
             openGallery()
         }
         binding.btnLaporkan.setOnClickListener { validateAndUpload() }
 
         openGallery()
-
-        //checkCameraPermission()
     }
 
     private fun checkIncomingArguments() {
@@ -98,7 +95,7 @@ class LaporanStaffFragment : Fragment() {
 //        binding.ivPreviewForm.setImageURI(uri)
 //    }
     private fun showForm(uri: Uri) {
-        currentPhotoUri = uri // 🔥 WAJIB
+        currentPhotoUri = uri
         binding.layoutCamera.visibility = View.GONE
         binding.layoutForm.visibility = View.VISIBLE
         binding.ivPreviewForm.setImageURI(uri)
@@ -236,26 +233,14 @@ class LaporanStaffFragment : Fragment() {
             )
 
             dbLaporan.push().setValue(laporan).addOnCompleteListener {
-
                 binding.btnLaporkan.isEnabled = true
                 binding.progressBar.visibility = View.GONE
 
                 if (it.isSuccessful) {
-                    Toast.makeText(
-                        context,
-                        "Laporan Berhasil!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
+                    Toast.makeText(context, "Laporan Berhasil!", Toast.LENGTH_SHORT).show()
                     parentFragmentManager.popBackStack()
-
                 } else {
-
-                    Toast.makeText(
-                        context,
-                        "Gagal kirim laporan",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(context, "Gagal kirim laporan", Toast.LENGTH_SHORT).show()
                 }
             }
         }

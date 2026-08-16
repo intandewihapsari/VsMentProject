@@ -55,7 +55,6 @@ class TugasFragment : Fragment() {
             viewModel.getTugasGroupedByVilla(managerUid)
         }
 
-        // 🔥 JIKA TERBACA ARGUMEN, LANGSUNG BUKA PILIH VILLA
         if (arguments?.getBoolean("OPEN_ADD_TASK") == true) {
             bukaPilihVillaOverlay()
         }
@@ -80,7 +79,6 @@ class TugasFragment : Fragment() {
 
     private fun setupPilihVillaAdapter() {
         villaAdapter = PilihVillaAdapter { villa ->
-            Log.d("DEBUG_KLIK", "Villa diklik: ${villa.nama}, Area list: ${villa.area}")
             currentVillaId = villa.id
             currentVillaName = villa.nama
 

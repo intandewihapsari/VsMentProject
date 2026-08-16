@@ -52,7 +52,6 @@ class AktivitasStaffFragment : Fragment() {
     private fun getManagerIdAndFetchData() {
         val currentUserId = auth.currentUser?.uid ?: return
 
-        // Ambil data pemetaan boss/manager dari user_mapping
         FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_USER_MAPPING).child(currentUserId)
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -68,20 +67,16 @@ class AktivitasStaffFragment : Fragment() {
     }
 
     private fun fetchData(managerId: String, currentStaffUid: String) {
-        // PERBAIKAN 1: Panggil helper task management ref yang sudah runtut masuk sub-folder operational anaknya
         FirebaseConfig.getTaskManagementRef(managerId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (_binding == null) return
                     listTugas.clear()
 
-                    // PERBAIKAN 2: Harus lakukan dual-looping karena data dipisahkan berdasarkan ID Villa dulu
                     snapshot.children.forEach { villaSnap ->
-                        // Masuk ke dalam sub-node list_tugas
                         villaSnap.child("list_tugas").children.forEach { tugasSnap ->
                             val tugas = tugasSnap.getValue(TugasModel::class.java)
 
-                            // FILTER: Hanya ambil tugas milik staff ini yang statusnya sudah 'selesai'
                             if (tugas != null &&
                                 tugas.staff_id == currentStaffUid &&
                                 tugas.status == FirebaseConfig.STATUS_DONE) {
@@ -98,7 +93,6 @@ class AktivitasStaffFragment : Fragment() {
                 }
             })
 
-        // PERBAIKAN 3: Ambil referensi laporan kerusakan lewat helper anaknya agar menembus folder operational
         FirebaseConfig.getLaporanKerusakanRef(managerId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -108,7 +102,6 @@ class AktivitasStaffFragment : Fragment() {
                     snapshot.children.forEach { ds ->
                         val laporan = ds.getValue(LaporanModel::class.java)
 
-                        // FILTER: Hanya ambil laporan riil yang diketik/dibuat oleh staff yang sedang login ini
                         if (laporan != null && laporan.staff_id == currentStaffUid) {
                             laporan.id = ds.key ?: ""
                             listLaporan.add(laporan)

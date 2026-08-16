@@ -30,21 +30,11 @@ class ManagerActivity : AppCompatActivity() {
         binding = ActivityManagerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // =====================================================================
-        // 🔥 JALANKAN SEEDER DI SINI
-        // Jalankan sekali saja, setelah data masuk ke Firebase, hapus/komentari lagi kode ini.
-        // =====================================================================
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            DatabaseSeeder.seedMassiveOperationalData()
-//        }
-        // =====================================================================
-
         if (savedInstanceState == null) {
             binding.tvTitlePage.text = "Home"
             replaceFragment(DashboardFragment())
         }
 
-        // Inisialisasi logika tombol Back
         setupBackNavigation()
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
@@ -88,29 +78,23 @@ class ManagerActivity : AppCompatActivity() {
     private fun setupBackNavigation() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // Ambil Fragment yang sedang aktif di container
                 val currentFragment = supportFragmentManager.findFragmentById(binding.fragmentContainer.id)
 
-                // 1. CEK: Apakah sedang di DashboardFragment DAN overlay Kirim Notif/Instruksi sedang terbuka?
                 if (currentFragment is DashboardFragment && currentFragment.isNotifOverlayOpen()) {
-                    currentFragment.closeNotifOverlay() // Tutup overlay notifikasi saja!
+                    currentFragment.closeNotifOverlay()
                 }
-                // 2. CEK: Apakah sedang di TugasFragment DAN ada Form Overlay (Pilih Villa/Input Tugas) yang terbuka?
                 else if (currentFragment is TugasFragment && currentFragment.isFormOverlayOpen()) {
-                    currentFragment.closeFormOverlay() // Tutup form overlay di TugasFragment
+                    currentFragment.closeFormOverlay()
                 }
-                // 3. CEK: Apakah ada Sub-Fragment di BackStack (misal StaffList, VillaList, DetailTask)?
                 else if (supportFragmentManager.backStackEntryCount > 0) {
-                    supportFragmentManager.popBackStack() // Tutup sub-fragment
+                    supportFragmentManager.popBackStack()
                 }
-                // 4. CEK: Jika sedang tidak berada di Tab Home (Tugas/Laporan/Data/Profile)
                 else if (binding.bottomNavigation.selectedItemId != R.id.navigation_home) {
-                    binding.bottomNavigation.selectedItemId = R.id.navigation_home // Pindah ke Home
+                    binding.bottomNavigation.selectedItemId = R.id.navigation_home
                 }
-                // 5. CEK: Jika sudah di Home tanpa overlay, berikan Toast untuk keluar
                 else {
                     if (backPressedTime + 2000 > System.currentTimeMillis()) {
-                        finish() // Keluar Aplikasi
+                        finish()
                     } else {
                         Toast.makeText(
                             this@ManagerActivity,

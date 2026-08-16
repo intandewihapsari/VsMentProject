@@ -2,15 +2,15 @@ package com.indri.vsmentproject.ui.manager.masterdata
 
 import android.os.Bundle
 import android.view.*
-import androidx.activity.OnBackPressedCallback // ➕ IMPORT INI
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomnavigation.BottomNavigationView // ➕ IMPORT INI
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.databinding.FragmentDataBinding
-import com.indri.vsmentproject.ui.main.ManagerActivity // ➕ IMPORT INI
+import com.indri.vsmentproject.ui.main.ManagerActivity
 import com.indri.vsmentproject.ui.manager.template.TemplateListFragment
 
 class DataFragment : Fragment() {
@@ -46,9 +46,6 @@ class DataFragment : Fragment() {
         }
     }
 
-    // =========================
-    // BACK NAVIGATION (➕ TAMBAHKAN FUNGSI INI)
-    // =========================
     private fun setupBackNavigation() {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
@@ -69,9 +66,6 @@ class DataFragment : Fragment() {
         )
     }
 
-    // =========================
-    // RECYCLER
-    // =========================
     private fun setupRecyclerView() {
         adapterRiwayat = NotifikasiAdapter { notif ->
             // klik item opsional
@@ -121,7 +115,6 @@ class DataFragment : Fragment() {
         }
     }
 
-    // =========================
     private fun navigasiKe(fragment: Fragment) {
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)

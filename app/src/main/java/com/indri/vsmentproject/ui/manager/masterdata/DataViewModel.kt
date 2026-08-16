@@ -31,9 +31,6 @@ class DataViewModel : ViewModel() {
 
     private var originalNotifList: List<NotifikasiModel> = listOf()
 
-    // =============================
-    // NOTIFIKASI
-    // =============================
     fun getRiwayatInstruksi(managerId: String) {
         notifRepo.getMyNotifications(managerId, managerId, isManager = true).observeForever { resource ->
             when (resource) {
@@ -115,9 +112,6 @@ class DataViewModel : ViewModel() {
             }
     }
 
-    // =============================
-    // VILLA CRUD
-    // =============================
     fun simpanVilla(managerId: String, villaId: String, villa: VillaModel) {
         _operationStatus.value = Resource.Loading()
         FirebaseConfig.getVillasRef(managerId).child(villaId).setValue(villa)

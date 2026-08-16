@@ -56,18 +56,15 @@ class DashboardViewModel : ViewModel() {
             is_read = false,
             waktu = waktuStr,
             timestamp = currentTime,
-            target_role = "staff", // Ditujukan untuk Staff
-            sender_id = managerUid, // Pengirimnya Manager
+            target_role = "staff",
+            sender_id = managerUid,
             villa_nama = villaNama
         )
 
-        // 🔥 Menggunakan notifRepo dengan Logging untuk debugging
         notifRepo.createNotification(managerUid, notif) { success, errorMessage ->
             if (success) {
-                Log.d("NOTIF_CHECK", "Berhasil dikirim! ID Notif: ${notif.id}, Target Role: ${notif.target_role}")
                 _kirimNotifStatus.postValue(Resource.Success(true))
             } else {
-                Log.e("NOTIF_CHECK", "Gagal kirim: $errorMessage")
                 _kirimNotifStatus.postValue(Resource.Error(errorMessage ?: "Gagal mengirim notifikasi"))
             }
         }

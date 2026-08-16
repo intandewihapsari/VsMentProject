@@ -32,20 +32,16 @@ class StaffActivity : AppCompatActivity() {
         binding = ActivityStaffBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Setup back navigation
         setupBackNavigation()
 
-        // PERBAIKAN: Menggunakan binding, bukan findViewById lagi
         binding.bottomNavigation.itemIconTintList = ContextCompat.getColorStateList(this, R.color.nav_item_color)
 
-        // Setup Window Insets (Padding System Bar)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
 
-        // Load Fragment Pertama kali
         if (savedInstanceState == null) {
             binding.tvTitlePage.text = "Home"
             replaceFragment(DashboardStaffFragment())
@@ -88,7 +84,6 @@ class StaffActivity : AppCompatActivity() {
     }
 
     private fun setupFab() {
-        // PERBAIKAN: Klik FAB memicu Bottom Navigation memilih menu laporan agar UI tetap sinkron
         binding.fab.setOnClickListener {
             binding.bottomNavigation.selectedItemId = R.id.navigation_laporan
             Toast.makeText(this, "Membuka Menu Laporan...", Toast.LENGTH_SHORT).show()
@@ -105,15 +100,12 @@ class StaffActivity : AppCompatActivity() {
     private fun setupBackNavigation() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // 1. CEK: Apakah ada Sub-Fragment di BackStack?
                 if (supportFragmentManager.backStackEntryCount > 0) {
                     supportFragmentManager.popBackStack()
                 }
-                // 2. CEK: Jika sedang tidak berada di Tab Home
                 else if (binding.bottomNavigation.selectedItemId != R.id.navigation_home) {
                     binding.bottomNavigation.selectedItemId = R.id.navigation_home
                 }
-                // 3. CEK: Jika sudah di Home, berikan Toast untuk keluar
                 else {
                     if (backPressedTime + 2000 > System.currentTimeMillis()) {
                         finish()
