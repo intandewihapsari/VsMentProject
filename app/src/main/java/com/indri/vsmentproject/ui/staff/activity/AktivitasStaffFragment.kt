@@ -16,7 +16,6 @@ import com.indri.vsmentproject.data.model.report.LaporanModel
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.utils.FirebaseConfig
 import com.indri.vsmentproject.databinding.FragmentAktivitasStaffBinding
-import java.text.SimpleDateFormat
 import java.util.*
 
 class AktivitasStaffFragment : Fragment() {
@@ -137,14 +136,18 @@ class AktivitasStaffFragment : Fragment() {
         } else emptyList()
 
         val laporanFiltered = if (selectedTypeFilter == "Semua" || selectedTypeFilter == "Laporan") {
-            listLaporan.filter { parseLaporanTime(it.waktu_lapor).let { time -> filterByTime(time) } }
+            listLaporan.filter { filterByTime(it.created_at) }
         } else emptyList()
 
         filteredList.addAll(tugasFiltered)
         filteredList.addAll(laporanFiltered)
 
         val sortedList = filteredList.sortedByDescending {
-            if (it is TugasModel) it.created_at else if (it is LaporanModel) parseLaporanTime(it.waktu_lapor) else 0L
+            when (it) {
+                is TugasModel -> it.created_at
+                is LaporanModel -> it.created_at
+                else -> 0L
+            }
         }
 
         adapter.updateData(sortedList)
@@ -170,10 +173,6 @@ class AktivitasStaffFragment : Fragment() {
             }
             else -> true
         }
-    }
-
-    private fun parseLaporanTime(timeStr: String): Long {
-        return try { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse(timeStr)?.time ?: 0L } catch (e: Exception) { 0L }
     }
 
     private fun setupFilterButtons() {
