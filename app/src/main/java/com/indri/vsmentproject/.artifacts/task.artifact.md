@@ -1,7 +1,8 @@
-# Task: Fix Missing Photos in Progress Dialog UI
+# Task: Staff Notifications & Activity Details Enhancement
 
-- [ ] Create `item_foto_grid.xml` for thumbnail display
-- [ ] Create `FotoGridAdapter.kt` using the new grid layout
-- [ ] Update `DeadlineAdapter.kt` to use `FotoGridAdapter`
-- [ ] Verify photo visibility in the Progress Dialog on device
-- [ ] Ensure PDF export remains unaffected
+- [x] Implement click listener and auto-read for "Jadwal Penting" in `DashboardStaffFragment.kt`
+- [x] Fix Firebase paths and read logic in `JadwalPentingActivity.kt`
+- [x] Add item click support to `AktivitasAdapter.kt`
+- [x] Implement read-only detail popup in `AktivitasStaffFragment.kt`
+- [x] Verify synchronization with Manager's dashboard
+- [x] Final build and visual verification

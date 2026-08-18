@@ -89,7 +89,7 @@ class DeadlineAdapter(
             rvFoto.visibility = View.VISIBLE
 
             rvFoto.layoutManager = GridLayoutManager(context, 3)
-            val fotoAdapter = FotoAdapter()
+            val fotoAdapter = FotoGridAdapter()
             rvFoto.adapter = fotoAdapter
             fotoAdapter.setData(item.foto)
         }

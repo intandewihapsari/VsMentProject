@@ -12,7 +12,10 @@ import com.indri.vsmentproject.databinding.ItemAktivitasBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AktivitasAdapter(private var list: List<Any>) : RecyclerView.Adapter<AktivitasAdapter.ViewHolder>() {
+class AktivitasAdapter(
+    private var list: List<Any>,
+    private val onItemClick: (Any) -> Unit
+) : RecyclerView.Adapter<AktivitasAdapter.ViewHolder>() {
 
     inner class ViewHolder(val binding: ItemAktivitasBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -78,6 +81,10 @@ class AktivitasAdapter(private var list: List<Any>) : RecyclerView.Adapter<Aktiv
                     tvDateTime.text = formatWaktuLapor(item.waktu_lapor)
                     tvDateTime.setTextColor(color)
                 }
+            }
+
+            root.setOnClickListener {
+                onItemClick(item)
             }
         }
     }

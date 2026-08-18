@@ -1,5 +1,6 @@
 package com.indri.vsmentproject.ui.staff.activity
 
+import android.app.Dialog
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
@@ -8,8 +9,15 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.indri.vsmentproject.R
+import com.indri.vsmentproject.ui.manager.task.progressVilla.FotoGridAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.indri.vsmentproject.data.model.report.LaporanModel
@@ -116,9 +124,69 @@ class AktivitasStaffFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = AktivitasAdapter(emptyList())
+        adapter = AktivitasAdapter(emptyList()) { item ->
+            showDetailPopup(item)
+        }
         binding.rvAktivitas.layoutManager = LinearLayoutManager(requireContext())
         binding.rvAktivitas.adapter = adapter
+    }
+
+    private fun showDetailPopup(item: Any) {
+        val dialog = Dialog(requireContext())
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_detail_tanggal)
+
+        val tvTanggal = dialog.findViewById<TextView>(R.id.tvTanggal)
+        val rvTugas = dialog.findViewById<RecyclerView>(R.id.rvTugas)
+        val rvFoto = dialog.findViewById<RecyclerView>(R.id.rvFoto)
+        val layoutEmptyFoto = dialog.findViewById<View>(R.id.layoutEmptyFoto)
+        val btnDownload = dialog.findViewById<View>(R.id.btnDownload)
+        val btnClose = dialog.findViewById<View>(R.id.btnClose)
+
+        btnDownload.visibility = View.GONE
+        btnClose.setOnClickListener { dialog.dismiss() }
+
+        when (item) {
+            is TugasModel -> {
+                tvTanggal.text = "Detail Tugas Selesai"
+                rvTugas.layoutManager = LinearLayoutManager(requireContext())
+                rvTugas.adapter = com.indri.vsmentproject.ui.manager.task.progressVilla.TugasSimpleAdapter(listOf(item))
+                
+                if (item.bukti_foto?.isNotEmpty() == true) {
+                    layoutEmptyFoto.visibility = View.GONE
+                    rvFoto.visibility = View.VISIBLE
+                    rvFoto.layoutManager = GridLayoutManager(requireContext(), 3)
+                    val fotoGrid = FotoGridAdapter()
+                    rvFoto.adapter = fotoGrid
+                    fotoGrid.setData(item.bukti_foto ?: emptyList())
+                } else {
+                    layoutEmptyFoto.visibility = View.VISIBLE
+                    rvFoto.visibility = View.GONE
+                }
+            }
+            is LaporanModel -> {
+                tvTanggal.text = "Detail Laporan ${item.tipe_laporan.uppercase()}"
+                rvTugas.layoutManager = LinearLayoutManager(requireContext())
+                val pseudoTask = TugasModel(tugas = item.nama_barang, status = "selesai", deskripsi = item.deskripsi)
+                rvTugas.adapter = com.indri.vsmentproject.ui.manager.task.progressVilla.TugasSimpleAdapter(listOf(pseudoTask))
+
+                if (item.bukti_foto.isNotEmpty()) {
+                    layoutEmptyFoto.visibility = View.GONE
+                    rvFoto.visibility = View.VISIBLE
+                    rvFoto.layoutManager = GridLayoutManager(requireContext(), 3)
+                    val fotoGrid = FotoGridAdapter()
+                    rvFoto.adapter = fotoGrid
+                    fotoGrid.setData(item.bukti_foto)
+                } else {
+                    layoutEmptyFoto.visibility = View.VISIBLE
+                    rvFoto.visibility = View.GONE
+                }
+            }
+        }
+
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
     }
 
     private fun applyFilters() {

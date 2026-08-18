@@ -20,9 +20,10 @@ import com.indri.vsmentproject.R
 class JadwalPentingActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityJadwalPentingBinding
-    private lateinit var dbRef: DatabaseReference
+    private var dbRef: DatabaseReference? = null
 
     private var staffId: String = ""
+    private var managerId: String = ""
     private var listener: ValueEventListener? = null
 
     private val listData = mutableListOf<NotifikasiModel>()
@@ -47,13 +48,26 @@ class JadwalPentingActivity : AppCompatActivity() {
         staffId = getSharedPreferences("UserSession", Context.MODE_PRIVATE)
             .getString("staff_id", "") ?: ""
 
-        dbRef = FirebaseDatabase.getInstance()
-            .getReference(FirebaseConfig.CHILD_NOTIFIKASI)
-
         setupRecycler()
-        loadData()
+        fetchManagerIdAndLoadData()
 
         binding.btnBack.setOnClickListener { finish() }
+    }
+
+    private fun fetchManagerIdAndLoadData() {
+        if (staffId.isEmpty()) return
+        
+        FirebaseDatabase.getInstance().getReference(FirebaseConfig.PATH_USER_MAPPING).child(staffId)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    managerId = snapshot.child(FirebaseConfig.FIELD_BELONGS_TO_MANAGER).value.toString()
+                    if (managerId != "null" && managerId.isNotEmpty()) {
+                        dbRef = FirebaseConfig.getNotifikasiRef(managerId)
+                        loadData()
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 
     // =========================
@@ -111,63 +125,47 @@ class JadwalPentingActivity : AppCompatActivity() {
     // LOAD DATA FIREBASE
     // =========================
     private fun loadData() {
-
-        if (staffId.isEmpty()) return
+        if (staffId.isEmpty() || dbRef == null) return
 
         binding.progressBar.visibility = View.VISIBLE
 
         listener = object : ValueEventListener {
-
             override fun onDataChange(snapshot: DataSnapshot) {
-
                 listData.clear()
-
                 for (data in snapshot.children) {
-
                     val item = data.getValue(NotifikasiModel::class.java)
-
                     item?.let {
                         it.id = data.key ?: ""
-
-                        if (it.target_uid == staffId || it.target_role == "staff") {
+                        // Filter: Hanya ambil instruksi (bukan notif tugas/template)
+                        if ((it.target_uid == staffId || it.target_role == "staff") && it.tipe != "normal") {
                             listData.add(it)
                         }
                     }
                 }
-
-                listData.sortByDescending { it.timestamp ?: 0L }
-
+                listData.sortByDescending { it.timestamp }
                 binding.progressBar.visibility = View.GONE
-                binding.tvEmpty.visibility =
-                    if (listData.isEmpty()) View.VISIBLE else View.GONE
-
+                binding.tvEmpty.visibility = if (listData.isEmpty()) View.VISIBLE else View.GONE
                 adapter.notifyDataSetChanged()
             }
 
             override fun onCancelled(error: DatabaseError) {
                 binding.progressBar.visibility = View.GONE
-                Toast.makeText(
-                    this@JadwalPentingActivity,
-                    error.message,
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this@JadwalPentingActivity, error.message, Toast.LENGTH_SHORT).show()
             }
         }
 
-        dbRef.addValueEventListener(listener!!)
+        dbRef?.addValueEventListener(listener!!)
     }
 
     // =========================
     // UPDATE IS_READ
     // =========================
     private fun markAsRead(notif: NotifikasiModel) {
-
-        dbRef.child(notif.id)
-            .updateChildren(mapOf("is_read" to true))
+        dbRef?.child(notif.id)?.updateChildren(mapOf("is_read" to true))
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        listener?.let { dbRef.removeEventListener(it) }
+        listener?.let { dbRef?.removeEventListener(it) }
     }
 }

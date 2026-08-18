@@ -114,9 +114,11 @@ class DashboardViewModel : ViewModel() {
         val ref = FirebaseConfig.getLaporanKerusakanRef(uid)
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                // Filter hanya yang pending/proses dan ambil yang paling baru berdasarkan created_at
                 val latest = snapshot.children
                     .mapNotNull { child -> child.getValue(LaporanModel::class.java)?.apply { id = child.key ?: "" } }
-                    .maxByOrNull { parseDate(it.waktu_lapor) }
+                    .filter { it.status.lowercase() != FirebaseConfig.STATUS_DONE }
+                    .maxByOrNull { it.created_at }
                 result.postValue(latest)
             }
             override fun onCancelled(error: DatabaseError) { result.postValue(null) }
@@ -159,11 +161,15 @@ class DashboardViewModel : ViewModel() {
                 var countHilang = 0
                 var countHabis = 0
                 snapshot.children.forEach { child ->
-                    val tipe = child.child("tipe_laporan").value?.toString()?.lowercase() ?: ""
-                    when (tipe) {
-                        "rusak" -> countRusak++
-                        "hilang" -> countHilang++
-                        "habis" -> countHabis++
+                    val status = child.child(FirebaseConfig.FIELD_STATUS).value?.toString()?.lowercase() ?: ""
+                    // Hanya hitung jika belum selesai
+                    if (status != FirebaseConfig.STATUS_DONE) {
+                        val tipe = child.child("tipe_laporan").value?.toString()?.lowercase() ?: ""
+                        when (tipe) {
+                            "rusak" -> countRusak++
+                            "hilang" -> countHilang++
+                            "habis" -> countHabis++
+                        }
                     }
                 }
                 result.postValue(InventarisModel(total_rusak = countRusak, total_hilang = countHilang, total_habis = countHabis))
@@ -200,7 +206,14 @@ class DashboardViewModel : ViewModel() {
             items.add(DashboardItem.AksiCepat)
 
             laporanSource.value?.let {
-                val notif = NotifikasiModel(id = it.id, judul = "Laporan Baru", pesan = "${it.staff_nama}: ${it.nama_barang}", tipe = "urgent", waktu = it.waktu_lapor)
+                val notif = NotifikasiModel(
+                    id = it.id, 
+                    judul = "Laporan Baru: ${it.tipe_laporan.uppercase()}", 
+                    pesan = "${it.staff_nama}: ${it.nama_barang}", 
+                    tipe = it.tipe_laporan.lowercase(), // Gunakan tipe laporan untuk warna kartu
+                    waktu = it.waktu_lapor,
+                    villa_nama = it.villa_nama
+                )
                 items.add(DashboardItem.NotifikasiUrgent(listOf(notif)))
             }
 

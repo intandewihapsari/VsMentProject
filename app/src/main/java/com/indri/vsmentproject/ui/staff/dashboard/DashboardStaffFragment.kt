@@ -33,6 +33,7 @@ class DashboardStaffFragment : Fragment() {
 
     private val listTugasHome = mutableListOf<TugasModel>()
     private var managerId: String? = null
+    private var latestNotifId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,6 +48,14 @@ class DashboardStaffFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         fetchManagerIdAndLoadData()
+
+        binding.cardJadwalPenting.setOnClickListener {
+            val id = latestNotifId
+            if (id != null) {
+                markNotifAsRead(id)
+            }
+            startActivity(Intent(requireContext(), JadwalPentingActivity::class.java))
+        }
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -133,10 +142,11 @@ class DashboardStaffFragment : Fragment() {
                     if (_binding == null) return
                     val listNotif =
                         snapshot.children.mapNotNull { it.getValue(NotifikasiModel::class.java) }
-                            .filter { it.target_uid == staffUid || it.target_role == "staff" }
+                            .filter { (it.target_uid == staffUid || it.target_role == "staff") && it.tipe != "normal" }
 
                     if (listNotif.isNotEmpty()) {
                         val latest = listNotif.maxByOrNull { it.timestamp }
+                        latestNotifId = latest?.id
                         val date = Date(latest?.timestamp ?: 0)
                         binding.apply {
                             tvJudulJadwal.text = latest?.judul ?: "-"
@@ -187,6 +197,11 @@ class DashboardStaffFragment : Fragment() {
             .replace(R.id.fragmentContainer, fragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun markNotifAsRead(notifId: String) {
+        val mId = managerId ?: return
+        FirebaseConfig.getNotifikasiRef(mId).child(notifId).child("is_read").setValue(true)
     }
 
     private fun updateStatUI(total: Int, pending: Int, selesai: Int) {

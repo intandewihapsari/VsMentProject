@@ -73,7 +73,7 @@ class LaporanFragment : Fragment() {
         binding.toggleGroupStatus.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 currentFilterStatus = when (checkedId) {
-                    R.id.btnBelum -> "pending"
+                    R.id.btnBelum -> "unfinished" // Gabungan Pending & Proses
                     R.id.btnSelesai -> "selesai"
                     else -> "semua"
                 }
@@ -99,13 +99,21 @@ class LaporanFragment : Fragment() {
 
     private fun applyFilter(list: List<LaporanModel>) {
         var filteredList = list
-        if (currentFilterStatus != "semua") filteredList = filteredList.filter { it.status.lowercase() == currentFilterStatus }
-        if (currentFilterVilla != "Semua Villa") filteredList = filteredList.filter { it.villa_nama == currentFilterVilla }
-
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-        filteredList = filteredList.sortedByDescending {
-            try { sdf.parse(it.waktu_lapor)?.time ?: 0L } catch (e: Exception) { 0L }
+        
+        // Filter Berdasarkan Status (Unfinished mencakup Pending & Proses)
+        filteredList = when (currentFilterStatus) {
+            "unfinished" -> filteredList.filter { it.status.lowercase() != "selesai" }
+            "selesai" -> filteredList.filter { it.status.lowercase() == "selesai" }
+            else -> filteredList
         }
+
+        // Filter Berdasarkan Villa
+        if (currentFilterVilla != "Semua Villa") {
+            filteredList = filteredList.filter { it.villa_nama == currentFilterVilla }
+        }
+
+        // Pengurutan Berdasarkan Waktu (Timestamp created_at jauh lebih akurat)
+        filteredList = filteredList.sortedByDescending { it.created_at }
 
         if (filteredList.isEmpty()) {
             binding.rvLaporan.visibility = View.GONE
