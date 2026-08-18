@@ -1,6 +1,7 @@
-# Tasks - Firebase Offline Persistence & Optimization
+# Task: Fix Missing Photos in Progress Dialog UI
 
-- [x] Enable global persistence in `VsMentApp.kt`
-- [x] Add sync optimization helpers in `FirebaseConfig.kt`
-- [x] Initialize synchronization logic in `LoginActivity.kt`
-- [x] Verify offline data retention and optimistic UI updates
+- [ ] Create `item_foto_grid.xml` for thumbnail display
+- [ ] Create `FotoGridAdapter.kt` using the new grid layout
+- [ ] Update `DeadlineAdapter.kt` to use `FotoGridAdapter`
+- [ ] Verify photo visibility in the Progress Dialog on device
+- [ ] Ensure PDF export remains unaffected

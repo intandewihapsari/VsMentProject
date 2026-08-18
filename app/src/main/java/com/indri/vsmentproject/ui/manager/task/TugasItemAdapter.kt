@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.indri.vsmentproject.R
 import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
@@ -71,7 +72,25 @@ class TugasItemAdapter(
         }
 
         holder.binding.root.setOnClickListener {
-            onEdit(tugas)
+            val opsi = arrayOf("Edit Tugas", "Hapus Tugas")
+            MaterialAlertDialogBuilder(holder.itemView.context)
+                .setTitle("Opsi Tugas")
+                .setItems(opsi) { _, which ->
+                    when (which) {
+                        0 -> onEdit(tugas)
+                        1 -> {
+                            MaterialAlertDialogBuilder(holder.itemView.context)
+                                .setTitle("Hapus Tugas")
+                                .setMessage("Apakah Anda yakin ingin menghapus tugas '${tugas.tugas}'?")
+                                .setPositiveButton("Hapus") { _, _ ->
+                                    onDelete(tugas)
+                                }
+                                .setNegativeButton("Batal", null)
+                                .show()
+                        }
+                    }
+                }
+                .show()
         }
     }
 }

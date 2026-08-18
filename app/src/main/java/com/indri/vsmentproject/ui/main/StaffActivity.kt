@@ -85,6 +85,8 @@ class StaffActivity : AppCompatActivity() {
 
     private fun setupFab() {
         binding.fab.setOnClickListener {
+            // Force replace fragment even if already on the report tab to trigger auto-camera
+            replaceFragment(LaporanStaffFragment())
             binding.bottomNavigation.selectedItemId = R.id.navigation_laporan
             Toast.makeText(this, "Membuka Menu Laporan...", Toast.LENGTH_SHORT).show()
         }

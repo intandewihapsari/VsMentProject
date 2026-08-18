@@ -1,12 +1,10 @@
 package com.indri.vsmentproject.ui.staff.task
 
-import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -147,6 +145,7 @@ class TugasStaffFragment : Fragment() {
     }
 
     private fun groupTugasByVilla(list: List<TugasModel>) {
+        if (_binding == null) return
         val grouped = list.groupBy { it.villa_id }.map { (villaId, tugasList) ->
             VillaTugasGroup(
                 villa_id = villaId,
@@ -174,7 +173,9 @@ class TugasStaffFragment : Fragment() {
             .child(tugas.id)
             .updateChildren(updates)
             .addOnSuccessListener {
-                Toast.makeText(context, "Status diperbarui", Toast.LENGTH_SHORT).show()
+                if (_binding != null) {
+                    Toast.makeText(context, "Status diperbarui", Toast.LENGTH_SHORT).show()
+                }
             }
     }
 
@@ -194,16 +195,13 @@ class TugasStaffFragment : Fragment() {
     }
 
     private fun setupFilterTabs() {
-        val tabs = listOf(binding.tabAll, binding.tabPending, binding.tabSelesai)
-        tabs.forEach { tab ->
-            tab.setOnClickListener {
-                tabs.forEach {
-                    it.setBackgroundResource(0)
-                    it.setTypeface(null, Typeface.NORMAL)
+        binding.toggleGroupFilter.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                currentFilter = when (checkedId) {
+                    R.id.tabPending -> "Pending"
+                    R.id.tabSelesai -> "Selesai"
+                    else -> "Seluruh Tugas"
                 }
-                tab.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.myWhite))
-                tab.setTypeface(null, Typeface.BOLD)
-                currentFilter = tab.text.toString()
                 filterData(binding.etSearch.text.toString(), currentFilter)
             }
         }

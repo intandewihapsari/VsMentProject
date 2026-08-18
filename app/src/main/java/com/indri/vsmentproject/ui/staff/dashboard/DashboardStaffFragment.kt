@@ -179,6 +179,8 @@ class DashboardStaffFragment : Fragment() {
                 putString("VILLA_NAMA", tugas.villa_nama)
                 putString("RUANGAN_NAMA", tugas.ruangan)
                 putString("BARANG_NAMA", tugas.tugas)
+                putString("TASK_ID", tugas.id) // Pass Task ID for auto-completion
+                putString("VILLA_ID", tugas.villa_id) // Pass Villa ID for targeting
             }
         }
         parentFragmentManager.beginTransaction()
@@ -189,8 +191,8 @@ class DashboardStaffFragment : Fragment() {
 
     private fun updateStatUI(total: Int, pending: Int, selesai: Int) {
         binding.itemTotal.tvCount.text = total.toString()
-        binding.itemPending.tvCount.text = pending.toString()
-        binding.itemDone.tvCount.text = selesai.toString()
+        binding.itemPending.tvCount.text = selesai.toString()
+        binding.itemDone.tvCount.text = pending.toString()
     }
 
     override fun onDestroyView() {

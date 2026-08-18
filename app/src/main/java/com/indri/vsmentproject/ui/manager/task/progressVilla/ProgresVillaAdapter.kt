@@ -64,7 +64,19 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
 
             // VALIDASI STATUS OPERASIONAL
             val semuaSelesai = group.listTugas.all { it.status.equals(FirebaseConfig.STATUS_DONE, ignoreCase = true) }
-            val adaFoto = group.listTugas.any { it.bukti_foto.isNotEmpty() }
+            
+            // Agregasi seluruh foto secara defensif
+            val seluruhFoto = mutableListOf<String>()
+            group.listTugas.forEach { tugas ->
+                tugas.bukti_foto?.let { seluruhFoto.addAll(it) }
+                if (tugas.foto_tugas.isNotEmpty()) seluruhFoto.add(tugas.foto_tugas)
+            }
+            val finalPhotos = seluruhFoto.filter { it.isNotEmpty() }.distinct()
+            val adaFoto = finalPhotos.isNotEmpty()
+            
+            // LOG DEBUG: Bantu cek apakah data terbaca
+            android.util.Log.d("PROGRES_SYNC", "Villa: ${group.namaVilla} | Foto Ditemukan: ${finalPhotos.size}")
+
             val mContext = binding.root.context
 
             // SINKRONISASI TEKS & WARNA LATAR BELAKANG STATUS
@@ -116,10 +128,16 @@ class ProgresVillaAdapter : RecyclerView.Adapter<ProgresVillaAdapter.ViewHolder>
             // GROUP BY DEADLINE TANGGAL
             val grouped = group.listTugas.groupBy { it.deadline }
             val result = grouped.map { (tanggal, tugasList) ->
+                val photosForDate = mutableListOf<String>()
+                tugasList.forEach { t ->
+                    t.bukti_foto?.let { photosForDate.addAll(it) }
+                    if (t.foto_tugas.isNotEmpty()) photosForDate.add(t.foto_tugas)
+                }
+
                 DeadlineGroup(
                     deadline = tanggal,
                     listTugas = tugasList,
-                    foto = tugasList.firstOrNull { it.bukti_foto.isNotEmpty() }?.bukti_foto ?: emptyList()
+                    foto = photosForDate.filter { it.isNotEmpty() }.distinct()
                 )
             }
 

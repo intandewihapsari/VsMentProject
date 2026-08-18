@@ -7,9 +7,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.indri.vsmentproject.R
+import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.WaktuContainer
 
-class WaktuContainerAdapter : RecyclerView.Adapter<WaktuContainerAdapter.ViewHolder>() {
+class WaktuContainerAdapter(
+    private val onItemClick: (TugasModel) -> Unit
+) : RecyclerView.Adapter<WaktuContainerAdapter.ViewHolder>() {
 
     private var items = listOf<WaktuContainer>()
 
@@ -29,7 +32,7 @@ class WaktuContainerAdapter : RecyclerView.Adapter<WaktuContainerAdapter.ViewHol
         holder.tvHeader.text = data.kategoriWaktu
 
         // Pasang Adapter Dalam
-        val innerAdapter = InnerVillaAdapter()
+        val innerAdapter = InnerVillaAdapter(onItemClick)
         holder.rvInner.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = innerAdapter

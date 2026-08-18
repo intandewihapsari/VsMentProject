@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.indri.vsmentproject.R
+import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.databinding.FragmentTugasBinding
 import com.indri.vsmentproject.ui.manager.task.progressVilla.ProgresDetailFragment
 import com.indri.vsmentproject.ui.manager.template.FragmentTemplateForm
@@ -70,7 +71,9 @@ class TugasFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        containerAdapter = WaktuContainerAdapter()
+        containerAdapter = WaktuContainerAdapter { tugas ->
+            showOpsiTugas(tugas)
+        }
         binding.rvTugasVilla.apply {
             adapter = containerAdapter
             layoutManager = LinearLayoutManager(requireContext())
@@ -94,11 +97,11 @@ class TugasFragment : Fragment() {
                 rvArea.layoutManager = LinearLayoutManager(requireContext())
                 rvArea.adapter = AreaAdapter(villa.area) { selectedArea ->
                     dialog.dismiss()
-                    bukaFormInput(villa.id, selectedArea)
+                    bukaFormTugas(villa.id, selectedArea)
                 }
                 dialog.show()
             } else {
-                bukaFormInput(villa.id, "Umum")
+                bukaFormTugas(villa.id, "Umum")
             }
         }
 
@@ -157,6 +160,36 @@ class TugasFragment : Fragment() {
         }
     }
 
+    private fun showOpsiTugas(tugas: TugasModel) {
+        val opsi = arrayOf("Edit Tugas", "Hapus Tugas")
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Opsi Tugas")
+            .setItems(opsi) { _, which ->
+                when (which) {
+                    0 -> bukaFormTugas(tugas.villa_id, tugas.ruangan, tugas)
+                    1 -> konfirmasiHapus(tugas)
+                }
+            }
+            .show()
+    }
+
+    private fun konfirmasiHapus(tugas: TugasModel) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Hapus Tugas")
+            .setMessage("Apakah Anda yakin ingin menghapus tugas '${tugas.tugas}'?")
+            .setPositiveButton("Hapus") { _, _ ->
+                viewModel.hapusTugas(managerUid, tugas.villa_id, tugas.id) { sukses ->
+                    if (sukses) {
+                        Toast.makeText(context, "Tugas berhasil dihapus", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Gagal menghapus tugas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
     private fun observeData() {
         viewModel.waktuListLive.observe(viewLifecycleOwner) { listWaktu ->
             if (!listWaktu.isNullOrEmpty()) {
@@ -179,12 +212,34 @@ class TugasFragment : Fragment() {
         }
     }
 
-    private fun bukaFormInput(villaId: String, ruangan: String) {
-        currentEditTaskId = null
+    private fun bukaFormTugas(villaId: String, ruangan: String, tugas: TugasModel? = null) {
+        currentEditTaskId = tugas?.id
         currentVillaId = villaId
         currentRoom = ruangan
+        currentVillaName = tugas?.villa_nama ?: currentVillaName
 
         binding.layoutFormInput.tvHeaderVilla.text = "${currentVillaName ?: ""} - $ruangan"
+
+        // Pre-fill data if in edit mode
+        if (tugas != null) {
+            binding.layoutFormInput.etNamaTugas.setText(tugas.tugas)
+            binding.layoutFormInput.etDeskripsiTugas.setText(tugas.deskripsi)
+            tanggalTerpilih = tugas.deadline
+            binding.layoutFormInput.tvTanggalTerpilih.text = if (tanggalTerpilih.isNotEmpty()) tanggalTerpilih else "Pilih Tanggal"
+            
+            // Set spinner selection for Staff
+            viewModel.staffList.value?.let { staffList ->
+                val index = staffList.indexOfFirst { it.uid == tugas.staff_id }
+                if (index != -1) {
+                    binding.layoutFormInput.spinnerStaff.setSelection(index)
+                }
+            }
+        } else {
+            resetForm()
+            // Reset essential state after resetForm clears everything
+            currentVillaId = villaId
+            currentRoom = ruangan
+        }
 
         binding.layoutPilihVillaContainer.visibility = View.GONE
         binding.containerFormInput.visibility = View.VISIBLE

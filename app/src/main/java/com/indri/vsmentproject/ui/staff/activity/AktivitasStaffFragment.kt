@@ -44,7 +44,7 @@ class AktivitasStaffFragment : Fragment() {
         getManagerIdAndFetchData()
         setupFilterButtons()
 
-        // SET DEFAULT UI STATE
+        // Set default UI state
         updateTimeUI(binding.btnSemuaWaktu)
         updateTypeUI(binding.btnSemuaJenis)
     }
@@ -209,8 +209,10 @@ class AktivitasStaffFragment : Fragment() {
     private fun updateTypeUI(selected: Button) {
         listOf(binding.btnSemuaJenis, binding.btnTugas, binding.btnLaporan).forEach {
             it.backgroundTintList = ColorStateList.valueOf(Color.WHITE)
+            it.setTextColor(Color.BLACK)
         }
         selected.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFF1CC"))
+        selected.setTextColor(Color.parseColor("#805B00"))
     }
 
     override fun onDestroyView() {

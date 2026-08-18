@@ -86,7 +86,7 @@
         android:layout_height="wrap_content"
         app:layout_anchor="@id/bottomAppBar"
         app:layout_anchorGravity="top|center_horizontal"
-        android:translationY="50dp"
+        android:translationY="0dp"
         android:clipChildren="false"
         android:clipToPadding="false">
 

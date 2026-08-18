@@ -12,7 +12,9 @@ import com.indri.vsmentproject.data.model.task.TugasModel
 import com.indri.vsmentproject.data.model.task.VillaTugasGroup
 import com.indri.vsmentproject.databinding.ItemTugasPendingListBinding
 
-class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class InnerVillaAdapter(
+    private val onItemClick: (TugasModel) -> Unit
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val TYPE_HEADER = 0
     private val TYPE_ITEM = 1
@@ -103,6 +105,10 @@ class InnerVillaAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 }
             }
             binding.tvStatus.background = shape
+
+            binding.root.setOnClickListener {
+                onItemClick(tugas)
+            }
         }
     }
 }

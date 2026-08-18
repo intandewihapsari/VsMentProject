@@ -39,6 +39,11 @@ class TugasViewModel : ViewModel() {
                     villaSnap.child("list_tugas").children.forEach { tugasSnap ->
                         tugasSnap.getValue(TugasModel::class.java)?.let {
                             it.id = tugasSnap.key ?: ""
+                            it.villa_id = villaSnap.key ?: ""
+                            
+                            // LOG: Verifikasi bukti foto terbaca dari Firebase
+                            android.util.Log.d("FIREBASE_FETCH", "Tugas: ${it.tugas} | Bukti Foto Count: ${it.bukti_foto?.size ?: 0}")
+                            
                             tasks.add(it)
                         }
                     }
@@ -157,5 +162,10 @@ class TugasViewModel : ViewModel() {
     fun updateTugas(managerId: String, villaId: String, taskId: String, data: Map<String, Any>, onComplete: (Boolean) -> Unit) {
         FirebaseConfig.getTaskManagementRef(managerId).child(villaId).child("list_tugas").child(taskId)
             .updateChildren(data).addOnCompleteListener { onComplete(it.isSuccessful) }
+    }
+
+    fun hapusTugas(managerId: String, villaId: String, taskId: String, onComplete: (Boolean) -> Unit) {
+        FirebaseConfig.getTaskManagementRef(managerId).child(villaId).child("list_tugas").child(taskId)
+            .removeValue().addOnCompleteListener { onComplete(it.isSuccessful) }
     }
 }

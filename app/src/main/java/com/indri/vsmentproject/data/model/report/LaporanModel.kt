@@ -2,37 +2,64 @@ package com.indri.vsmentproject.data.model.report
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import com.google.firebase.database.PropertyName
 
 @Parcelize
 data class LaporanModel(
-    // ID & Timestamp
-    var id: String = "",                          // ID laporan
-    var created_at: Long = 0L,                    // Unix timestamp
+    var id: String = "",
 
-    // Relasi Data
+    @get:PropertyName("created_at")
+    @set:PropertyName("created_at")
+    var created_at: Long = 0L,
+
+    @get:PropertyName("villa_id")
+    @set:PropertyName("villa_id")
     var villa_id: String = "",
-    var villa_nama: String = "",
-    var area: String = "",                        // Sesuai JSON baru: area (bukan ruangan)
 
+    @get:PropertyName("villa_nama")
+    @set:PropertyName("villa_nama")
+    var villa_nama: String = "",
+
+    var area: String = "",
+
+    @get:PropertyName("staff_id")
+    @set:PropertyName("staff_id")
     var staff_id: String = "",
+
+    @get:PropertyName("staff_nama")
+    @set:PropertyName("staff_nama")
     var staff_nama: String = "",
 
-    // Konten Laporan
-    var tipe_laporan: String = "",                // Habis / Rusak / Hilang
-    var nama_barang: String = "",                 // Sesuai JSON baru: nama_barang (bukan item_nama)
+    @get:PropertyName("tipe_laporan")
+    @set:PropertyName("tipe_laporan")
+    var tipe_laporan: String = "",
+
+    @get:PropertyName("nama_barang")
+    @set:PropertyName("nama_barang")
+    var nama_barang: String = "",
+
     var deskripsi: String = "",
+    var prioritas: String = "Normal",
 
-    // Prioritas
-    var prioritas: String = "Normal",             // Low / Normal / Urgent
-
-    // Bukti Foto
+    @get:PropertyName("foto_url")
+    @set:PropertyName("foto_url")
     var foto_url: String = "",
 
-    // Status Workflow
-    var status: String = "pending",               // pending / proses / selesai / ditolak
+    @get:PropertyName("bukti_foto")
+    @set:PropertyName("bukti_foto")
+    var bukti_foto: List<String> = emptyList(),
+
+    var status: String = "pending",
+
+    @get:PropertyName("catatan_manager")
+    @set:PropertyName("catatan_manager")
     var catatan_manager: String = "",
 
-    // Waktu
-    var waktu_lapor: String = "",                 // yyyy-MM-dd HH:mm
+    @get:PropertyName("waktu_lapor")
+    @set:PropertyName("waktu_lapor")
+    var waktu_lapor: String = "",
+
+    @get:PropertyName("waktu_selesai")
+    @set:PropertyName("waktu_selesai")
     var waktu_selesai: String = ""
 ) : Parcelable
